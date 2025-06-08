@@ -28,10 +28,6 @@ args = "ML Training System"
 task = "workflow.run"
 args = "Intellectia Trading Platform"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Modern UI Server"
-
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -56,15 +52,6 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run intellectia_app.py --server.port 5000"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Modern UI Server"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python modern_ui_app.py"
-waitForPort = 5001
 
 [[ports]]
 localPort = 5000
