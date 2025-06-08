@@ -41,26 +41,16 @@ def test_risk_manager():
         
         risk_manager = AdvancedRiskManager()
         
-        # Test creating a position with datetime objects
-        test_position_data = {
-            'symbol': 'BTCUSDT',
-            'entry_price': 50000.0,
-            'position_size': 0.1,
-            'entry_time': datetime.now(),
-            'take_profits': [
-                {'price': 52000.0, 'percentage': 0.5},
-                {'price': 54000.0, 'percentage': 0.5}
-            ],
-            'stop_loss': {
-                'price': 48000.0,
-                'type': 'fixed'
-            },
-            'trailing_stop': None,
-            'max_risk_pct': 0.02
-        }
-        
+        # Test creating a position with correct parameters
         # This should not raise JSON serialization errors
-        risk_manager.create_position_risk(**test_position_data)
+        position = risk_manager.create_position_risk(
+            symbol='BTCUSDT',
+            entry_price=50000.0,
+            position_size=0.1,
+            tp_levels=[0.04, 0.08, 0.12],  # 4%, 8%, 12% profit levels
+            sl_percentage=0.02,  # 2% stop loss
+            use_trailing_stop=True
+        )
         print("✅ Risk Manager: Position created without datetime serialization errors")
         
         # Test risk metrics calculation (would involve datetime serialization)
