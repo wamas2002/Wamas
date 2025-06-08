@@ -22,6 +22,30 @@ def show_explainable_ai_panel():
     st.title("🧠 Explainable AI - Trade Reasoning")
     st.markdown("**Understand why AI made specific trading decisions**")
     
+    # Real-time market analysis and decision generation
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        st.subheader("🎯 Live AI Decision Center")
+    
+    with col2:
+        if st.button("🔄 Generate Live Decisions", type="primary"):
+            with st.spinner("Analyzing markets and generating decisions..."):
+                if 'live_decision_generator' in st.session_state:
+                    decisions = st.session_state.live_decision_generator.generate_decisions_for_all_symbols()
+                    if decisions:
+                        st.success(f"Generated {len(decisions)} new trading decisions")
+                        st.rerun()
+                    else:
+                        st.warning("Unable to generate decisions - checking market data")
+    
+    with col3:
+        if st.button("📊 Market Regime"):
+            if 'live_decision_generator' in st.session_state:
+                regime = st.session_state.live_decision_generator.get_market_regime_analysis()
+                display_confidence_badge(regime['confidence'], f"Market: {regime['regime']}")
+                st.write(regime['description'])
+    
     # Initialize trade reason logger if not already done
     if 'trade_reason_logger' not in st.session_state:
         from ai.trade_reason_logger import TradeReasonLogger
