@@ -22,19 +22,19 @@ class AssetExplorer:
         self.ml_pipeline = TradingMLPipeline()
         self.sentiment_analyzer = EnhancedSentimentAnalyzer()
         
-        # Major trading pairs to focus on
+        # Major trading pairs to focus on (verified OKX pairs)
         self.major_pairs = [
             'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT',
             'DOTUSDT', 'LINKUSDT', 'LTCUSDT', 'SOLUSDT', 'AVAXUSDT',
-            'UNIUSDT', 'MATICUSDT', 'FTMUSDT', 'ATOMUSDT', 'NEARUSDT'
+            'UNIUSDT', 'ATOMUSDT', 'NEARUSDT'
         ]
         
-        # Extended pairs for comprehensive analysis
+        # Extended pairs for comprehensive analysis (verified OKX pairs)
         self.extended_pairs = self.major_pairs + [
-            'SANDUSDT', 'MANAUSDT', 'ALICEUSDT', 'CHZUSDT', 'ENJUSDT',
+            'SANDUSDT', 'MANAUSDT', 'CHZUSDT', 'ENJUSDT',
             'AAVEUSDT', 'MKRUSDT', 'COMPUSDT', 'SUSHIUSDT', 'CRVUSDT',
-            'YFIUSDT', '1INCHUSDT', 'SNXUSDT', 'UMAUSDT', 'BALRUSDT',
-            'ICPUSDT', 'FLOWUSDT', 'FILUSDT', 'EGLDUSDT', 'THETAUSDT'
+            'YFIUSDT', '1INCHUSDT', 'SNXUSDT', 'UMAUSDT',
+            'ICPUSDT', 'FILUSDT', 'THETAUSDT'
         ]
     
     def get_all_assets_overview(self, sort_by: str = 'volume') -> List[Dict[str, Any]]:

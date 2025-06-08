@@ -1,0 +1,96 @@
+I want to enhance my AI-powered crypto trading bot to match and exceed the flexibility and usability of Gunbot. Please implement the following features:
+
+✅ 1. Add Prebuilt Strategy Presets
+Component: /strategies/presets
+Functionality:
+
+Implement the following reusable strategies with modular parameters:
+
+Grid Strategy: Place staggered buy/sell orders
+
+DCA (Dollar Cost Averaging): Buy more after a drop by X%
+
+Trailing Stop ATR: Use ATR to determine trailing SL/TP levels
+
+Ping-Pong Strategy: Trade between two price bands
+
+Breakout Strategy: Enter on volatility spikes
+
+Allow switching between strategies via dashboard or API.
+
+⚙️ 2. Implement AutoConfig Engine
+Component: /engine/autoconfig
+Functionality:
+
+Auto-detect market regime (trending, ranging, high-volatility)
+
+Dynamically assign best-fit strategy for each symbol based on:
+
+Volume > X
+
+Volatility index (std deviation or ATR)
+
+AI signal confidence
+
+Example: If market is trending with low volatility, enable EMA cross strategy.
+
+🧪 3. Backtest Presets
+Component: /backtest
+Functionality:
+
+Allow backtesting of all strategy presets across historical data
+
+Visualize:
+
+Win rate
+
+Avg PnL
+
+Max drawdown
+
+Equity curve
+
+Optional: export to CSV or JSON
+
+🧑‍💻 4. UI Enhancements
+Dashboard Updates:
+
+Add Beginner/Expert toggle
+
+Beginner mode: Basic metrics (Balance, Win Rate, PnL)
+
+Expert mode: Strategy tuning, feature importance, log viewer
+
+Add interactive charting (Plotly.js or embed TradingView)
+
+Strategy editor per symbol:
+
+Enable/disable
+
+Set SL/TP, frequency, allocation
+
+📢 5. Telegram Bot Command Integration
+Component: /telegram/commands
+Functionality:
+
+Add these command triggers:
+
+/status BTC → shows active strategy, balance, open trades
+
+/enable DCA BTC → enables DCA for BTC
+
+/disable strategy BTC → disables strategy for BTC
+
+/risk 3% → changes risk parameter globally
+
+Connect to Telegram bot with webhook or polling.
+
+Please make sure these additions integrate with the existing:
+
+Risk management system
+
+AI model prediction engine
+
+Real-time market data pipeline
+
+Let me know when these modules are complete, and I’ll review performance
