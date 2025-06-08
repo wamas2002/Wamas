@@ -11,8 +11,8 @@ from frontend.tradingview_charts import TradingViewCharts
 from frontend.advanced_ml_interface import AdvancedMLInterface
 from trading.engine import TradingEngine
 from ai.predictor import AIPredictor
-from ai.lstm_predictor import LSTMPredictor
-from ai.prophet_predictor import ProphetPredictor
+from ai.lstm_predictor import AdvancedLSTMPredictor
+from ai.prophet_predictor import AdvancedProphetPredictor
 from ai.reinforcement_advanced import AdvancedQLearningAgent
 from ai.market_regime_detector import MarketRegimeDetector
 from ai.portfolio_optimizer import PortfolioOptimizer

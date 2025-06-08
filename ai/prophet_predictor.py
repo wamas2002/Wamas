@@ -1,23 +1,52 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from typing import Dict, List, Any, Optional, Tuple
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 import warnings
 warnings.filterwarnings('ignore')
 
-class ProphetPredictor:
-    """Prophet-like time series forecasting using trend decomposition and seasonality"""
+class AdvancedProphetPredictor:
+    """Advanced Prophet-style time series prediction with enhanced seasonality and trend modeling"""
     
-    def __init__(self, seasonality_periods: List[int] = None):
-        self.seasonality_periods = seasonality_periods or [24, 168, 720]  # hourly, weekly, monthly
-        self.trend_model = LinearRegression()
+    def __init__(self, prediction_horizon: int = 1):
+        self.prediction_horizon = prediction_horizon
+        self.price_scaler = MinMaxScaler(feature_range=(0, 1))
+        self.feature_scaler = StandardScaler()
+        self.target_scaler = StandardScaler()
+        
+        # Model parameters
+        self.changepoint_prior_scale = 0.05
+        self.seasonality_prior_scale = 10.0
+        self.holidays_prior_scale = 10.0
+        self.seasonality_mode = 'additive'
+        self.growth = 'linear'
+        
+        # Advanced components
+        self.trend_model = Ridge(alpha=0.1)
         self.seasonality_models = {}
-        self.scaler = StandardScaler()
+        self.holiday_models = {}
+        self.external_regressors = {}
+        self.changepoints = []
+        self.ensemble_models = {}
+        
+        # Training state
         self.is_trained = False
-        self.trend_changepoints = []
+        self.training_history = {
+            'metrics': {},
+            'components': {},
+            'predictions': []
+        }
+        
+        # Advanced features
+        self.fourier_order = {'hourly': 2, 'daily': 3, 'weekly': 3, 'monthly': 5, 'yearly': 10}
+        self.auto_seasonalities = True
+        self.mcmc_samples = 0
+        self.uncertainty_samples = 1000
+        self.seasonality_periods = [24, 168, 720, 8760]  # hourly, weekly, monthly, yearly
         self.forecast_components = {}
         
     def detect_changepoints(self, ts: pd.Series, n_changepoints: int = 25) -> List[int]:
