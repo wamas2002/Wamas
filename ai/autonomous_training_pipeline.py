@@ -81,8 +81,12 @@ class AutonomousTrainingPipeline:
                     'subsample': [0.8, 1.0],
                     'colsample_bytree': [0.8, 1.0]
                 }
-            },
-            'lightgbm': {
+            }
+        }
+        
+        # Add optional models only if available
+        if LIGHTGBM_AVAILABLE:
+            self.model_configs['lightgbm'] = {
                 'model': lgb.LGBMClassifier,
                 'params': {
                     'n_estimators': [100, 200],
@@ -91,8 +95,10 @@ class AutonomousTrainingPipeline:
                     'subsample': [0.8, 1.0],
                     'colsample_bytree': [0.8, 1.0]
                 }
-            },
-            'catboost': {
+            }
+            
+        if CATBOOST_AVAILABLE:
+            self.model_configs['catboost'] = {
                 'model': cb.CatBoostClassifier,
                 'params': {
                     'iterations': [100, 200],
@@ -101,7 +107,6 @@ class AutonomousTrainingPipeline:
                     'subsample': [0.8, 1.0]
                 }
             }
-        }
         
         # Best models storage
         self.best_models = {}
