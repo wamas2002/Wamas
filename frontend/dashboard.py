@@ -180,7 +180,7 @@ class TradingDashboard:
             st.subheader("⚡ Futures Trading Mode")
             
             # Futures disclaimer
-            st.warning("⚠️ Futures trading involves leverage and higher risk. This is a simulation mode.")
+            st.warning("⚠️ Futures trading involves leverage and higher risk. Using authentic OKX market data.")
             
             col1, col2 = st.columns(2)
             
@@ -210,9 +210,15 @@ class TradingDashboard:
             with col2:
                 st.subheader("Futures Analytics")
                 
-                # Funding rate simulation
-                funding_rate = np.random.uniform(-0.01, 0.01)  # Simulated funding rate
-                st.metric("Funding Rate", f"{funding_rate:.4f}%")
+                # Real funding rate from OKX
+                if 'okx_data_service' in st.session_state:
+                    funding_rate = st.session_state.okx_data_service.get_funding_rate(symbol)
+                    if funding_rate is not None:
+                        st.metric("Funding Rate", f"{funding_rate:.4f}%")
+                    else:
+                        st.metric("Funding Rate", "Loading...")
+                else:
+                    st.metric("Funding Rate", "API Required")
                 
                 # Liquidation calculator
                 if symbol in st.session_state.get('trading_engine', {}).get('latest_prices', {}):

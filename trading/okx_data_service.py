@@ -202,6 +202,32 @@ class OKXDataService:
             print(f"Error getting market data summary: {e}")
             return {}
     
+    def get_funding_rate(self, symbol: str) -> float:
+        """Get current funding rate for futures symbol"""
+        try:
+            # Convert spot symbol to futures if needed
+            if symbol.endswith('-USDT'):
+                futures_symbol = symbol.replace('-USDT', '-USDT-SWAP')
+            else:
+                futures_symbol = symbol
+                
+            response = requests.get(
+                f"{self.base_url}/public/funding-rate",
+                params={"instId": futures_symbol},
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == '0' and data.get('data'):
+                    return float(data['data'][0]['fundingRate']) * 100  # Convert to percentage
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error fetching funding rate for {symbol}: {e}")
+            return None
+    
     def get_orderbook(self, symbol: str, limit: int = 100) -> Dict[str, Any]:
         """Get order book data"""
         try:
