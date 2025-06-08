@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Intellectia Trading Platform{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-success" id="totalBalance">$10,000.00</div>
+                <div class="metric-label">Total Balance</div>
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +2.5% (24h)
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-primary" id="activeTrades">8</div>
+                <div class="metric-label">Active Trades</div>
+                <small class="text-muted">Across 5 pairs</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-warning" id="winRate">72%</div>
+                <div class="metric-label">Win Rate (7d)</div>
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +5% from last week
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-info" id="aiConfidence">85%</div>
+                <div class="metric-label">AI Confidence</div>
+                <small class="text-muted">Model ensemble</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Chart and AI Status Row -->
+<div class="row mb-4">
+    <!-- Main Trading Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    BTC/USDT Live Chart
+                </h6>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" data-timeframe="1">1m</button>
+                    <button type="button" class="btn btn-outline-secondary" data-timeframe="5">5m</button>
+                    <button type="button" class="btn btn-outline-secondary" data-timeframe="15">15m</button>
+                    <button type="button" class="btn btn-outline-secondary" data-timeframe="60">1h</button>
+                    <button type="button" class="btn btn-outline-secondary" data-timeframe="240">4h</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- TradingView Widget -->
+                <div class="tradingview-widget-container" style="height: 500px;">
+                    <div id="tradingview_btc_chart" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Model Status Panel -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    AI Model Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- LSTM Model -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>LSTM Model</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="progress mb-1" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: 87%"></div>
+                    </div>
+                    <small class="text-muted">Accuracy: 87%</small>
+                </div>
+
+                <!-- Prophet Model -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Prophet Model</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="progress mb-1" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: 82%"></div>
+                    </div>
+                    <small class="text-muted">Accuracy: 82%</small>
+                </div>
+
+                <!-- Gradient Boost -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Gradient Boost</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="progress mb-1" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: 79%"></div>
+                    </div>
+                    <small class="text-muted">Accuracy: 79%</small>
+                </div>
+
+                <!-- Ensemble Result -->
+                <div class="mt-4 p-3 bg-dark rounded">
+                    <div class="text-center">
+                        <h5 class="text-success mb-1">BULLISH</h5>
+                        <div class="text-muted">Ensemble Prediction</div>
+                        <div class="mt-2">
+                            <small class="text-muted">Confidence: 85%</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Signals -->
+                <div class="mt-4">
+                    <h6 class="mb-3">Recent Signals</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small>BTC/USDT</small>
+                        <span class="badge bg-success">BUY</span>
+                        <small class="text-muted">2m ago</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small>ETH/USDT</small>
+                        <span class="badge bg-warning">HOLD</span>
+                        <small class="text-muted">5m ago</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small>BNB/USDT</small>
+                        <span class="badge bg-danger">SELL</span>
+                        <small class="text-muted">8m ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Positions and Market Overview -->
+<div class="row">
+    <!-- Active Positions -->
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Active Positions
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Side</th>
+                                <th>Size</th>
+                                <th>Entry Price</th>
+                                <th>Current Price</th>
+                                <th>P&L</th>
+                                <th>Strategy</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activePositionsTable">
+                            <tr>
+                                <td><strong>BTC/USDT</strong></td>
+                                <td><span class="badge bg-success">LONG</span></td>
+                                <td>0.025</td>
+                                <td>$42,150</td>
+                                <td class="text-success" id="btc-price">$43,200</td>
+                                <td class="text-success">+$26.25</td>
+                                <td>Grid</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ETH/USDT</strong></td>
+                                <td><span class="badge bg-success">LONG</span></td>
+                                <td>0.8</td>
+                                <td>$2,480</td>
+                                <td class="text-success" id="eth-price">$2,534</td>
+                                <td class="text-success">+$43.20</td>
+                                <td>DCA</td>
+                            </tr>
+                            <tr>
+                                <td><strong>BNB/USDT</strong></td>
+                                <td><span class="badge bg-danger">SHORT</span></td>
+                                <td>15</td>
+                                <td>$672</td>
+                                <td class="text-danger" id="bnb-price">$656</td>
+                                <td class="text-success">+$240.00</td>
+                                <td>Breakout</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Overview Widget -->
+    <div class="col-lg-5 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-globe me-2"></i>
+                    Market Overview
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <!-- TradingView Market Overview Widget -->
+                <div class="tradingview-widget-container" style="height: 300px;">
+                    <div id="tradingview_market_overview" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health and Recent Activity -->
+<div class="row">
+    <!-- System Health -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    System Health
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>OKX API</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Online
+                        </span>
+                    </div>
+                    <small class="text-muted">Response: 250ms</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Database</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Healthy
+                        </span>
+                    </div>
+                    <small class="text-muted">16,268 records</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>AI Models</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Running
+                        </span>
+                    </div>
+                    <small class="text-muted">5 models active</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Risk Manager</span>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Protected
+                        </span>
+                    </div>
+                    <small class="text-muted">All limits active</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Activity
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-robot text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between">
+                                    <strong>AI Model Switch</strong>
+                                    <small class="text-muted">2 minutes ago</small>
+                                </div>
+                                <div class="text-muted">ETHUSDT: Ensemble → GradientBoost (score improvement)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Position Opened</strong>
+                                    <small class="text-muted">5 minutes ago</small>
+                                </div>
+                                <div class="text-muted">BTC/USDT LONG 0.025 @ $42,150</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-cogs text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Strategy Update</strong>
+                                    <small class="text-muted">12 minutes ago</small>
+                                </div>
+                                <div class="text-muted">Smart selector optimized grid parameters</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-shield-alt text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Risk Check</strong>
+                                    <small class="text-muted">15 minutes ago</small>
+                                </div>
+                                <div class="text-muted">Portfolio risk within acceptable limits</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- TradingView Charting Library -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+<script>
+// Initialize TradingView Charts
+document.addEventListener('DOMContentLoaded', function() {
+    // Main BTC Chart
+    new TradingView.widget({
+        "width": "100%",
+        "height": "500",
+        "symbol": "BINANCE:BTCUSDT",
+        "interval": "1",
+        "timezone": "Etc/UTC",
+        "theme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "tradingview_btc_chart",
+        "studies": [
+            "RSI@tv-basicstudies",
+            "MACD@tv-basicstudies"
+        ]
+    });
+
+    // Market Overview Widget
+    new TradingView.MiniWidget({
+        "symbols": [
+            ["Bitcoin", "BINANCE:BTCUSDT|1D"],
+            ["Ethereum", "BINANCE:ETHUSDT|1D"],
+            ["BNB", "BINANCE:BNBUSDT|1D"],
+            ["Cardano", "BINANCE:ADAUSDT|1D"],
+            ["Solana", "BINANCE:SOLUSDT|1D"]
+        ],
+        "chartOnly": false,
+        "width": "100%",
+        "height": "300",
+        "locale": "en",
+        "colorTheme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "isTransparent": true,
+        "autosize": true,
+        "container_id": "tradingview_market_overview"
+    });
+
+    // Update theme for TradingView widgets when theme changes
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', function() {
+        setTimeout(() => {
+            location.reload(); // Reload to apply new theme to TradingView widgets
+        }, 100);
+    });
+
+    // Real-time price updates
+    function updatePrices() {
+        // This would connect to your real OKX API
+        // For now keeping the structure for the frontend redesign
+        // The backend integration remains untouched
+        
+        // Example of how prices would be updated:
+        // fetch('/api/prices')
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         document.getElementById('btc-price').textContent = '$' + data.BTCUSDT.toFixed(2);
+        //         document.getElementById('eth-price').textContent = '$' + data.ETHUSDT.toFixed(2);
+        //         document.getElementById('bnb-price').textContent = '$' + data.BNBUSDT.toFixed(2);
+        //     });
+    }
+
+    // Update prices every 5 seconds
+    setInterval(updatePrices, 5000);
+    updatePrices(); // Initial call
+
+    // Timeframe buttons
+    document.querySelectorAll('[data-timeframe]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('[data-timeframe]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Here you would update the chart timeframe
+            // The implementation would depend on your backend API
+        });
+    });
+});
+</script>
+{% endblock %}

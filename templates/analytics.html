@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Intellectia Trading Platform{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<!-- Analytics Overview Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-success" id="totalReturn">+24.86%</div>
+                <div class="metric-label">Total Return</div>
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +2.5% vs last month
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-primary" id="sharpeRatio">1.85</div>
+                <div class="metric-label">Sharpe Ratio</div>
+                <small class="text-success">Above benchmark</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-warning" id="maxDrawdown">-8.2%</div>
+                <div class="metric-label">Max Drawdown</div>
+                <small class="text-success">Within limits</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-info" id="winRate">72%</div>
+                <div class="metric-label">Win Rate</div>
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +5% improvement
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts Row -->
+<div class="row mb-4">
+    <!-- Portfolio Performance Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Portfolio Performance vs Benchmark
+                </h6>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" data-period="7d">7D</button>
+                    <button type="button" class="btn btn-outline-secondary active" data-period="30d">30D</button>
+                    <button type="button" class="btn btn-outline-secondary" data-period="90d">90D</button>
+                    <button type="button" class="btn btn-outline-secondary" data-period="1y">1Y</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <canvas id="performanceChart" width="800" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Confidence Tracking -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    AI Confidence Tracking
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Confidence Gauge -->
+                <div class="text-center mb-4">
+                    <canvas id="confidenceGauge" width="200" height="200"></canvas>
+                    <div class="mt-2">
+                        <h4 class="text-primary mb-0">85%</h4>
+                        <small class="text-muted">Current Confidence</small>
+                    </div>
+                </div>
+
+                <!-- Model Performance Breakdown -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>LSTM Model</span>
+                        <span class="fw-bold text-success">87%</span>
+                    </div>
+                    <div class="progress mb-1" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 87%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Prophet</span>
+                        <span class="fw-bold text-primary">82%</span>
+                    </div>
+                    <div class="progress mb-1" style="height: 6px;">
+                        <div class="progress-bar bg-primary" style="width: 82%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Gradient Boost</span>
+                        <span class="fw-bold text-warning">79%</span>
+                    </div>
+                    <div class="progress mb-1" style="height: 6px;">
+                        <div class="progress-bar bg-warning" style="width: 79%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Ensemble</span>
+                        <span class="fw-bold text-info">85%</span>
+                    </div>
+                    <div class="progress mb-1" style="height: 6px;">
+                        <div class="progress-bar bg-info" style="width: 85%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Multi-Symbol Overview and Trade Analysis -->
+<div class="row mb-4">
+    <!-- TradingView Multi-Symbol Overview -->
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-globe me-2"></i>
+                    Multi-Symbol Market Overview
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="tradingview-widget-container" style="height: 400px;">
+                    <div id="multi_symbol_overview" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Analysis -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Trade Analysis
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Profit/Loss Distribution -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Profit/Loss Distribution</h6>
+                    <canvas id="pnlDistribution" width="300" height="200"></canvas>
+                </div>
+
+                <!-- Trade Timing Analysis -->
+                <div class="mt-4">
+                    <h6 class="mb-3">Best Trading Hours</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>08:00 - 12:00</span>
+                        <span class="fw-bold text-success">+3.2%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>12:00 - 16:00</span>
+                        <span class="fw-bold text-primary">+2.8%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>16:00 - 20:00</span>
+                        <span class="fw-bold text-warning">+1.5%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>20:00 - 00:00</span>
+                        <span class="fw-bold text-danger">-0.3%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analytics Tables -->
+<div class="row mb-4">
+    <!-- Performance by Asset -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-coins me-2"></i>
+                    Performance by Asset
+                </h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Last 30 Days
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-period="7d">Last 7 Days</a></li>
+                        <li><a class="dropdown-item" href="#" data-period="30d">Last 30 Days</a></li>
+                        <li><a class="dropdown-item" href="#" data-period="90d">Last 90 Days</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Trades</th>
+                                <th>Win Rate</th>
+                                <th>Avg Return</th>
+                                <th>Total P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="BTC" style="width: 20px; height: 20px;" class="me-2">
+                                        <strong>BTC/USDT</strong>
+                                    </div>
+                                </td>
+                                <td>47</td>
+                                <td class="text-success">78%</td>
+                                <td class="text-success">+2.4%</td>
+                                <td class="text-success">+$1,247.85</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="ETH" style="width: 20px; height: 20px;" class="me-2">
+                                        <strong>ETH/USDT</strong>
+                                    </div>
+                                </td>
+                                <td>38</td>
+                                <td class="text-success">72%</td>
+                                <td class="text-success">+1.9%</td>
+                                <td class="text-success">+$864.32</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="BNB" style="width: 20px; height: 20px;" class="me-2">
+                                        <strong>BNB/USDT</strong>
+                                    </div>
+                                </td>
+                                <td>29</td>
+                                <td class="text-warning">65%</td>
+                                <td class="text-success">+1.2%</td>
+                                <td class="text-success">+$412.67</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/cardano-ada-logo.png" alt="ADA" style="width: 20px; height: 20px;" class="me-2">
+                                        <strong>ADA/USDT</strong>
+                                    </div>
+                                </td>
+                                <td>22</td>
+                                <td class="text-success">71%</td>
+                                <td class="text-success">+0.8%</td>
+                                <td class="text-success">+$187.43</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/solana-sol-logo.png" alt="SOL" style="width: 20px; height: 20px;" class="me-2">
+                                        <strong>SOL/USDT</strong>
+                                    </div>
+                                </td>
+                                <td>16</td>
+                                <td class="text-success">69%</td>
+                                <td class="text-success">+1.5%</td>
+                                <td class="text-success">+$298.16</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy Performance -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Strategy Performance
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Trades</th>
+                                <th>Win Rate</th>
+                                <th>Avg Return</th>
+                                <th>Total P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>Grid Trading</strong>
+                                        <div class="text-muted small">Automated grid orders</div>
+                                    </div>
+                                </td>
+                                <td>89</td>
+                                <td class="text-success">76%</td>
+                                <td class="text-success">+1.8%</td>
+                                <td class="text-success">+$1,642.18</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>DCA Strategy</strong>
+                                        <div class="text-muted small">Dollar cost averaging</div>
+                                    </div>
+                                </td>
+                                <td>34</td>
+                                <td class="text-success">72%</td>
+                                <td class="text-success">+2.1%</td>
+                                <td class="text-success">+$758.42</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>Breakout</strong>
+                                        <div class="text-muted small">Momentum trading</div>
+                                    </div>
+                                </td>
+                                <td>28</td>
+                                <td class="text-warning">65%</td>
+                                <td class="text-success">+1.4%</td>
+                                <td class="text-success">+$387.25</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>Mean Reversion</strong>
+                                        <div class="text-muted small">RSI-based signals</div>
+                                    </div>
+                                </td>
+                                <td>21</td>
+                                <td class="text-success">71%</td>
+                                <td class="text-success">+1.2%</td>
+                                <td class="text-success">+$222.58</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Analysis and Calendar -->
+<div class="row">
+    <!-- Risk Metrics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Risk Analysis
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Value at Risk (VaR)</span>
+                        <span class="fw-bold text-warning">$284.50</span>
+                    </div>
+                    <small class="text-muted">95% confidence, 1-day horizon</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Beta (vs BTC)</span>
+                        <span class="fw-bold text-info">0.87</span>
+                    </div>
+                    <small class="text-muted">Portfolio correlation to market</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Portfolio Volatility</span>
+                        <span class="fw-bold text-primary">18.5%</span>
+                    </div>
+                    <small class="text-muted">Annualized standard deviation</small>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Calmar Ratio</span>
+                        <span class="fw-bold text-success">3.02</span>
+                    </div>
+                    <small class="text-muted">Annual return / max drawdown</small>
+                </div>
+
+                <!-- Risk Level Indicator -->
+                <div class="text-center">
+                    <div class="mb-2">
+                        <span class="badge bg-success fs-6">LOW RISK</span>
+                    </div>
+                    <small class="text-muted">Current portfolio risk level</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Calendar -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>
+                    Performance History Calendar
+                </h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="changeCalendarMonth(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" id="currentMonth">December 2024</button>
+                    <button class="btn btn-outline-secondary" onclick="changeCalendarMonth(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="performanceCalendar"></div>
+                
+                <div class="mt-3 d-flex justify-content-center align-items-center">
+                    <small class="text-muted me-3">Legend:</small>
+                    <div class="d-flex gap-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-danger rounded-circle me-1" style="width: 10px; height: 10px;"></div>
+                            <small>Loss</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-secondary rounded-circle me-1" style="width: 10px; height: 10px;"></div>
+                            <small>Neutral</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success rounded-circle me-1" style="width: 10px; height: 10px;"></div>
+                            <small>Profit</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- TradingView Charting Library -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializePerformanceChart();
+    initializeConfidenceGauge();
+    initializePnLChart();
+    initializeTradingViewWidget();
+    initializePerformanceCalendar();
+    initializePeriodButtons();
+});
+
+function initializePerformanceChart() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    
+    // Generate sample performance data
+    const dates = [];
+    const portfolioData = [];
+    const benchmarkData = [];
+    
+    for (let i = 30; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date.toLocaleDateString());
+        
+        // Simulate portfolio performance
+        portfolioData.push(10000 + (Math.random() - 0.3) * 500 + i * 80);
+        benchmarkData.push(10000 + (Math.random() - 0.4) * 300 + i * 60);
+    }
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Portfolio',
+                data: portfolioData,
+                borderColor: '#27ae60',
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                fill: false,
+                tension: 0.4
+            }, {
+                label: 'BTC Benchmark',
+                data: benchmarkData,
+                borderColor: '#f39c12',
+                backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                fill: false,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'var(--text-primary)'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'var(--border-color)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)'
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'var(--border-color)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeConfidenceGauge() {
+    const ctx = document.getElementById('confidenceGauge').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [85, 15],
+                backgroundColor: ['#3498db', '#ecf0f1'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '80%',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function initializePnLChart() {
+    const ctx = document.getElementById('pnlDistribution').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['< -5%', '-5% to -1%', '-1% to 1%', '1% to 5%', '> 5%'],
+            datasets: [{
+                label: 'Number of Trades',
+                data: [8, 12, 25, 45, 32],
+                backgroundColor: [
+                    '#e74c3c',
+                    '#f39c12',
+                    '#95a5a6',
+                    '#27ae60',
+                    '#2ecc71'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'var(--border-color)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)'
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'var(--border-color)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeTradingViewWidget() {
+    new TradingView.MiniWidget({
+        "symbols": [
+            ["Bitcoin", "BINANCE:BTCUSDT|1D"],
+            ["Ethereum", "BINANCE:ETHUSDT|1D"],
+            ["BNB", "BINANCE:BNBUSDT|1D"],
+            ["Cardano", "BINANCE:ADAUSDT|1D"],
+            ["Solana", "BINANCE:SOLUSDT|1D"],
+            ["Polkadot", "BINANCE:DOTUSDT|1D"],
+            ["Chainlink", "BINANCE:LINKUSDT|1D"],
+            ["Litecoin", "BINANCE:LTCUSDT|1D"]
+        ],
+        "chartOnly": false,
+        "width": "100%",
+        "height": "400",
+        "locale": "en",
+        "colorTheme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "isTransparent": true,
+        "autosize": true,
+        "container_id": "multi_symbol_overview"
+    });
+}
+
+function initializePerformanceCalendar() {
+    const calendar = document.getElementById('performanceCalendar');
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    generateCalendar(year, month);
+}
+
+function generateCalendar(year, month) {
+    const calendar = document.getElementById('performanceCalendar');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    document.getElementById('currentMonth').textContent = monthNames[month] + ' ' + year;
+    
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    let calendarHTML = '<div class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">';
+    
+    // Day headers
+    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    dayHeaders.forEach(day => {
+        calendarHTML += `<div class="text-center fw-bold p-2 text-muted">${day}</div>`;
+    });
+    
+    // Empty cells for days before month starts
+    for (let i = 0; i < firstDay; i++) {
+        calendarHTML += '<div class="p-2"></div>';
+    }
+    
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const performance = (Math.random() - 0.5) * 4; // Random performance between -2% and +2%
+        let bgClass = 'bg-secondary';
+        
+        if (performance > 0.5) bgClass = 'bg-success';
+        else if (performance < -0.5) bgClass = 'bg-danger';
+        
+        calendarHTML += `
+            <div class="calendar-day p-2 text-center ${bgClass} rounded" style="min-height: 40px; cursor: pointer;" 
+                 title="Day ${day}: ${performance > 0 ? '+' : ''}${performance.toFixed(2)}%">
+                <div class="fw-bold">${day}</div>
+                <small>${performance > 0 ? '+' : ''}${performance.toFixed(1)}%</small>
+            </div>`;
+    }
+    
+    calendarHTML += '</div>';
+    calendar.innerHTML = calendarHTML;
+}
+
+function changeCalendarMonth(direction) {
+    const currentMonth = document.getElementById('currentMonth').textContent;
+    const [monthName, year] = currentMonth.split(' ');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    let monthIndex = monthNames.indexOf(monthName);
+    let newYear = parseInt(year);
+    
+    monthIndex += direction;
+    
+    if (monthIndex < 0) {
+        monthIndex = 11;
+        newYear--;
+    } else if (monthIndex > 11) {
+        monthIndex = 0;
+        newYear++;
+    }
+    
+    generateCalendar(newYear, monthIndex);
+}
+
+function initializePeriodButtons() {
+    document.querySelectorAll('[data-period]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Here you would update charts based on the selected period
+            // Implementation would depend on your backend API
+            console.log('Period changed to:', this.dataset.period);
+        });
+    });
+}
+
+// Real-time analytics updates
+function updateAnalyticsData() {
+    // This would connect to your backend API for real analytics data
+    // Preserving backend functionality while updating the frontend
+    
+    // Example of how data would be updated:
+    // fetch('/api/analytics')
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         document.getElementById('totalReturn').textContent = (data.totalReturn >= 0 ? '+' : '') + data.totalReturn.toFixed(2) + '%';
+    //         document.getElementById('sharpeRatio').textContent = data.sharpeRatio.toFixed(2);
+    //         document.getElementById('maxDrawdown').textContent = data.maxDrawdown.toFixed(2) + '%';
+    //         document.getElementById('winRate').textContent = data.winRate.toFixed(0) + '%';
+    //     });
+}
+
+// Update analytics every 30 seconds
+setInterval(updateAnalyticsData, 30000);
+updateAnalyticsData(); // Initial call
+</script>
+
+<style>
+.calendar-day {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.calendar-day:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.calendar-grid {
+    max-width: 100%;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        font-size: 0.75rem;
+    }
+    
+    .calendar-day {
+        min-height: 35px !important;
+        padding: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}

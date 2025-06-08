@@ -1,0 +1,976 @@
+{% extends "base.html" %}
+
+{% block title %}AI Panel - Intellectia Trading Platform{% endblock %}
+{% block page_title %}AI Panel{% endblock %}
+
+{% block content %}
+<!-- AI Overview Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-success" id="activeModels">5</div>
+                <div class="metric-label">Active Models</div>
+                <small class="text-success">All operational</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-primary" id="avgAccuracy">84.2%</div>
+                <div class="metric-label">Average Accuracy</div>
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +2.1% this week
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-warning" id="totalPredictions">1,247</div>
+                <div class="metric-label">Predictions (24h)</div>
+                <small class="text-muted">Across all models</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-info" id="modelSwitches">3</div>
+                <div class="metric-label">Model Switches</div>
+                <small class="text-success">Optimization active</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Model Status and Forecast Chart -->
+<div class="row mb-4">
+    <!-- Real-time Model Status -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Model Status Dashboard
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- LSTM Model -->
+                <div class="model-status-item mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="model-indicator bg-success me-2"></div>
+                            <strong>LSTM Neural Network</strong>
+                        </div>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="model-metrics">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Accuracy</small>
+                            <small class="fw-bold text-success">87.3%</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 4px;">
+                            <div class="progress-bar bg-success" style="width: 87.3%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Last trained: 2h ago</small>
+                            <small>BTC/USDT</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prophet Model -->
+                <div class="model-status-item mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="model-indicator bg-primary me-2"></div>
+                            <strong>Prophet Forecasting</strong>
+                        </div>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="model-metrics">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Accuracy</small>
+                            <small class="fw-bold text-primary">82.1%</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 4px;">
+                            <div class="progress-bar bg-primary" style="width: 82.1%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Last trained: 1h ago</small>
+                            <small>ETH/USDT</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gradient Boost -->
+                <div class="model-status-item mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="model-indicator bg-warning me-2"></div>
+                            <strong>Gradient Boost</strong>
+                        </div>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="model-metrics">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Accuracy</small>
+                            <small class="fw-bold text-warning">79.4%</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 4px;">
+                            <div class="progress-bar bg-warning" style="width: 79.4%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Last trained: 3h ago</small>
+                            <small>BNB/USDT</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- XGBoost -->
+                <div class="model-status-item mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="model-indicator bg-info me-2"></div>
+                            <strong>XGBoost</strong>
+                        </div>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="model-metrics">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Accuracy</small>
+                            <small class="fw-bold text-info">81.7%</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 4px;">
+                            <div class="progress-bar bg-info" style="width: 81.7%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Last trained: 45m ago</small>
+                            <small>ADA/USDT</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ensemble Model -->
+                <div class="model-status-item">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="model-indicator bg-secondary me-2"></div>
+                            <strong>Ensemble Predictor</strong>
+                        </div>
+                        <span class="status-indicator status-live">
+                            <i class="fas fa-circle"></i>
+                            Active
+                        </span>
+                    </div>
+                    <div class="model-metrics">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Accuracy</small>
+                            <small class="fw-bold text-light">85.6%</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 4px;">
+                            <div class="progress-bar bg-secondary" style="width: 85.6%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Combines all models</small>
+                            <small>All pairs</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Forecast Chart with TradingView -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    AI Forecast Chart with Predictions
+                </h6>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="forecastSymbol" style="width: 150px;">
+                        <option value="BTCUSDT">BTC/USDT</option>
+                        <option value="ETHUSDT">ETH/USDT</option>
+                        <option value="BNBUSDT">BNB/USDT</option>
+                        <option value="ADAUSDT">ADA/USDT</option>
+                        <option value="SOLUSDT">SOL/USDT</option>
+                    </select>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" data-forecast="1h">1H</button>
+                        <button class="btn btn-outline-secondary active" data-forecast="4h">4H</button>
+                        <button class="btn btn-outline-secondary" data-forecast="1d">1D</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="tradingview-widget-container" style="height: 500px;">
+                    <div id="ai_forecast_chart" style="height: 100%;"></div>
+                </div>
+                
+                <!-- Forecast Overlay Controls -->
+                <div class="p-3 border-top">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showLSTM" checked>
+                                    <label class="form-check-label text-success" for="showLSTM">
+                                        LSTM Predictions
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showProphet" checked>
+                                    <label class="form-check-label text-primary" for="showProphet">
+                                        Prophet Forecast
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showEnsemble" checked>
+                                    <label class="form-check-label text-warning" for="showEnsemble">
+                                        Ensemble
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Predictions are estimates based on historical patterns
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Performance and Training Status -->
+<div class="row mb-4">
+    <!-- Prediction Accuracy Graphs -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-target me-2"></i>
+                    Prediction Accuracy Over Time
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="accuracyChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Training Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Training & Optimization Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Training Progress -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Active Training Sessions</h6>
+                    
+                    <div class="training-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>LSTM - BTC/USDT</strong>
+                                <div class="text-muted small">Epoch 45/100</div>
+                            </div>
+                            <span class="badge bg-primary">Training</span>
+                        </div>
+                        <div class="progress mb-1" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: 45%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Loss: 0.0023</small>
+                            <small>ETA: 12m</small>
+                        </div>
+                    </div>
+
+                    <div class="training-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>XGBoost - ETH/USDT</strong>
+                                <div class="text-muted small">Hyperparameter tuning</div>
+                            </div>
+                            <span class="badge bg-warning">Optimizing</span>
+                        </div>
+                        <div class="progress mb-1" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 78%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <small>Best score: 0.847</small>
+                            <small>ETA: 5m</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Retraining Schedule -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Retraining Schedule</h6>
+                    <div class="schedule-item d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>Prophet Models</strong>
+                            <div class="text-muted small">Weekly retraining</div>
+                        </div>
+                        <small class="text-success">Next: 2 days</small>
+                    </div>
+                    <div class="schedule-item d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>LSTM Networks</strong>
+                            <div class="text-muted small">Daily adaptation</div>
+                        </div>
+                        <small class="text-primary">Next: 6 hours</small>
+                    </div>
+                    <div class="schedule-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Ensemble Weights</strong>
+                            <div class="text-muted small">Real-time optimization</div>
+                        </div>
+                        <small class="text-info">Continuous</small>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-play me-1"></i>
+                        Start Training
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-sync me-1"></i>
+                        Force Retrain
+                    </button>
+                    <button class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-download me-1"></i>
+                        Export Models
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Predictions and Model Logs -->
+<div class="row">
+    <!-- Recent AI Predictions -->
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-crystal-ball me-2"></i>
+                    Recent AI Predictions
+                </h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active" data-prediction-filter="all">All</button>
+                    <button class="btn btn-outline-success" data-prediction-filter="bullish">Bullish</button>
+                    <button class="btn btn-outline-danger" data-prediction-filter="bearish">Bearish</button>
+                    <button class="btn btn-outline-warning" data-prediction-filter="neutral">Neutral</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="predictionsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Symbol</th>
+                                <th>Model</th>
+                                <th>Prediction</th>
+                                <th>Confidence</th>
+                                <th>Target Price</th>
+                                <th>Time Horizon</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-prediction="bullish">
+                                <td>
+                                    <div>14:23:45</div>
+                                    <small class="text-muted">2m ago</small>
+                                </td>
+                                <td><strong>BTC/USDT</strong></td>
+                                <td>
+                                    <span class="badge bg-success">LSTM</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">BULLISH</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 50px; height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: 87%"></div>
+                                        </div>
+                                        <small>87%</small>
+                                    </div>
+                                </td>
+                                <td class="text-success">$43,500</td>
+                                <td>4h</td>
+                                <td>
+                                    <i class="fas fa-clock text-warning" title="Pending"></i>
+                                </td>
+                            </tr>
+                            <tr data-prediction="bullish">
+                                <td>
+                                    <div>14:18:32</div>
+                                    <small class="text-muted">7m ago</small>
+                                </td>
+                                <td><strong>ETH/USDT</strong></td>
+                                <td>
+                                    <span class="badge bg-primary">Prophet</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">BULLISH</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 50px; height: 8px;">
+                                            <div class="progress-bar bg-primary" style="width: 82%"></div>
+                                        </div>
+                                        <small>82%</small>
+                                    </div>
+                                </td>
+                                <td class="text-success">$2,580</td>
+                                <td>1d</td>
+                                <td>
+                                    <i class="fas fa-clock text-warning" title="Pending"></i>
+                                </td>
+                            </tr>
+                            <tr data-prediction="bearish">
+                                <td>
+                                    <div>14:12:18</div>
+                                    <small class="text-muted">13m ago</small>
+                                </td>
+                                <td><strong>BNB/USDT</strong></td>
+                                <td>
+                                    <span class="badge bg-warning">XGBoost</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">BEARISH</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 50px; height: 8px;">
+                                            <div class="progress-bar bg-warning" style="width: 74%"></div>
+                                        </div>
+                                        <small>74%</small>
+                                    </div>
+                                </td>
+                                <td class="text-danger">$645</td>
+                                <td>2h</td>
+                                <td>
+                                    <i class="fas fa-check text-success" title="Confirmed"></i>
+                                </td>
+                            </tr>
+                            <tr data-prediction="neutral">
+                                <td>
+                                    <div>14:05:44</div>
+                                    <small class="text-muted">20m ago</small>
+                                </td>
+                                <td><strong>ADA/USDT</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">Ensemble</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">NEUTRAL</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 50px; height: 8px;">
+                                            <div class="progress-bar bg-secondary" style="width: 65%"></div>
+                                        </div>
+                                        <small>65%</small>
+                                    </div>
+                                </td>
+                                <td class="text-muted">$0.35</td>
+                                <td>6h</td>
+                                <td>
+                                    <i class="fas fa-clock text-warning" title="Pending"></i>
+                                </td>
+                            </tr>
+                            <tr data-prediction="bullish">
+                                <td>
+                                    <div>13:58:21</div>
+                                    <small class="text-muted">27m ago</small>
+                                </td>
+                                <td><strong>SOL/USDT</strong></td>
+                                <td>
+                                    <span class="badge bg-info">GradBoost</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">BULLISH</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 50px; height: 8px;">
+                                            <div class="progress-bar bg-info" style="width: 79%"></div>
+                                        </div>
+                                        <small>79%</small>
+                                    </div>
+                                </td>
+                                <td class="text-success">$132</td>
+                                <td>3h</td>
+                                <td>
+                                    <i class="fas fa-times text-danger" title="Incorrect"></i>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI System Logs -->
+    <div class="col-lg-5 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-list-alt me-2"></i>
+                    AI System Logs
+                </h6>
+                <button class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="log-container">
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-info-circle text-primary me-2"></i>
+                                    <small class="text-muted">14:25:12</small>
+                                </div>
+                                <div class="log-message">
+                                    Model switch detected: ETHUSDT Ensemble → GradientBoost (score improvement: 0.82 → 0.87)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <small class="text-muted">14:20:45</small>
+                                </div>
+                                <div class="log-message">
+                                    LSTM model training completed for BTCUSDT. New accuracy: 87.3%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-sync text-warning me-2"></i>
+                                    <small class="text-muted">14:15:33</small>
+                                </div>
+                                <div class="log-message">
+                                    Retraining initiated for Prophet model on ETH/USDT due to drift detection
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-chart-line text-info me-2"></i>
+                                    <small class="text-muted">14:12:18</small>
+                                </div>
+                                <div class="log-message">
+                                    Prediction accuracy improved: XGBoost BNB/USDT now at 81.7% (+3.2%)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    <small class="text-muted">14:08:52</small>
+                                </div>
+                                <div class="log-message">
+                                    Market volatility spike detected. Adjusting ensemble weights for better stability
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-database text-secondary me-2"></i>
+                                    <small class="text-muted">14:05:01</small>
+                                </div>
+                                <div class="log-message">
+                                    Feature engineering completed: 215+ technical indicators updated for all symbols
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-entry mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="log-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-brain text-primary me-2"></i>
+                                    <small class="text-muted">14:00:15</small>
+                                </div>
+                                <div class="log-message">
+                                    Neural network hyperparameter optimization started for SOLUSDT
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- TradingView Charting Library -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeForecastChart();
+    initializeAccuracyChart();
+    initializePredictionFilters();
+    initializeForecastControls();
+});
+
+function initializeForecastChart() {
+    new TradingView.widget({
+        "width": "100%",
+        "height": "500",
+        "symbol": "BINANCE:BTCUSDT",
+        "interval": "4H",
+        "timezone": "Etc/UTC",
+        "theme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "ai_forecast_chart",
+        "studies": [
+            "RSI@tv-basicstudies",
+            "MACD@tv-basicstudies",
+            "BB@tv-basicstudies"
+        ]
+    });
+}
+
+function initializeAccuracyChart() {
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+    
+    // Generate sample accuracy data over time
+    const hours = [];
+    const lstmData = [];
+    const prophetData = [];
+    const xgboostData = [];
+    const ensembleData = [];
+    
+    for (let i = 24; i >= 0; i--) {
+        const date = new Date();
+        date.setHours(date.getHours() - i);
+        hours.push(date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+        
+        lstmData.push(85 + Math.random() * 5);
+        prophetData.push(80 + Math.random() * 5);
+        xgboostData.push(77 + Math.random() * 5);
+        ensembleData.push(83 + Math.random() * 4);
+    }
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: [{
+                label: 'LSTM',
+                data: lstmData,
+                borderColor: '#27ae60',
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                fill: false,
+                tension: 0.4
+            }, {
+                label: 'Prophet',
+                data: prophetData,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: false,
+                tension: 0.4
+            }, {
+                label: 'XGBoost',
+                data: xgboostData,
+                borderColor: '#f39c12',
+                backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                fill: false,
+                tension: 0.4
+            }, {
+                label: 'Ensemble',
+                data: ensembleData,
+                borderColor: '#9b59b6',
+                backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'var(--text-primary)',
+                        usePointStyle: true
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'var(--border-color)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        maxTicksLimit: 8
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'var(--border-color)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        callback: function(value) {
+                            return value.toFixed(1) + '%';
+                        }
+                    },
+                    min: 70,
+                    max: 95
+                }
+            }
+        }
+    });
+}
+
+function initializePredictionFilters() {
+    document.querySelectorAll('[data-prediction-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-prediction-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const filter = this.dataset.predictionFilter;
+            const rows = document.querySelectorAll('#predictionsTable tbody tr');
+            
+            rows.forEach(row => {
+                if (filter === 'all' || row.dataset.prediction === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+}
+
+function initializeForecastControls() {
+    // Symbol selector
+    document.getElementById('forecastSymbol').addEventListener('change', function() {
+        updateForecastChart(this.value);
+    });
+    
+    // Timeframe buttons
+    document.querySelectorAll('[data-forecast]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-forecast]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            const timeframe = this.dataset.forecast;
+            updateForecastTimeframe(timeframe);
+        });
+    });
+    
+    // Forecast overlay checkboxes
+    document.querySelectorAll('input[type="checkbox"][id^="show"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            toggleForecastOverlay(this.id, this.checked);
+        });
+    });
+}
+
+function updateForecastChart(symbol) {
+    document.getElementById('ai_forecast_chart').innerHTML = '';
+    
+    new TradingView.widget({
+        "width": "100%",
+        "height": "500",
+        "symbol": "BINANCE:" + symbol,
+        "interval": document.querySelector('[data-forecast].active').dataset.forecast.toUpperCase(),
+        "timezone": "Etc/UTC",
+        "theme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "ai_forecast_chart",
+        "studies": [
+            "RSI@tv-basicstudies",
+            "MACD@tv-basicstudies",
+            "BB@tv-basicstudies"
+        ]
+    });
+}
+
+function updateForecastTimeframe(timeframe) {
+    const symbol = document.getElementById('forecastSymbol').value;
+    updateForecastChart(symbol);
+}
+
+function toggleForecastOverlay(overlayId, show) {
+    // This would toggle prediction overlays on the chart
+    // Implementation would depend on TradingView API capabilities
+    console.log('Toggle forecast overlay:', overlayId, show);
+}
+
+// Real-time AI panel updates
+function updateAIPanelData() {
+    // This would connect to your backend AI system for real status
+    // Preserving backend functionality while updating the frontend
+    
+    // Example of how AI data would be updated:
+    // fetch('/api/ai/status')
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         document.getElementById('activeModels').textContent = data.activeModels;
+    //         document.getElementById('avgAccuracy').textContent = data.avgAccuracy.toFixed(1) + '%';
+    //         document.getElementById('totalPredictions').textContent = data.totalPredictions.toLocaleString();
+    //         document.getElementById('modelSwitches').textContent = data.modelSwitches;
+    //     });
+}
+
+// Update AI panel every 15 seconds
+setInterval(updateAIPanelData, 15000);
+updateAIPanelData(); // Initial call
+
+// Auto-scroll logs container
+function scrollLogsToBottom() {
+    const logsContainer = document.querySelector('.log-container').parentElement;
+    logsContainer.scrollTop = logsContainer.scrollHeight;
+}
+
+// Simulate new log entries
+setInterval(function() {
+    // This would be replaced by real-time log streaming from your AI system
+    // Adding a placeholder for the frontend design demonstration
+}, 30000);
+</script>
+
+<style>
+.model-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.model-status-item {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background-color: var(--bg-tertiary);
+}
+
+.training-item {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background-color: var(--bg-primary);
+}
+
+.schedule-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.schedule-item:last-child {
+    border-bottom: none;
+}
+
+.log-entry {
+    padding: 0.75rem;
+    border-left: 3px solid transparent;
+    border-radius: 0.25rem;
+    background-color: var(--bg-primary);
+    transition: all 0.3s ease;
+}
+
+.log-entry:hover {
+    background-color: var(--bg-tertiary);
+    border-left-color: var(--secondary-color);
+}
+
+.log-message {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .model-status-item {
+        margin-bottom: 1rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}

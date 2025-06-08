@@ -1,0 +1,80 @@
+Important Instruction:
+This task is strictly limited to frontend UI/UX redesign.
+DO NOT modify or affect any of the following:
+	•	Backend logic or trading engine
+	•	AI models or retraining cycle
+	•	Database schema or API endpoints
+	•	Data flow between modules
+
+✅ All system connections, strategies, and live market integrations must remain 100% functional and untouched.
+
+⸻
+
+🎯 Objective:
+
+Redesign the user interface of the cryptocurrency trading platform to match a professional, modern, and intuitive layout while preserving all existing backend functionality and system integrations.
+
+⸻
+
+✅ Mandatory Requirements:
+	•	Do not change or interrupt any backend or logic systems
+	•	The system must remain fully integrated with OKX and AI engines
+	•	Real-time updates must not be affected
+	•	Ensure full compatibility with existing workflows and architecture
+
+⸻
+
+📊 Charts & Visualizations Requirement:
+
+✅ TradingView Integration Required
+Whenever a chart is needed — in any page or module (e.g. dashboard, portfolio, strategies, or AI logs) — use a TradingView Widget to render it.
+All live market data should be visualized through embedded TradingView charts using the appropriate symbol pair.
+
+⸻
+
+🖥 Design Guidelines:
+	•	Framework: Use HTML + CSS + JS (Bootstrap or Tailwind CSS)
+	•	Optional: Use Jinja2 templates if keeping within existing Streamlit structure
+	•	Theme: Dark Mode default, with light mode toggle option
+	•	Layout: Use flexbox/grid systems for responsive design
+	•	Navigation: Left sidebar with icons and labels, collapsible on mobile
+	•	Real-time indicators: ✅ Live | ⚠️ Delay | ❌ Error
+
+⸻
+
+🧩 Pages to Redesign or Enhance:
+	1.	Dashboard
+	•	Key system metrics (balance, trades, win rate)
+	•	AI model status panel
+	•	✅ TradingView chart for BTC/USDT + active trades overlay
+	2.	Portfolio
+	•	Table of assets, positions, live value
+	•	Performance tracker
+	•	✅ TradingView charts per pair
+	3.	Strategy Builder
+	•	Visual drag-and-drop strategy design
+	•	Strategy list by symbol
+	•	✅ Chart preview for symbol being edited
+	4.	Analytics
+	•	Graphs: win rate, performance history, AI confidence
+	•	✅ TradingView multi-symbol overview widget
+	5.	AI Panel
+	•	Model status (LSTM, Prophet, etc.)
+	•	Prediction accuracy graphs
+	•	✅ Forecast chart overlay using TradingView
+
+⸻
+
+📱 Mobile Optimization:
+	•	Fully responsive for tablet and mobile
+	•	Collapsible sidebar
+	•	Adaptive charts with auto-resize
+
+⸻
+
+✅ Final Deliverables:
+	•	Modern HTML/CSS/JS templates or integrated Streamlit-compatible frontends
+	•	TradingView charts embedded where needed
+	•	All views tested and confirmed with live OKX data
+	•	Full UI/UX validation across modules
+	•	0% impact on backend operations

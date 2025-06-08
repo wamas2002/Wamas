@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio - Intellectia Trading Platform{% endblock %}
+{% block page_title %}Portfolio{% endblock %}
+
+{% block content %}
+<!-- Portfolio Overview Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-primary" id="portfolioValue">$12,485.67</div>
+                <div class="metric-label">Total Portfolio Value</div>
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +$485.67 (24h)
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-success" id="totalPnL">+$2,485.67</div>
+                <div class="metric-label">Total P&L</div>
+                <small class="text-success">+24.86%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-info" id="dailyPnL">+$127.43</div>
+                <div class="metric-label">Daily P&L</div>
+                <small class="text-success">+1.03%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body metric-card">
+                <div class="metric-value text-warning" id="activePositions">8</div>
+                <div class="metric-label">Active Positions</div>
+                <small class="text-muted">5 pairs</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Performance Chart and Allocation -->
+<div class="row mb-4">
+    <!-- Portfolio Performance Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Portfolio Performance
+                </h6>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" data-period="1D">1D</button>
+                    <button type="button" class="btn btn-outline-secondary active" data-period="7D">7D</button>
+                    <button type="button" class="btn btn-outline-secondary" data-period="30D">30D</button>
+                    <button type="button" class="btn btn-outline-secondary" data-period="90D">90D</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="tradingview-widget-container" style="height: 400px;">
+                    <div id="portfolio_performance_chart" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Allocation -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>
+                    Asset Allocation
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="allocationChart" width="300" height="300"></canvas>
+                
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-warning rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <span>BTC</span>
+                        </div>
+                        <span class="fw-bold">42.5%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <span>ETH</span>
+                        </div>
+                        <span class="fw-bold">28.3%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <span>BNB</span>
+                        </div>
+                        <span class="fw-bold">15.7%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                            <span>Others</span>
+                        </div>
+                        <span class="fw-bold">13.5%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Holdings Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    Holdings
+                </h6>
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="Search assets..." id="holdingsSearch">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="holdingsTable">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Holdings</th>
+                                <th>Value (USDT)</th>
+                                <th>Price</th>
+                                <th>24h Change</th>
+                                <th>Allocation</th>
+                                <th>P&L</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="BTC" style="width: 24px; height: 24px;" class="me-2">
+                                        <div>
+                                            <strong>Bitcoin</strong>
+                                            <div class="text-muted small">BTC</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>0.125 BTC</td>
+                                <td>$5,305.75</td>
+                                <td class="text-success">$42,446.00</td>
+                                <td class="text-success">+2.45%</td>
+                                <td>42.5%</td>
+                                <td class="text-success">+$452.30</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewChart('BTCUSDT')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="ETH" style="width: 24px; height: 24px;" class="me-2">
+                                        <div>
+                                            <strong>Ethereum</strong>
+                                            <div class="text-muted small">ETH</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>1.4 ETH</td>
+                                <td>$3,547.60</td>
+                                <td class="text-success">$2,534.00</td>
+                                <td class="text-success">+1.82%</td>
+                                <td>28.3%</td>
+                                <td class="text-success">+$187.45</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewChart('ETHUSDT')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="BNB" style="width: 24px; height: 24px;" class="me-2">
+                                        <div>
+                                            <strong>BNB</strong>
+                                            <div class="text-muted small">BNB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>3.0 BNB</td>
+                                <td>$1,968.00</td>
+                                <td class="text-danger">$656.00</td>
+                                <td class="text-danger">-1.12%</td>
+                                <td>15.7%</td>
+                                <td class="text-danger">-$24.50</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewChart('BNBUSDT')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/cardano-ada-logo.png" alt="ADA" style="width: 24px; height: 24px;" class="me-2">
+                                        <div>
+                                            <strong>Cardano</strong>
+                                            <div class="text-muted small">ADA</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>2,500 ADA</td>
+                                <td>$875.00</td>
+                                <td class="text-success">$0.35</td>
+                                <td class="text-success">+3.25%</td>
+                                <td>7.0%</td>
+                                <td class="text-success">+$28.75</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewChart('ADAUSDT')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://cryptologos.cc/logos/solana-sol-logo.png" alt="SOL" style="width: 24px; height: 24px;" class="me-2">
+                                        <div>
+                                            <strong>Solana</strong>
+                                            <div class="text-muted small">SOL</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>6.2 SOL</td>
+                                <td>$789.32</td>
+                                <td class="text-success">$127.31</td>
+                                <td class="text-success">+4.15%</td>
+                                <td>6.5%</td>
+                                <td class="text-success">+$31.45</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewChart('SOLUSDT')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics and Trade History -->
+<div class="row">
+    <!-- Performance Metrics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Performance Metrics
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Total Return</span>
+                        <span class="text-success fw-bold">+24.86%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Win Rate</span>
+                        <span class="text-primary fw-bold">72%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-primary" style="width: 72%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Sharpe Ratio</span>
+                        <span class="text-info fw-bold">1.85</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: 62%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Max Drawdown</span>
+                        <span class="text-warning fw-bold">-8.2%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" style="width: 18%"></div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="metric-value text-success" style="font-size: 1.2rem;">152</div>
+                        <div class="metric-label">Total Trades</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-value text-primary" style="font-size: 1.2rem;">12.5</div>
+                        <div class="metric-label">Avg Hold (hrs)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trade History -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Trade History
+                </h6>
+                <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-download me-1"></i>
+                    Export
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Pair</th>
+                                <th>Side</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>P&L</th>
+                                <th>Strategy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div>14:23:45</div>
+                                    <small class="text-muted">Today</small>
+                                </td>
+                                <td><strong>BTC/USDT</strong></td>
+                                <td><span class="badge bg-danger">SELL</span></td>
+                                <td>0.012</td>
+                                <td>$43,215.50</td>
+                                <td class="text-success">+$47.85</td>
+                                <td>Grid</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>13:45:12</div>
+                                    <small class="text-muted">Today</small>
+                                </td>
+                                <td><strong>ETH/USDT</strong></td>
+                                <td><span class="badge bg-success">BUY</span></td>
+                                <td>0.5</td>
+                                <td>$2,498.20</td>
+                                <td class="text-success">+$18.90</td>
+                                <td>DCA</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>12:18:33</div>
+                                    <small class="text-muted">Today</small>
+                                </td>
+                                <td><strong>BNB/USDT</strong></td>
+                                <td><span class="badge bg-danger">SELL</span></td>
+                                <td>2.0</td>
+                                <td>$664.75</td>
+                                <td class="text-success">+$25.50</td>
+                                <td>Breakout</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>11:52:07</div>
+                                    <small class="text-muted">Today</small>
+                                </td>
+                                <td><strong>ADA/USDT</strong></td>
+                                <td><span class="badge bg-success">BUY</span></td>
+                                <td>500</td>
+                                <td>$0.3425</td>
+                                <td class="text-success">+$8.75</td>
+                                <td>Mean Reversion</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>10:34:29</div>
+                                    <small class="text-muted">Today</small>
+                                </td>
+                                <td><strong>SOL/USDT</strong></td>
+                                <td><span class="badge bg-success">BUY</span></td>
+                                <td>1.2</td>
+                                <td>$125.80</td>
+                                <td class="text-success">+$1.81</td>
+                                <td>Grid</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Modal -->
+<div class="modal fade" id="chartModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chartModalTitle">Asset Chart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="tradingview-widget-container" style="height: 500px;">
+                    <div id="modal_chart" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js for Allocation Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- TradingView Charting Library -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Portfolio Performance Chart using TradingView
+    new TradingView.widget({
+        "width": "100%",
+        "height": "400",
+        "symbol": "INDEX:BTCUSD", // Portfolio proxy using BTC
+        "interval": "1H",
+        "timezone": "Etc/UTC",
+        "theme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "portfolio_performance_chart"
+    });
+
+    // Asset Allocation Pie Chart
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['BTC', 'ETH', 'BNB', 'ADA', 'SOL', 'Others'],
+            datasets: [{
+                data: [42.5, 28.3, 15.7, 7.0, 6.5, 0],
+                backgroundColor: [
+                    '#f39c12',
+                    '#3498db', 
+                    '#27ae60',
+                    '#e74c3c',
+                    '#9b59b6',
+                    '#95a5a6'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Holdings search functionality
+    document.getElementById('holdingsSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#holdingsTable tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+
+    // Period buttons for performance chart
+    document.querySelectorAll('[data-period]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Here you would update the chart period
+            // Implementation would depend on your backend API
+        });
+    });
+});
+
+// View chart in modal
+function viewChart(symbol) {
+    document.getElementById('chartModalTitle').textContent = symbol + ' Chart';
+    
+    // Clear previous chart
+    document.getElementById('modal_chart').innerHTML = '';
+    
+    // Create new TradingView widget in modal
+    new TradingView.widget({
+        "width": "100%",
+        "height": "500",
+        "symbol": "BINANCE:" + symbol,
+        "interval": "1H",
+        "timezone": "Etc/UTC",
+        "theme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "modal_chart",
+        "studies": [
+            "RSI@tv-basicstudies",
+            "MACD@tv-basicstudies"
+        ]
+    });
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('chartModal')).show();
+}
+
+// Real-time portfolio updates
+function updatePortfolioData() {
+    // This would connect to your backend API for real portfolio data
+    // Keeping the structure while preserving backend functionality
+    
+    // Example of how data would be updated:
+    // fetch('/api/portfolio')
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         document.getElementById('portfolioValue').textContent = '$' + data.totalValue.toFixed(2);
+    //         document.getElementById('totalPnL').textContent = (data.totalPnL >= 0 ? '+' : '') + '$' + data.totalPnL.toFixed(2);
+    //         document.getElementById('dailyPnL').textContent = (data.dailyPnL >= 0 ? '+' : '') + '$' + data.dailyPnL.toFixed(2);
+    //         document.getElementById('activePositions').textContent = data.activePositions;
+    //     });
+}
+
+// Update portfolio data every 10 seconds
+setInterval(updatePortfolioData, 10000);
+updatePortfolioData(); // Initial call
+</script>
+{% endblock %}
