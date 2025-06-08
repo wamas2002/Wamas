@@ -163,7 +163,7 @@ class TradingViewCharts:
         </div>
         """
         
-        components.html(mini_chart_html, height=height)
+        st.html(mini_chart_html)
     
     def render_technical_analysis_widget(self, 
                                        symbol: str = 'BTCUSDT',
@@ -197,7 +197,7 @@ class TradingViewCharts:
         </div>
         """
         
-        components.html(ta_widget_html, height=height)
+        st.html(ta_widget_html)
     
     def render_market_overview(self, 
                              theme: str = 'dark',
@@ -250,7 +250,7 @@ class TradingViewCharts:
         </div>
         """
         
-        components.html(market_overview_html, height=height)
+        st.html(market_overview_html)
     
     def render_crypto_screener(self, 
                              theme: str = 'dark',
@@ -280,7 +280,7 @@ class TradingViewCharts:
         </div>
         """
         
-        components.html(screener_html, height=height)
+        st.html(screener_html)
     
     def render_economic_calendar(self, 
                                theme: str = 'dark',
@@ -310,7 +310,7 @@ class TradingViewCharts:
         </div>
         """
         
-        components.html(calendar_html, height=height)
+        st.html(calendar_html)
     
     def get_available_intervals(self) -> List[str]:
         """Get list of available time intervals"""
