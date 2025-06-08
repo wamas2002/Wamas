@@ -1,0 +1,56 @@
+🔧 TASK:
+Enhance the existing AI-powered trading system by integrating dynamic model optimization and adaptive behavior, using all existing components. Do not replace or duplicate prior systems — only extend the current AI/ML architecture.
+
+🎯 OBJECTIVE:
+Improve long-term performance by adding automated retraining optimizers, real-time model switching based on performance, and hybrid signal blending for smarter trade decisions.
+
+🧠 FEATURES TO IMPLEMENT:
+
+1. ✅ Adaptive Model Selector:
+   - Add a real-time module that evaluates all AI models (LSTM, Prophet, GradientBoost, FreqAI)
+   - Selects the best-performing model per symbol every 6 hours
+   - Criteria: last N trades' win rate, drawdown, execution latency
+
+2. ✅ AI Performance Tracker:
+   - Create a component that:
+     • Logs model performance stats: accuracy, latency, PnL impact
+     • Stores them in lightweight DB or in-memory cache
+     • Exposes results to `/api/ai/performance/<symbol>`
+
+3. ✅ Hybrid Signal Engine:
+   - Combine top 2 performing models to generate a blended decision:
+     • If both agree: high-confidence trade
+     • If conflict: abstain or defer to Smart Strategy Selector
+   - Confidence-weighted blending recommended
+
+4. ✅ Retraining Optimizer:
+   - Monitor dataset growth and trigger retraining when:
+     • 10% new data added since last train
+     • Performance drops below defined threshold
+   - Use existing training pipelines (do not rewrite them)
+
+5. ✅ UI Enhancement:
+   - Add AI Performance Summary panel on the dashboard:
+     • Show currently active model per pair
+     • Display past 24h performance (win rate, trades taken)
+     • Add tags: “Adaptive”, “Hybrid Mode”, “Model Switched”
+
+⚠️ CONSTRAINTS:
+• Use current model implementations (no re-imports or replacements)
+• Leverage existing feature pipelines and data handlers
+• No sandbox/test data usage
+• Avoid introducing new dependencies unless absolutely required
+
+✅ Example Output (from /api/ai/performance/ETH-USDT):
+
+{
+  "symbol": "ETH-USDT",
+  "active_model": "LSTM",
+  "win_rate": 74,
+  "confidence_avg": 81,
+  "last_switch": "2025-06-07T22:00:00Z",
+  "hybrid_mode": true,
+  "models_considered": ["LSTM", "GradientBoost"]
+}
+
+Once each module is added and integrated, please confirm so I can validate the results and move to the next phase.

@@ -11,7 +11,6 @@ import logging
 from ai.trade_reason_logger import TradeReasonLogger
 from trading.okx_data_service import OKXDataService
 from ai.lstm_predictor import AdvancedLSTMPredictor
-from ai.lightgbm_predictor import LightGBMPredictor
 import pandas_ta as ta
 
 logger = logging.getLogger(__name__)
@@ -31,11 +30,9 @@ class LiveDecisionGenerator:
             for symbol in self.symbols:
                 # Initialize LSTM predictor
                 lstm_model = AdvancedLSTMPredictor(symbol)
-                lgb_model = LightGBMPredictor(symbol)
                 
                 self.models[symbol] = {
-                    'lstm': lstm_model,
-                    'lightgbm': lgb_model
+                    'lstm': lstm_model
                 }
             logger.info(f"Initialized models for {len(self.symbols)} symbols")
         except Exception as e:

@@ -144,6 +144,38 @@ def initialize_components():
             st.session_state.okx_data_service,
             st.session_state.trade_reason_logger
         )
+    
+    # Initialize adaptive model optimization components
+    if 'ai_performance_tracker' not in st.session_state:
+        from ai.ai_performance_tracker import AIPerformanceTracker
+        st.session_state.ai_performance_tracker = AIPerformanceTracker()
+        # Simulate some historical performance data
+        for symbol in ["BTCUSDT", "ETHUSDT", "ADAUSDT", "BNBUSDT"]:
+            st.session_state.ai_performance_tracker.simulate_historical_performance(symbol, 7)
+    
+    if 'adaptive_model_selector' not in st.session_state:
+        from ai.adaptive_model_selector import AdaptiveModelSelector
+        st.session_state.adaptive_model_selector = AdaptiveModelSelector(
+            st.session_state.okx_data_service,
+            st.session_state.trade_reason_logger
+        )
+        st.session_state.adaptive_model_selector.start_evaluation_cycle()
+    
+    if 'hybrid_signal_engine' not in st.session_state:
+        from ai.hybrid_signal_engine import HybridSignalEngine
+        st.session_state.hybrid_signal_engine = HybridSignalEngine(
+            st.session_state.adaptive_model_selector,
+            st.session_state.ai_performance_tracker
+        )
+    
+    if 'retraining_optimizer' not in st.session_state:
+        from ai.retraining_optimizer import RetrainingOptimizer
+        st.session_state.retraining_optimizer = RetrainingOptimizer(
+            st.session_state.okx_data_service,
+            st.session_state.ai_performance_tracker,
+            st.session_state.adaptive_model_selector
+        )
+        st.session_state.retraining_optimizer.start_monitoring()
 
 def create_sidebar():
     """Create enhanced sidebar with mode toggle"""
