@@ -85,6 +85,18 @@ def initialize_session_state():
     if 'tradingview_charts' not in st.session_state:
         st.session_state.tradingview_charts = TradingViewCharts()
     
+    if 'advanced_ml_pipeline' not in st.session_state:
+        from ai.advanced_ml_pipeline import AdvancedMLPipeline
+        st.session_state.advanced_ml_pipeline = AdvancedMLPipeline()
+    
+    if 'transformer_ensemble' not in st.session_state:
+        from ai.transformer_ensemble import TransformerEnsemble
+        st.session_state.transformer_ensemble = TransformerEnsemble()
+    
+    if 'freqai_pipeline' not in st.session_state:
+        from ai.freqai_pipeline import FreqAILevelPipeline
+        st.session_state.freqai_pipeline = FreqAILevelPipeline()
+    
     if 'logger' not in st.session_state:
         st.session_state.logger = TradingLogger()
     
