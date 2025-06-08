@@ -1240,22 +1240,31 @@ def main():
                 else:
                     st.info("No portfolio history available. Start trading to see analytics.")
                     
-                    # Store sample portfolio data button
-                    if st.button("Store Sample Portfolio Data"):
+                    # Fetch live portfolio data from OKX
+                    if st.button("Load Live Portfolio Data"):
                         try:
-                            st.session_state.db_service.store_portfolio_snapshot(
-                                total_value=10000.0,
-                                cash_balance=5000.0,
-                                positions_value=5000.0,
-                                daily_return=0.02,
-                                total_return=0.15,
-                                sharpe_ratio=1.5,
-                                volatility=0.20
+                            # Get real account balance from OKX
+                            balance_result = st.session_state.okx_connector.get_account_balance()
+                            if balance_result.get('success'):
+                                balances = balance_result.get('balances', {})
+                                total_value = sum(float(b.get('total', 0)) for b in balances.values())
+                                cash_balance = float(balances.get('USDT', {}).get('available', 0))
+                                
+                                st.session_state.db_service.store_portfolio_snapshot(
+                                    total_value=total_value,
+                                    cash_balance=cash_balance,
+                                    positions_value=total_value - cash_balance,
+                                    daily_return=0.0,
+                                total_return=0.0,
+                                sharpe_ratio=0.0,
+                                volatility=0.0
                             )
-                            st.success("Sample portfolio data stored")
-                            st.rerun()
+                                st.success("Live portfolio data loaded from OKX!")
+                                st.rerun()
+                            else:
+                                st.error("Failed to fetch live portfolio data from OKX")
                         except Exception as e:
-                            st.error(f"Error storing portfolio data: {e}")
+                            st.error(f"Error loading live data: {e}")
                             
             except Exception as e:
                 st.error(f"Error loading portfolio data: {e}")
