@@ -16,6 +16,7 @@ from ai.reinforcement_advanced import AdvancedQLearningAgent
 from ai.market_regime_detector import MarketRegimeDetector
 from ai.portfolio_optimizer import PortfolioOptimizer
 from trading.okx_connector import OKXConnector
+from trading.okx_data_service import OKXDataService
 from trading.risk_manager_advanced import AdvancedRiskManager
 from trading.backtesting_engine import BacktestingEngine, WalkForwardAnalyzer
 from utils.logger import TradingLogger
@@ -58,6 +59,9 @@ def initialize_session_state():
     
     if 'okx_connector' not in st.session_state:
         st.session_state.okx_connector = OKXConnector()
+    
+    if 'okx_data_service' not in st.session_state:
+        st.session_state.okx_data_service = OKXDataService()
     
     if 'risk_manager' not in st.session_state:
         st.session_state.risk_manager = AdvancedRiskManager()

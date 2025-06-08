@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import time
 import threading
-from .data_handler import DataHandler
+from .okx_data_service import OKXDataService
 from .risk_manager import RiskManager
 from strategies.ensemble_strategy import EnsembleStrategy
 from strategies.ml_strategy import MLStrategy
@@ -22,7 +22,7 @@ class TradingEngine:
     
     def __init__(self):
         # Core components
-        self.data_handler = DataHandler()
+        self.data_handler = OKXDataService()
         self.risk_manager = RiskManager()
         self.logger = TradingLogger()
         self.performance_tracker = PerformanceTracker()
