@@ -585,7 +585,7 @@ class OKXConnector:
                 order_data["px"] = str(price)
             
             # Place main order
-            result = self._make_request('POST', '/api/v5/trade/order', body=json.dumps(order_data))
+            result = self._make_request('POST', '/api/v5/trade/order', data=order_data)
             
             if 'error' in result:
                 return result
@@ -642,7 +642,7 @@ class OKXConnector:
                 "reduceOnly": True
             }
             
-            result = self._make_request('POST', '/api/v5/trade/order-algo', body=json.dumps(stop_data))
+            result = self._make_request('POST', '/api/v5/trade/order-algo', data=stop_data)
             
             if 'error' in result:
                 return result
@@ -699,7 +699,7 @@ class OKXConnector:
                 "reduceOnly": True
             }
             
-            result = self._make_request('POST', '/api/v5/trade/order', body=json.dumps(close_data))
+            result = self._make_request('POST', '/api/v5/trade/order', data=close_data)
             
             if 'error' in result:
                 return result
@@ -864,7 +864,7 @@ class OKXConnector:
                 "ordId": order_id
             }
             
-            result = self._make_request('POST', '/api/v5/trade/cancel-order', body=json.dumps(body))
+            result = self._make_request('POST', '/api/v5/trade/cancel-order', data=body)
             
             if 'error' in result:
                 return result
@@ -919,7 +919,7 @@ class OKXConnector:
                 "posMode": position_mode  # long_short_mode or net_mode
             }
             
-            result = self._make_request('POST', '/api/v5/account/set-position-mode', body=json.dumps(body))
+            result = self._make_request('POST', '/api/v5/account/set-position-mode', data=body)
             
             if 'error' in result:
                 return result
