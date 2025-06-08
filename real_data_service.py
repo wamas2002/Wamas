@@ -15,14 +15,15 @@ import time
 
 class RealDataService:
     def __init__(self):
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        
         self.okx_exchange = None
         self.portfolio_db = 'data/portfolio_tracking.db'
         self.trading_db = 'data/trading_data.db'
         self.ai_db = 'data/ai_performance.db'
         
         self._initialize_okx_connection()
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
     
     def _initialize_okx_connection(self):
         """Initialize OKX exchange connection for market data"""

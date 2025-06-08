@@ -1,163 +1,142 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard - Intellectia Trading Platform{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Key Metrics Row -->
-<div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card">
-            <div class="card-body metric-card">
-                <div class="metric-value text-success" id="totalBalance">$10,000.00</div>
-                <div class="metric-label">Total Balance</div>
-                <small class="text-success">
-                    <i class="fas fa-arrow-up"></i> +2.5% (24h)
+<div class="row mt-3">
+    <!-- Portfolio Overview -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="portfolio-value">
+                {% if data and data.portfolio %}
+                    ${{ "%.2f"|format(data.portfolio.total_value) }}
+                {% else %}
+                    Loading...
+                {% endif %}
+            </div>
+            <div class="metric-label">Total Portfolio Value</div>
+            <div class="mt-2">
+                <small class="{% if data and data.portfolio and data.portfolio.daily_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if data and data.portfolio %}
+                        {{ "%.2f"|format(data.portfolio.daily_pnl) }}% (24h)
+                    {% endif %}
                 </small>
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card">
-            <div class="card-body metric-card">
-                <div class="metric-value text-primary" id="activeTrades">8</div>
-                <div class="metric-label">Active Trades</div>
-                <small class="text-muted">Across 5 pairs</small>
+
+    <!-- AI Performance -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="ai-accuracy">
+                {% if data and data.ai_performance %}
+                    {{ "%.1f"|format(data.ai_performance.overall_accuracy) }}%
+                {% else %}
+                    Loading...
+                {% endif %}
             </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card">
-            <div class="card-body metric-card">
-                <div class="metric-value text-warning" id="winRate">72%</div>
-                <div class="metric-label">Win Rate (7d)</div>
-                <small class="text-success">
-                    <i class="fas fa-arrow-up"></i> +5% from last week
+            <div class="metric-label">AI Model Accuracy</div>
+            <div class="mt-2">
+                <small class="{% if data and data.ai_performance and data.ai_performance.overall_accuracy >= 70 %}positive{% elif data and data.ai_performance and data.ai_performance.overall_accuracy >= 60 %}neutral{% else %}negative{% endif %}">
+                    {% if data and data.ai_performance %}
+                        {{ data.ai_performance.total_predictions }} predictions today
+                    {% endif %}
                 </small>
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card">
-            <div class="card-body metric-card">
-                <div class="metric-value text-info" id="aiConfidence">85%</div>
-                <div class="metric-label">AI Confidence</div>
-                <small class="text-muted">Model ensemble</small>
+
+    <!-- Risk Level -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="risk-level">
+                {% if data and data.risk_metrics %}
+                    {{ "%.1f"|format(data.risk_metrics.concentration_risk) }}%
+                {% else %}
+                    Loading...
+                {% endif %}
+            </div>
+            <div class="metric-label">Concentration Risk</div>
+            <div class="mt-2">
+                <small class="{% if data and data.risk_metrics and data.risk_metrics.concentration_risk >= 80 %}negative{% elif data and data.risk_metrics and data.risk_metrics.concentration_risk >= 60 %}neutral{% else %}positive{% endif %}">
+                    {% if data and data.risk_metrics %}
+                        {{ data.risk_metrics.risk_level }} Risk
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Signals -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="active-signals">
+                {% if data and data.technical_signals %}
+                    {{ data.technical_signals|length }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="metric-label">Active Trading Signals</div>
+            <div class="mt-2">
+                <small class="positive">
+                    {% if data and data.technical_signals %}
+                        {% set buy_signals = data.technical_signals | selectattr("type", "equalto", "BUY") | list | length %}
+                        {{ buy_signals }} BUY signals
+                    {% endif %}
+                </small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Main Chart and AI Status Row -->
+<!-- Critical Alerts Section -->
+{% if data and data.portfolio and data.risk_metrics and data.risk_metrics.concentration_risk >= 80 %}
 <div class="row mb-4">
-    <!-- Main Trading Chart -->
-    <div class="col-lg-8 mb-4">
+    <div class="col-12">
+        <div class="alert alert-danger">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>Critical Portfolio Alert</h5>
+            <p class="mb-2">Your portfolio has <strong>{{ "%.1f"|format(data.risk_metrics.concentration_risk) }}% concentration risk</strong> - immediate rebalancing recommended.</p>
+            <p class="mb-0">Current allocation: {{ data.risk_metrics.largest_position }} dominates your portfolio.</p>
+            <a href="/risk-manager" class="btn btn-danger btn-sm mt-2">
+                <i class="fas fa-shield-alt me-1"></i>Rebalance Now
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Portfolio Composition Chart -->
+    <div class="col-lg-6 mb-4">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    BTC/USDT Live Chart
-                </h6>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-secondary active" data-timeframe="1">1m</button>
-                    <button type="button" class="btn btn-outline-secondary" data-timeframe="5">5m</button>
-                    <button type="button" class="btn btn-outline-secondary" data-timeframe="15">15m</button>
-                    <button type="button" class="btn btn-outline-secondary" data-timeframe="60">1h</button>
-                    <button type="button" class="btn btn-outline-secondary" data-timeframe="240">4h</button>
-                </div>
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Portfolio Composition</h5>
+                <span class="real-time-badge">LIVE</span>
             </div>
-            <div class="card-body p-0">
-                <!-- TradingView Widget -->
-                <div class="tradingview-widget-container" style="height: 500px;">
-                    <div id="tradingview_btc_chart" style="height: 100%;"></div>
+            <div class="card-body">
+                <div id="portfolio-chart" style="height: 400px;">
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Loading portfolio data...</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- AI Model Status Panel -->
-    <div class="col-lg-4 mb-4">
-        <div class="card h-100">
+    <!-- Performance Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-brain me-2"></i>
-                    AI Model Status
-                </h6>
+                <h5><i class="fas fa-chart-line me-2"></i>Portfolio Performance</h5>
+                <span class="real-time-badge">LIVE</span>
             </div>
             <div class="card-body">
-                <!-- LSTM Model -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>LSTM Model</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Active
-                        </span>
-                    </div>
-                    <div class="progress mb-1" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 87%"></div>
-                    </div>
-                    <small class="text-muted">Accuracy: 87%</small>
-                </div>
-
-                <!-- Prophet Model -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Prophet Model</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Active
-                        </span>
-                    </div>
-                    <div class="progress mb-1" style="height: 8px;">
-                        <div class="progress-bar bg-primary" style="width: 82%"></div>
-                    </div>
-                    <small class="text-muted">Accuracy: 82%</small>
-                </div>
-
-                <!-- Gradient Boost -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Gradient Boost</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Active
-                        </span>
-                    </div>
-                    <div class="progress mb-1" style="height: 8px;">
-                        <div class="progress-bar bg-warning" style="width: 79%"></div>
-                    </div>
-                    <small class="text-muted">Accuracy: 79%</small>
-                </div>
-
-                <!-- Ensemble Result -->
-                <div class="mt-4 p-3 bg-dark rounded">
-                    <div class="text-center">
-                        <h5 class="text-success mb-1">BULLISH</h5>
-                        <div class="text-muted">Ensemble Prediction</div>
-                        <div class="mt-2">
-                            <small class="text-muted">Confidence: 85%</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Signals -->
-                <div class="mt-4">
-                    <h6 class="mb-3">Recent Signals</h6>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small>BTC/USDT</small>
-                        <span class="badge bg-success">BUY</span>
-                        <small class="text-muted">2m ago</small>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small>ETH/USDT</small>
-                        <span class="badge bg-warning">HOLD</span>
-                        <small class="text-muted">5m ago</small>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small>BNB/USDT</small>
-                        <span class="badge bg-danger">SELL</span>
-                        <small class="text-muted">8m ago</small>
+                <div id="performance-chart" style="height: 400px;">
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Loading performance data...</p>
                     </div>
                 </div>
             </div>
@@ -165,312 +144,283 @@
     </div>
 </div>
 
-<!-- Active Positions and Market Overview -->
 <div class="row">
-    <!-- Active Positions -->
-    <div class="col-lg-7 mb-4">
+    <!-- Market Prices -->
+    <div class="col-lg-4 mb-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-list me-2"></i>
-                    Active Positions
-                </h6>
+                <h5><i class="fas fa-coins me-2"></i>Live Market Prices</h5>
+                <span class="real-time-badge">LIVE</span>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Symbol</th>
-                                <th>Side</th>
-                                <th>Size</th>
-                                <th>Entry Price</th>
-                                <th>Current Price</th>
-                                <th>P&L</th>
-                                <th>Strategy</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activePositionsTable">
-                            <tr>
-                                <td><strong>BTC/USDT</strong></td>
-                                <td><span class="badge bg-success">LONG</span></td>
-                                <td>0.025</td>
-                                <td>$42,150</td>
-                                <td class="text-success" id="btc-price">$43,200</td>
-                                <td class="text-success">+$26.25</td>
-                                <td>Grid</td>
-                            </tr>
-                            <tr>
-                                <td><strong>ETH/USDT</strong></td>
-                                <td><span class="badge bg-success">LONG</span></td>
-                                <td>0.8</td>
-                                <td>$2,480</td>
-                                <td class="text-success" id="eth-price">$2,534</td>
-                                <td class="text-success">+$43.20</td>
-                                <td>DCA</td>
-                            </tr>
-                            <tr>
-                                <td><strong>BNB/USDT</strong></td>
-                                <td><span class="badge bg-danger">SHORT</span></td>
-                                <td>15</td>
-                                <td>$672</td>
-                                <td class="text-danger" id="bnb-price">$656</td>
-                                <td class="text-success">+$240.00</td>
-                                <td>Breakout</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="card-body">
+                <div id="market-prices">
+                    {% if data and data.market_prices %}
+                        {% for symbol, price_data in data.market_prices.items() %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <strong>{{ symbol }}</strong>
+                                <br>
+                                <small class="text-muted">{{ price_data.name if price_data.name else symbol }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${{ "%.2f"|format(price_data.price) }}</div>
+                                <small class="{% if price_data.change_24h >= 0 %}positive{% else %}negative{% endif %}">
+                                    {{ "%.2f"|format(price_data.change_24h) }}%
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2">Loading market data...</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Market Overview Widget -->
-    <div class="col-lg-5 mb-4">
+    <!-- AI Model Performance -->
+    <div class="col-lg-4 mb-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-globe me-2"></i>
-                    Market Overview
-                </h6>
+                <h5><i class="fas fa-robot me-2"></i>AI Model Status</h5>
+                <span class="real-time-badge">LIVE</span>
             </div>
-            <div class="card-body p-0">
-                <!-- TradingView Market Overview Widget -->
-                <div class="tradingview-widget-container" style="height: 300px;">
-                    <div id="tradingview_market_overview" style="height: 100%;"></div>
+            <div class="card-body">
+                <div id="ai-models">
+                    {% if data and data.ai_performance and data.ai_performance.model_performance %}
+                        {% for model in data.ai_performance.model_performance[:5] %}
+                        <div class="ai-model-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ model.model_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ model.symbol }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold {% if model.accuracy >= 70 %}positive{% elif model.accuracy >= 60 %}neutral{% else %}negative{% endif %}">
+                                        {{ "%.1f"|format(model.accuracy) }}%
+                                    </div>
+                                    <small class="text-muted">{{ model.total_trades }} trades</small>
+                                </div>
+                            </div>
+                            <div class="signal-strength mt-2" style="width: {{ model.accuracy }}%;"></div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2">Loading AI models...</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trading Signals -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-signal me-2"></i>Trading Signals</h5>
+                <span class="real-time-badge">LIVE</span>
+            </div>
+            <div class="card-body">
+                <div id="trading-signals">
+                    {% if data and data.technical_signals %}
+                        {% for signal in data.technical_signals[:8] %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <strong>{{ signal.symbol }}</strong>
+                                <br>
+                                <small class="text-muted">{{ signal.indicator }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if signal.signal_type == 'BUY' %}bg-success{% elif signal.signal_type == 'SELL' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ signal.signal_type }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ "%.0f"|format(signal.strength) }}% confidence</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2">Loading signals...</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- System Health and Recent Activity -->
+<!-- TradingView Chart -->
 <div class="row">
-    <!-- System Health -->
-    <div class="col-lg-4 mb-4">
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-heartbeat me-2"></i>
-                    System Health
-                </h6>
+                <h5><i class="fas fa-chart-area me-2"></i>Live Trading Chart</h5>
+                <span class="real-time-badge">LIVE</span>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>OKX API</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Online
-                        </span>
-                    </div>
-                    <small class="text-muted">Response: 250ms</small>
-                </div>
-
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Database</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Healthy
-                        </span>
-                    </div>
-                    <small class="text-muted">16,268 records</small>
-                </div>
-
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>AI Models</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Running
-                        </span>
-                    </div>
-                    <small class="text-muted">5 models active</small>
-                </div>
-
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Risk Manager</span>
-                        <span class="status-indicator status-live">
-                            <i class="fas fa-circle"></i>
-                            Protected
-                        </span>
-                    </div>
-                    <small class="text-muted">All limits active</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    Recent Activity
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="timeline">
-                    <div class="timeline-item mb-3">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-robot text-primary"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="d-flex justify-content-between">
-                                    <strong>AI Model Switch</strong>
-                                    <small class="text-muted">2 minutes ago</small>
-                                </div>
-                                <div class="text-muted">ETHUSDT: Ensemble → GradientBoost (score improvement)</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item mb-3">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-chart-line text-success"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Position Opened</strong>
-                                    <small class="text-muted">5 minutes ago</small>
-                                </div>
-                                <div class="text-muted">BTC/USDT LONG 0.025 @ $42,150</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item mb-3">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-cogs text-warning"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Strategy Update</strong>
-                                    <small class="text-muted">12 minutes ago</small>
-                                </div>
-                                <div class="text-muted">Smart selector optimized grid parameters</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-shield-alt text-info"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Risk Check</strong>
-                                    <small class="text-muted">15 minutes ago</small>
-                                </div>
-                                <div class="text-muted">Portfolio risk within acceptable limits</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div id="tradingview-chart" style="height: 500px;"></div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-<!-- TradingView Charting Library -->
-<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
+{% block extra_js %}
 <script>
-// Initialize TradingView Charts
-document.addEventListener('DOMContentLoaded', function() {
-    // Main BTC Chart
-    new TradingView.widget({
-        "width": "100%",
-        "height": "500",
-        "symbol": "BINANCE:BTCUSDT",
-        "interval": "1",
-        "timezone": "Etc/UTC",
-        "theme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#f1f3f6",
-        "enable_publishing": false,
-        "hide_top_toolbar": false,
-        "hide_legend": false,
-        "save_image": false,
-        "container_id": "tradingview_btc_chart",
-        "studies": [
-            "RSI@tv-basicstudies",
-            "MACD@tv-basicstudies"
-        ]
-    });
-
-    // Market Overview Widget
-    new TradingView.MiniWidget({
-        "symbols": [
-            ["Bitcoin", "BINANCE:BTCUSDT|1D"],
-            ["Ethereum", "BINANCE:ETHUSDT|1D"],
-            ["BNB", "BINANCE:BNBUSDT|1D"],
-            ["Cardano", "BINANCE:ADAUSDT|1D"],
-            ["Solana", "BINANCE:SOLUSDT|1D"]
-        ],
-        "chartOnly": false,
-        "width": "100%",
-        "height": "300",
-        "locale": "en",
-        "colorTheme": document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
-        "isTransparent": true,
-        "autosize": true,
-        "container_id": "tradingview_market_overview"
-    });
-
-    // Update theme for TradingView widgets when theme changes
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle.addEventListener('click', function() {
-        setTimeout(() => {
-            location.reload(); // Reload to apply new theme to TradingView widgets
-        }, 100);
-    });
-
-    // Real-time price updates
-    function updatePrices() {
-        // This would connect to your real OKX API
-        // For now keeping the structure for the frontend redesign
-        // The backend integration remains untouched
-        
-        // Example of how prices would be updated:
-        // fetch('/api/prices')
-        //     .then(response => response.json())
-        //     .then(data => {
-        //         document.getElementById('btc-price').textContent = '$' + data.BTCUSDT.toFixed(2);
-        //         document.getElementById('eth-price').textContent = '$' + data.ETHUSDT.toFixed(2);
-        //         document.getElementById('bnb-price').textContent = '$' + data.BNBUSDT.toFixed(2);
-        //     });
+    // Initialize TradingView Chart
+    function initializeTradingViewChart() {
+        new TradingView.widget({
+            "width": "100%",
+            "height": 500,
+            "symbol": "BINANCE:BTCUSDT",
+            "interval": "15",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "hide_top_toolbar": false,
+            "save_image": false,
+            "container_id": "tradingview-chart"
+        });
     }
 
-    // Update prices every 5 seconds
-    setInterval(updatePrices, 5000);
-    updatePrices(); // Initial call
-
-    // Timeframe buttons
-    document.querySelectorAll('[data-timeframe]').forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            document.querySelectorAll('[data-timeframe]').forEach(btn => {
-                btn.classList.remove('active');
+    // Load portfolio composition chart
+    function loadPortfolioChart() {
+        fetch('/api/portfolio-chart')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('portfolio-chart').innerHTML = 
+                        '<div class="text-center py-5"><p class="text-warning">Chart data unavailable</p></div>';
+                    return;
+                }
+                Plotly.newPlot('portfolio-chart', data.data, data.layout, {
+                    responsive: true,
+                    displayModeBar: false
+                });
+            })
+            .catch(error => {
+                console.error('Portfolio chart error:', error);
+                document.getElementById('portfolio-chart').innerHTML = 
+                    '<div class="text-center py-5"><p class="text-danger">Failed to load chart</p></div>';
             });
-            
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            // Here you would update the chart timeframe
-            // The implementation would depend on your backend API
-        });
+    }
+
+    // Load performance chart
+    function loadPerformanceChart() {
+        fetch('/api/performance-chart')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('performance-chart').innerHTML = 
+                        '<div class="text-center py-5"><p class="text-warning">Performance data unavailable</p></div>';
+                    return;
+                }
+                Plotly.newPlot('performance-chart', data.data, data.layout, {
+                    responsive: true,
+                    displayModeBar: false
+                });
+            })
+            .catch(error => {
+                console.error('Performance chart error:', error);
+                document.getElementById('performance-chart').innerHTML = 
+                    '<div class="text-center py-5"><p class="text-danger">Failed to load performance data</p></div>';
+            });
+    }
+
+    // Update dashboard data
+    function updateDashboard() {
+        fetch('/api/dashboard')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Dashboard update error:', data.error);
+                    return;
+                }
+
+                // Update portfolio value
+                if (data.portfolio) {
+                    document.getElementById('portfolio-value').textContent = 
+                        formatCurrency(data.portfolio.total_value);
+                }
+
+                // Update AI accuracy
+                if (data.ai_performance) {
+                    document.getElementById('ai-accuracy').textContent = 
+                        data.ai_performance.overall_accuracy.toFixed(1) + '%';
+                }
+
+                // Update risk level
+                if (data.risk_metrics) {
+                    document.getElementById('risk-level').textContent = 
+                        data.risk_metrics.concentration_risk.toFixed(1) + '%';
+                }
+
+                // Update active signals count
+                if (data.technical_signals) {
+                    document.getElementById('active-signals').textContent = 
+                        data.technical_signals.length;
+                }
+
+                // Update market prices
+                updateMarketPrices(data.market_prices);
+            })
+            .catch(error => {
+                console.error('Dashboard update failed:', error);
+            });
+    }
+
+    // Update market prices
+    function updateMarketPrices(prices) {
+        if (!prices) return;
+
+        let html = '';
+        for (const [symbol, priceData] of Object.entries(prices)) {
+            const changeClass = priceData.change_24h >= 0 ? 'positive' : 'negative';
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>${symbol}</strong>
+                        <br>
+                        <small class="text-muted">${priceData.name || symbol}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">${formatCurrency(priceData.price)}</div>
+                        <small class="${changeClass}">
+                            ${priceData.change_24h.toFixed(2)}%
+                        </small>
+                    </div>
+                </div>
+            `;
+        }
+        document.getElementById('market-prices').innerHTML = html;
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load charts
+        loadPortfolioChart();
+        loadPerformanceChart();
+        
+        // Initialize TradingView chart after a short delay
+        setTimeout(initializeTradingViewChart, 1000);
+        
+        // Set up auto-refresh
+        setInterval(updateDashboard, 30000);
+        
+        // Initial data update
+        updateDashboard();
     });
-});
 </script>
 {% endblock %}

@@ -1,0 +1,56 @@
+finalize the migration of your entire system to the modern UI served at http://localhost:5001, ensuring all features, real data, and backend logic are fully integrated and the old version (:5000) is deprecated:
+
+⸻
+
+✅ Prompt: Migrate All Features & Data to Modern UI (:5001) and Retire Legacy Interface (:5000)
+
+🎯 Objective:
+Transfer the entire trading system (data, logic, features) to the modern Flask-based UI at http://localhost:5001, ensuring that it fully replaces the original Streamlit app on port :5000.
+
+⸻
+
+🔁 Migration Tasks
+
+1. Transfer All Functional Modules
+
+Move or replicate all critical components from :5000 into :5001:
+	•	✅ Real-time OKX portfolio display and updates
+	•	✅ AI model insights (LSTM, GradientBoost, Ensemble, etc.)
+	•	✅ Strategy Builder (Drag-and-Drop interface)
+	•	✅ Risk Manager with multi-level TP/SL
+	•	✅ Live charts and market data (via TradingView widgets)
+	•	✅ Real-time alerts and performance analytics
+	•	✅ Full-featured Dashboard, Portfolio, Analytics, and AI pages
+
+2. Integrate Data & Model Connections
+
+Ensure :5001 fully accesses:
+	•	✅ Real OKX API data for all USDT pairs
+	•	✅ Live model predictions (from backend ML pipeline)
+	•	✅ Real-time portfolio positions (including PI, BTC, ETH, etc.)
+	•	✅ Historical data, logs, and trade records
+
+All these should be fetched directly, not redirected through :5000.
+
+3. Shut Down Legacy Streamlit App (:5000)
+	•	Remove or disable the Streamlit interface on port :5000
+	•	Redirect any remaining internal calls or data dependencies to the new Flask interface
+	•	Confirm no component is still dependent on the old Streamlit session or cache
+
+4. Verify Full System Integration in New UI
+	•	✅ Confirm all pages in :5001 pull live data
+	•	✅ Charts reflect real-time OKX activity
+	•	✅ AI models and predictions are synced
+	•	✅ Alerts, logs, and dashboard widgets are updated live
+	•	✅ TradingView charts are responsive and functional
+
+⸻
+
+🔒 Final Requirement
+
+Ensure backward compatibility is maintained at the backend level, but all user interactions, monitoring, and strategy management must now occur through http://localhost:5001.
+
+⸻
+
+✅ Once migration is complete, reply:
+“Modern UI is now the primary and only interface, all features successfully migrated.”

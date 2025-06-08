@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Error - Intellectia Trading Platform{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4><i class="fas fa-exclamation-triangle text-warning me-2"></i>System Error</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">An error occurred while processing your request.</p>
+                    <div class="alert alert-danger">
+                        <strong>Error Details:</strong>
+                        <pre class="mt-2">{{ error }}</pre>
+                    </div>
+                    <div class="mt-4">
+                        <a href="/" class="btn btn-primary me-2">
+                            <i class="fas fa-home me-1"></i>Return to Dashboard
+                        </a>
+                        <button onclick="location.reload()" class="btn btn-secondary">
+                            <i class="fas fa-redo me-1"></i>Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

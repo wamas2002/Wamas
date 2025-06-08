@@ -1,4 +1,4 @@
-modules = ["python-3.11", "postgresql-16"]
+modules = ["python-3.11", "postgresql-16", "python3"]
 
 [nix]
 channel = "stable-24_05"
@@ -24,10 +24,6 @@ args = "install_packages"
 task = "workflow.run"
 args = "ML Training System"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Intellectia Trading Platform"
-
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -43,15 +39,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_autonomous_training.py train"
-
-[[workflows.workflow]]
-name = "Intellectia Trading Platform"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run intellectia_app.py --server.port 5000"
-waitForPort = 5000
 
 [[ports]]
 localPort = 5000
