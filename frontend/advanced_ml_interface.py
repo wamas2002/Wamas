@@ -668,3 +668,225 @@ class AdvancedMLInterface:
                 
                 except Exception as e:
                     st.error(f"Model insights error: {e}")
+    
+    def _render_market_sentiment_analysis(self):
+        """Render market sentiment analysis interface"""
+        st.subheader("🎭 Advanced Market Sentiment Analysis")
+        st.markdown("**Comprehensive market sentiment intelligence combining multiple indicators**")
+        
+        # Sentiment analysis controls
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            sentiment_symbol = st.selectbox(
+                "Select Cryptocurrency",
+                ["BTCUSDT", "ETHUSDT", "ADAUSDT", "BNBUSDT", "DOTUSDT", "LINKUSDT"],
+                key="sentiment_symbol"
+            )
+        
+        with col2:
+            sentiment_timeframe = st.selectbox(
+                "Analysis Timeframe",
+                ["1h", "4h", "1d"],
+                index=1,
+                key="sentiment_timeframe"
+            )
+        
+        with col3:
+            st.write("")
+            st.write("")
+            if st.button("🔍 Analyze Sentiment", key="analyze_sentiment"):
+                self._perform_sentiment_analysis(sentiment_symbol, sentiment_timeframe)
+        
+        # Display sentiment results if available
+        if hasattr(st.session_state, 'sentiment_results'):
+            self._display_sentiment_results()
+        
+        # Sentiment history and trends
+        self._render_sentiment_trends()
+    
+    def _perform_sentiment_analysis(self, symbol: str, timeframe: str):
+        """Perform comprehensive sentiment analysis"""
+        try:
+            with st.spinner(f"Analyzing market sentiment for {symbol}..."):
+                # Get market data
+                if hasattr(st.session_state, 'okx_data_service'):
+                    market_data = st.session_state.okx_data_service.get_market_data(symbol, timeframe, limit=200)
+                else:
+                    st.error("Market data service not available")
+                    return
+                
+                if market_data is None or market_data.empty:
+                    st.error("No market data available for sentiment analysis")
+                    return
+                
+                # Perform sentiment analysis
+                if hasattr(st.session_state, 'market_sentiment_analyzer'):
+                    sentiment_results = st.session_state.market_sentiment_analyzer.analyze_market_sentiment(
+                        symbol, market_data
+                    )
+                    
+                    if sentiment_results.get('success'):
+                        st.session_state.sentiment_results = sentiment_results
+                        st.success("✅ Sentiment analysis completed!")
+                        st.rerun()
+                    else:
+                        st.error(f"Sentiment analysis failed: {sentiment_results.get('error', 'Unknown error')}")
+                else:
+                    st.error("Market sentiment analyzer not available")
+                    
+        except Exception as e:
+            st.error(f"Error performing sentiment analysis: {e}")
+    
+    def _display_sentiment_results(self):
+        """Display comprehensive sentiment analysis results"""
+        results = st.session_state.sentiment_results
+        
+        if not results.get('success'):
+            return
+        
+        sentiment_data = results.get('sentiment_data', {})
+        signals = results.get('signals', {})
+        
+        # Overall sentiment dashboard
+        st.subheader("📊 Sentiment Dashboard")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            sentiment_score = results.get('sentiment_score', 0.5)
+            st.metric(
+                "Overall Sentiment",
+                f"{sentiment_score:.2f}",
+                delta=f"{(sentiment_score - 0.5) * 100:.1f}% vs Neutral"
+            )
+        
+        with col2:
+            sentiment_label = results.get('sentiment_label', 'Neutral')
+            color = "🟢" if sentiment_score > 0.6 else "🔴" if sentiment_score < 0.4 else "🟡"
+            st.metric("Market Mood", f"{color} {sentiment_label}")
+        
+        with col3:
+            confidence = results.get('confidence', 0.0)
+            st.metric("Confidence", f"{confidence:.1%}")
+        
+        with col4:
+            signal = signals.get('signal', 'HOLD')
+            signal_color = "🟢" if 'BUY' in signal else "🔴" if 'SELL' in signal else "🟡"
+            st.metric("Signal", f"{signal_color} {signal}")
+        
+        # Detailed sentiment breakdown
+        st.subheader("🔍 Sentiment Breakdown")
+        
+        # Technical sentiment
+        if 'technical' in sentiment_data:
+            with st.expander("⚙️ Technical Indicators Sentiment"):
+                tech_data = sentiment_data['technical']
+                
+                tech_col1, tech_col2 = st.columns(2)
+                
+                with tech_col1:
+                    st.metric("RSI Sentiment", f"{tech_data.get('rsi_sentiment', 0.5):.2f}")
+                    st.metric("MACD Sentiment", f"{tech_data.get('macd_sentiment', 0.5):.2f}")
+                    st.metric("Bollinger Bands", f"{tech_data.get('bollinger_sentiment', 0.5):.2f}")
+                
+                with tech_col2:
+                    st.metric("Moving Averages", f"{tech_data.get('ma_sentiment', 0.5):.2f}")
+                    st.metric("Stochastic", f"{tech_data.get('stochastic_sentiment', 0.5):.2f}")
+                    st.metric("Technical Overall", f"{tech_data.get('overall', 0.5):.2f}")
+        
+        # Volume sentiment
+        if 'volume' in sentiment_data:
+            with st.expander("📊 Volume Analysis Sentiment"):
+                vol_data = sentiment_data['volume']
+                
+                vol_col1, vol_col2 = st.columns(2)
+                
+                with vol_col1:
+                    st.metric("Volume Trend", f"{vol_data.get('volume_trend', 0.5):.2f}")
+                    st.metric("Price-Volume Correlation", f"{vol_data.get('price_volume_correlation', 0.5):.2f}")
+                
+                with vol_col2:
+                    st.metric("Volume Spike", f"{vol_data.get('volume_spike', 0.5):.2f}")
+                    st.metric("Volume Overall", f"{vol_data.get('overall', 0.5):.2f}")
+        
+        # Trading signals and recommendations
+        st.subheader("🎯 Trading Signals & Recommendations")
+        
+        signal_col1, signal_col2 = st.columns(2)
+        
+        with signal_col1:
+            st.metric("Signal Strength", f"{signals.get('strength', 0.0):.1%}")
+            st.metric("Risk Level", signals.get('risk_level', 'MEDIUM'))
+        
+        with signal_col2:
+            recommendation = signals.get('recommendation', 'No recommendation available')
+            st.info(f"**Recommendation:** {recommendation}")
+        
+        # Sentiment visualization
+        self._create_sentiment_charts(sentiment_data)
+    
+    def _create_sentiment_charts(self, sentiment_data: Dict[str, Any]):
+        """Create sentiment visualization charts"""
+        st.subheader("📈 Sentiment Visualization")
+        
+        # Sentiment radar chart
+        categories = []
+        values = []
+        
+        for category, data in sentiment_data.items():
+            if isinstance(data, dict) and 'overall' in data:
+                categories.append(category.replace('_', ' ').title())
+                values.append(data['overall'])
+        
+        if categories and values:
+            # Create radar chart
+            fig = go.Figure()
+            
+            fig.add_trace(go.Scatterpolar(
+                r=values,
+                theta=categories,
+                fill='toself',
+                name='Sentiment Score',
+                line_color='rgb(0, 123, 255)'
+            ))
+            
+            fig.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 1]
+                    )),
+                showlegend=True,
+                title="Market Sentiment Radar",
+                height=400
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    def _render_sentiment_trends(self):
+        """Render sentiment trends and statistics"""
+        st.subheader("📊 Sentiment Statistics")
+        
+        if hasattr(st.session_state, 'market_sentiment_analyzer'):
+            sentiment_summary = st.session_state.market_sentiment_analyzer.get_sentiment_summary()
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Total Analyses", sentiment_summary.get('total_analyses', 0))
+            
+            with col2:
+                avg_sentiment = sentiment_summary.get('avg_sentiment', 0.5)
+                st.metric("Average Sentiment", f"{avg_sentiment:.2f}")
+            
+            with col3:
+                sentiment_trend = sentiment_summary.get('sentiment_trend', 'No data')
+                trend_color = "🟢" if sentiment_trend == 'Bullish' else "🔴" if sentiment_trend == 'Bearish' else "🟡"
+                st.metric("Trend", f"{trend_color} {sentiment_trend}")
+            
+            last_updated = sentiment_summary.get('last_updated')
+            if last_updated:
+                st.caption(f"Last updated: {last_updated}")
+        else:
+            st.info("No sentiment data available yet. Run an analysis to see statistics.")
