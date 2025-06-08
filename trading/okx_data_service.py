@@ -133,6 +133,10 @@ class OKXDataService:
             print(f"Error getting current price for {symbol}: {e}")
             return 0.0
     
+    def fetch_candlestick_data(self, symbol: str, interval: str, limit: int = 500) -> pd.DataFrame:
+        """Alias for get_historical_data to maintain compatibility"""
+        return self.get_historical_data(symbol, interval, limit)
+    
     def get_24hr_ticker(self, symbol: str) -> Dict[str, Any]:
         """Get 24hr ticker statistics"""
         try:

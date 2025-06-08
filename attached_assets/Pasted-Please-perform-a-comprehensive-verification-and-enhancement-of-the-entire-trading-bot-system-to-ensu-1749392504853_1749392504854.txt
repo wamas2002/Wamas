@@ -1,0 +1,79 @@
+Please perform a comprehensive verification and enhancement of the entire trading bot system to ensure that it is fully functional, optimized, and using only authentic real-time OKX market data.
+
+✅ System Integration & Health Check:
+Verify full integration of all system components:
+
+Live OKX connection (2,400+ markets available)
+
+Real-time market data streaming for all active pairs
+
+AI model functionality (LSTM, Prophet, XGBoost, CatBoost, RandomForest, GradientBoosting)
+
+Risk management module (position sizing, stop-loss, circuit breaker, drawdown tracking)
+
+Strategy engine (ensemble voting, confidence threshold, volatility-aware rebalancing)
+
+Web and API interfaces (all dashboards/pages reachable)
+
+Ensure all modules are connected and communicating properly:
+
+No dependency issues
+
+Data flows seamlessly between components
+
+No mock/sandbox/placeholder data in use
+
+📈 Strategy & Dashboard Enhancements:
+Add or validate the following:
+
+Strategy switching from the dashboard (LSTM ↔ Prophet ↔ Boosting models)
+
+Visual confidence scores (e.g., “Buy BTC - 87% Confidence”)
+
+Risk alerts:
+
+3 consecutive losing trades
+
+Daily loss exceeds 5%
+
+Sudden volatility spikes > 20%
+
+Improve dashboard UX:
+
+Real-time performance chart (PnL over time)
+
+Open/closed trades table with timestamps and profit
+
+Visualized portfolio allocation with live OKX balance
+
+🚨 Error Recovery & Real-Time Monitoring:
+Ensure proper error handling is active:
+
+Retry logic for failed API calls
+
+Graceful fallback for missing symbols
+
+Circuit breaker functionality
+
+Enable real-time logging & monitoring:
+
+Live trade execution log
+
+Portfolio updates every 5 seconds
+
+Market condition (bullish/bearish/neutral) detector feedback
+
+📊 Final Deliverables:
+✅ A full status report of each module (connected / working / error)
+
+⏱ Latency measurements: Signal → Execution delay
+
+🔁 Confirmation that live trading is enabled (not sandbox mode)
+
+📁 Summary of current live portfolio (real OKX account data)
+
+🛠 Recommendations for further improvements (if any)
+
+Please begin the audit and reply with the full technical report once complete.
+The goal is to ensure production-readiness, complete automation, and maximum reliability.
+
