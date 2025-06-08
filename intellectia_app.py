@@ -68,6 +68,8 @@ def initialize_components():
             st.session_state.okx_data_service,
             st.session_state.advanced_risk_manager
         )
+        # Start the Smart Strategy Selector evaluation cycle
+        st.session_state.smart_strategy_selector.start_evaluation_cycle()
 
 def create_sidebar():
     """Create enhanced sidebar with mode toggle"""
@@ -1017,6 +1019,333 @@ def show_strategy_monitor_page():
     except Exception as e:
         st.error(f"Error loading switch history: {str(e)}")
 
+def show_auto_analyzer_page():
+    """Auto Strategy Analyzer page with real-time market analysis"""
+    st.title("📈 Auto Strategy Analyzer")
+    st.markdown("Real-time market analysis and strategy recommendations based on OKX data")
+    
+    # Analysis controls
+    st.subheader("🔧 Analysis Controls")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        analyze_symbol = st.selectbox("Analyze Symbol:", Config.SUPPORTED_SYMBOLS)
+    
+    with col2:
+        if st.button("🔍 Run Analysis", type="primary"):
+            st.session_state.analyzer_running = True
+    
+    with col3:
+        auto_mode = st.toggle("Auto Analysis", value=True)
+    
+    # Current market analysis
+    if auto_mode or st.session_state.get('analyzer_running', False):
+        try:
+            # Get current strategies for all symbols
+            current_strategies = {}
+            for symbol in Config.SUPPORTED_SYMBOLS:
+                current_strategies[symbol] = st.session_state.autoconfig_engine.get_strategy_for_symbol(symbol)
+            
+            # Generate recommendations
+            recommendations = st.session_state.auto_strategy_analyzer.generate_strategy_recommendations(
+                st.session_state.okx_data_service, current_strategies
+            )
+            
+            st.subheader("🎯 Strategy Recommendations")
+            
+            if recommendations:
+                for rec in recommendations:
+                    with st.expander(f"{rec.symbol} - {rec.recommended_strategy.upper()} (Confidence: {rec.confidence:.1%})"):
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write("**Current Strategy:**", rec.current_strategy or "None")
+                            st.write("**Recommended Strategy:**", rec.recommended_strategy)
+                            st.write("**Switch Recommended:**", "✅" if rec.switch_recommended else "❌")
+                            st.write("**Priority:**", rec.priority.upper())
+                        
+                        with col2:
+                            st.write("**Market Conditions:**")
+                            conditions = rec.market_conditions
+                            st.metric("Volatility", f"{conditions.get('volatility', 0):.3f}")
+                            st.metric("Volume Ratio", f"{conditions.get('volume_ratio', 0):.2f}")
+                            st.metric("Trend Strength", f"{conditions.get('trend_strength', 0):.2f}")
+                            st.metric("Risk Score", f"{conditions.get('risk_score', 0):.2f}")
+                        
+                        st.write("**Reasoning:**", rec.reasoning)
+                        
+                        if rec.switch_recommended:
+                            if st.button(f"Apply Switch for {rec.symbol}", key=f"switch_{rec.symbol}"):
+                                try:
+                                    st.session_state.autoconfig_engine.force_strategy_switch(
+                                        rec.symbol, rec.recommended_strategy, "Manual approval from Auto Analyzer"
+                                    )
+                                    st.success(f"Strategy switched for {rec.symbol}")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Switch failed: {str(e)}")
+            else:
+                st.info("No recommendations available. Ensure market data is accessible.")
+        
+        except Exception as e:
+            st.error(f"Analysis failed: {str(e)}")
+    
+    # Analysis history
+    st.subheader("📊 Analysis History")
+    
+    try:
+        history_symbol = st.selectbox("View History for:", Config.SUPPORTED_SYMBOLS, key="history_symbol")
+        history = st.session_state.auto_strategy_analyzer.get_analysis_history(history_symbol, days=7)
+        
+        if not history.empty:
+            # Display recent analysis
+            st.dataframe(
+                history[['timestamp', 'market_regime', 'recommended_strategy', 'confidence', 'risk_score']].head(10),
+                use_container_width=True
+            )
+            
+            # Analysis trends chart
+            if len(history) > 1:
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=history['timestamp'], 
+                    y=history['confidence'],
+                    mode='lines+markers',
+                    name='Confidence',
+                    line=dict(color='blue')
+                ))
+                fig.add_trace(go.Scatter(
+                    x=history['timestamp'], 
+                    y=history['risk_score'],
+                    mode='lines+markers',
+                    name='Risk Score',
+                    line=dict(color='red'),
+                    yaxis='y2'
+                ))
+                
+                fig.update_layout(
+                    title=f"Analysis Trends for {history_symbol}",
+                    xaxis_title="Time",
+                    yaxis_title="Confidence",
+                    yaxis2=dict(title="Risk Score", overlaying='y', side='right'),
+                    hovermode='x unified'
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No analysis history found for the selected timeframe")
+    
+    except Exception as e:
+        st.error(f"Error loading analysis history: {str(e)}")
+    
+    # Strategy effectiveness report
+    st.subheader("📈 Strategy Effectiveness Report")
+    
+    try:
+        effectiveness = st.session_state.auto_strategy_analyzer.get_strategy_effectiveness_report()
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Performance Statistics**")
+            perf_stats = effectiveness.get('performance_stats', [])
+            if perf_stats:
+                perf_df = pd.DataFrame(perf_stats)
+                st.dataframe(perf_df, use_container_width=True)
+            else:
+                st.info("No performance data available yet")
+        
+        with col2:
+            st.write("**Recommendation Statistics**")
+            rec_stats = effectiveness.get('recommendation_stats', [])
+            if rec_stats:
+                rec_df = pd.DataFrame(rec_stats)
+                st.dataframe(rec_df, use_container_width=True)
+            else:
+                st.info("No recommendation data available yet")
+        
+        st.metric("Total Analyses (30d)", effectiveness.get('total_analyses', 0))
+        
+    except Exception as e:
+        st.error(f"Error loading effectiveness report: {str(e)}")
+
+def show_risk_manager_page():
+    """Advanced Risk Manager page with multi-level TP/SL controls"""
+    st.title("🛡️ Advanced Risk Manager")
+    st.markdown("Multi-level Take Profit/Stop Loss management with ATR-based trailing stops")
+    
+    # Risk management controls
+    st.subheader("⚙️ Risk Management Configuration")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        position_symbol = st.selectbox("Position Symbol:", Config.SUPPORTED_SYMBOLS, key="risk_symbol")
+        entry_price = st.number_input("Entry Price:", min_value=0.01, value=100.0, step=0.01)
+        position_size = st.number_input("Position Size:", min_value=0.01, value=1.0, step=0.01)
+    
+    with col2:
+        st.write("**Take Profit Levels (%)**")
+        tp1 = st.number_input("TP1:", min_value=0.1, max_value=50.0, value=3.0, step=0.1) / 100
+        tp2 = st.number_input("TP2:", min_value=0.1, max_value=50.0, value=6.0, step=0.1) / 100
+        tp3 = st.number_input("TP3:", min_value=0.1, max_value=50.0, value=10.0, step=0.1) / 100
+    
+    with col3:
+        st.write("**Stop Loss Configuration**")
+        sl_pct = st.number_input("Stop Loss (%):", min_value=0.1, max_value=20.0, value=2.0, step=0.1) / 100
+        use_trailing = st.checkbox("Enable Trailing Stop", value=True)
+        atr_multiplier = st.number_input("ATR Multiplier:", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
+    
+    # Create position risk management
+    if st.button("🎯 Create Position Risk", type="primary"):
+        try:
+            position_risk = st.session_state.advanced_risk_manager.create_position_risk(
+                symbol=position_symbol,
+                entry_price=entry_price,
+                position_size=position_size,
+                tp_levels=[tp1, tp2, tp3],
+                sl_percentage=sl_pct,
+                use_trailing_stop=use_trailing
+            )
+            st.success(f"Risk management created for {position_symbol}")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Failed to create position risk: {str(e)}")
+    
+    # Active positions overview
+    st.subheader("📊 Active Positions")
+    
+    try:
+        active_positions = st.session_state.advanced_risk_manager.active_positions
+        
+        if active_positions:
+            for symbol, position in active_positions.items():
+                with st.expander(f"{symbol} - Entry: ${position.entry_price:.4f}"):
+                    # Get current market data for updates
+                    try:
+                        data = st.session_state.okx_data_service.get_historical_data(symbol, '1h', limit=24)
+                        if not data.empty:
+                            current_price = data['close'].iloc[-1]
+                            
+                            # Calculate ATR for trailing stop updates
+                            atr_series = []
+                            for i in range(1, len(data)):
+                                high_low = data['high'].iloc[i] - data['low'].iloc[i]
+                                high_close = abs(data['high'].iloc[i] - data['close'].iloc[i-1])
+                                low_close = abs(data['low'].iloc[i] - data['close'].iloc[i-1])
+                                true_range = max(high_low, high_close, low_close)
+                                atr_series.append(true_range)
+                            
+                            atr_value = np.mean(atr_series[-14:]) if len(atr_series) >= 14 else np.mean(atr_series)
+                            
+                            # Update risk metrics
+                            risk_metrics = st.session_state.advanced_risk_manager.update_position_risk(
+                                symbol, current_price, atr_value
+                            )
+                            
+                            # Display position metrics
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                st.metric("Current Price", f"${current_price:.4f}")
+                                st.metric("Unrealized P&L", f"${risk_metrics.unrealized_pnl:.2f}")
+                                st.metric("P&L %", f"{risk_metrics.unrealized_pnl_pct:.2%}")
+                            
+                            with col2:
+                                st.metric("Stop Loss", f"${position.stop_loss.price:.4f}")
+                                st.metric("Distance to SL", f"{risk_metrics.distance_to_sl:.2%}")
+                                st.metric("Risk/Reward", f"{risk_metrics.risk_reward_ratio:.2f}")
+                            
+                            with col3:
+                                st.metric("ATR Value", f"${risk_metrics.atr_value:.4f}")
+                                st.metric("Volatility Risk", f"{risk_metrics.volatility_risk:.2%}")
+                                st.metric("Position Value", f"${risk_metrics.position_value:.2f}")
+                            
+                            # Take Profit status
+                            st.write("**Take Profit Levels:**")
+                            tp_data = []
+                            for tp in position.take_profits:
+                                status = "✅ Triggered" if tp.triggered else "⏳ Pending"
+                                trigger_time = tp.trigger_time.strftime('%H:%M:%S') if tp.trigger_time else "N/A"
+                                tp_data.append({
+                                    'Level': f"TP{tp.level}",
+                                    'Price': f"${tp.price:.4f}",
+                                    'Percentage': f"{tp.percentage:.1%}",
+                                    'Status': status,
+                                    'Triggered': trigger_time
+                                })
+                            
+                            tp_df = pd.DataFrame(tp_data)
+                            st.dataframe(tp_df, use_container_width=True)
+                            
+                            # Position controls
+                            st.write("**Position Controls:**")
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                if st.button(f"Modify TP/SL", key=f"modify_{symbol}"):
+                                    st.info("TP/SL modification interface would open here")
+                            
+                            with col2:
+                                if st.button(f"Close Position", key=f"close_{symbol}"):
+                                    try:
+                                        pnl = st.session_state.advanced_risk_manager.close_position(
+                                            symbol, current_price, "Manual close"
+                                        )
+                                        st.success(f"Position closed. P&L: ${pnl:.2f}")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Close failed: {str(e)}")
+                            
+                            with col3:
+                                risk_level = "🟢 Low" if risk_metrics.volatility_risk < 0.3 else "🟡 Medium" if risk_metrics.volatility_risk < 0.7 else "🔴 High"
+                                st.write(f"Risk Level: {risk_level}")
+                        
+                        else:
+                            st.warning("No market data available for position update")
+                    
+                    except Exception as e:
+                        st.error(f"Error updating position {symbol}: {str(e)}")
+        else:
+            st.info("No active positions. Create a position above to start risk management.")
+    
+    except Exception as e:
+        st.error(f"Error loading active positions: {str(e)}")
+    
+    # Portfolio risk summary
+    st.subheader("📈 Portfolio Risk Summary")
+    
+    try:
+        portfolio_summary = st.session_state.advanced_risk_manager.get_portfolio_risk_summary()
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Positions", portfolio_summary['total_positions'])
+        with col2:
+            st.metric("Total Unrealized P&L", f"${portfolio_summary['total_unrealized_pnl']:.2f}")
+        with col3:
+            portfolio_risk = abs(portfolio_summary['total_unrealized_pnl']) / 10000 * 100  # Assuming 10k portfolio
+            st.metric("Portfolio Risk", f"{portfolio_risk:.1f}%")
+        with col4:
+            tp_triggered = sum(1 for status in portfolio_summary.get('take_profit_status', {}).values() 
+                             if 'triggered' in status.lower())
+            st.metric("TP Triggered", tp_triggered)
+        
+        # Risk events log
+        st.subheader("📝 Recent Risk Events")
+        risk_events = st.session_state.advanced_risk_manager.get_risk_events(days=7)
+        
+        if not risk_events.empty:
+            st.dataframe(
+                risk_events[['event_time', 'symbol', 'event_type', 'description', 'pnl']].head(10),
+                use_container_width=True
+            )
+        else:
+            st.info("No recent risk events")
+    
+    except Exception as e:
+        st.error(f"Error loading portfolio summary: {str(e)}")
+
 def show_alerts_page():
     """Alert system page (Expert mode only)"""
     st.title("🚨 Smart Alert System")
@@ -1122,6 +1451,12 @@ def main():
         show_strategies_page()
     elif selected_page == "strategy_monitor" and st.session_state.user_mode == 'expert':
         show_strategy_monitor_page()
+    elif selected_page == "visual_builder" and st.session_state.user_mode == 'expert':
+        show_visual_strategy_builder()
+    elif selected_page == "auto_analyzer" and st.session_state.user_mode == 'expert':
+        show_auto_analyzer_page()
+    elif selected_page == "risk_manager" and st.session_state.user_mode == 'expert':
+        show_risk_manager_page()
     elif selected_page == "alerts" and st.session_state.user_mode == 'expert':
         show_alerts_page()
     else:
