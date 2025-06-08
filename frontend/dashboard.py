@@ -26,12 +26,12 @@ class TradingDashboard:
             with col1:
                 st.subheader(f"📊 {symbol} Live Chart")
                 
-                # Get trading engine and market data
-                if 'trading_engine' in st.session_state:
-                    engine = st.session_state.trading_engine
+                # Get market data from OKX API
+                if 'okx_data_service' in st.session_state:
+                    okx_service = st.session_state.okx_data_service
+                    data = okx_service.get_historical_data(symbol, timeframe, 500)
                     
-                    if symbol in engine.market_data and not engine.market_data[symbol].empty:
-                        data = engine.market_data[symbol]
+                    if not data.empty:
                         
                         # Create candlestick chart
                         chart = self.chart_manager.create_candlestick_chart(
@@ -191,12 +191,15 @@ class TradingDashboard:
                 st.subheader("Position Calculator")
                 margin = st.number_input("Margin ($)", value=1000, min_value=100)
                 
-                if symbol in st.session_state.get('trading_engine', {}).get('latest_prices', {}):
-                    current_price = st.session_state.trading_engine.latest_prices[symbol]
-                    position_size = (margin * leverage) / current_price
-                    
-                    st.metric("Position Size", f"{position_size:.6f} {symbol.replace('USDT', '')}")
-                    st.metric("Notional Value", f"${margin * leverage:,.2f}")
+                if 'okx_data_service' in st.session_state:
+                    current_price = st.session_state.okx_data_service.get_current_price(symbol)
+                    if current_price > 0:
+                        position_size = (margin * leverage) / current_price
+                        
+                        st.metric("Position Size", f"{position_size:.6f} {symbol.replace('USDT', '')}")
+                        st.metric("Notional Value", f"${margin * leverage:,.2f}")
+                    else:
+                        st.warning("Unable to fetch current price")
                 
                 # Risk warning
                 st.error(f"⚠️ Risk: With {leverage}x leverage, a {100/leverage:.1f}% move against you will liquidate your position")
@@ -303,24 +306,27 @@ class TradingDashboard:
     def _render_price_display(self, symbol: str):
         """Render current price display"""
         try:
-            if ('trading_engine' in st.session_state and 
-                symbol in st.session_state.trading_engine.latest_prices):
+            if 'okx_data_service' in st.session_state:
+                okx_service = st.session_state.okx_data_service
+                current_price = okx_service.get_current_price(symbol)
                 
-                current_price = st.session_state.trading_engine.latest_prices[symbol]
-                
-                # Get 24hr change (simulated for now)
-                change_24h = np.random.uniform(-5, 5)  # Placeholder
-                
-                st.metric(
-                    f"{symbol} Price",
-                    f"${current_price:.4f}",
-                    delta=f"{change_24h:.2f}%"
-                )
-                
-                # Last update time
-                st.caption(f"Last updated: {datetime.now().strftime('%H:%M:%S')}")
+                if current_price > 0:
+                    # Get 24hr ticker data
+                    ticker_data = okx_service.get_24hr_ticker(symbol)
+                    change_24h = ticker_data.get('price_change_percent', 0)
+                    
+                    st.metric(
+                        f"{symbol} Price",
+                        f"${current_price:.4f}",
+                        delta=f"{change_24h:.2f}%"
+                    )
+                    
+                    # Last update time
+                    st.caption(f"Last updated: {datetime.now().strftime('%H:%M:%S')}")
+                else:
+                    st.warning(f"Unable to fetch price for {symbol}")
             else:
-                st.warning(f"Price data not available for {symbol}")
+                st.warning(f"Data service not available")
                 
         except Exception as e:
             st.error(f"Error displaying price: {e}")
@@ -333,10 +339,14 @@ class TradingDashboard:
                 position = engine.current_positions.get(symbol, 0.0)
                 
                 if position > 0:
-                    if symbol in engine.latest_prices:
-                        current_value = position * engine.latest_prices[symbol]
-                        st.success(f"Position: {position:.6f} {symbol.replace('USDT', '')}")
-                        st.info(f"Value: ${current_value:.2f}")
+                    if 'okx_data_service' in st.session_state:
+                        current_price = st.session_state.okx_data_service.get_current_price(symbol)
+                        if current_price > 0:
+                            current_value = position * current_price
+                            st.success(f"Position: {position:.6f} {symbol.replace('USDT', '')}")
+                            st.info(f"Value: ${current_value:.2f}")
+                        else:
+                            st.success(f"Position: {position:.6f} {symbol.replace('USDT', '')}")
                     else:
                         st.success(f"Position: {position:.6f} {symbol.replace('USDT', '')}")
                 else:

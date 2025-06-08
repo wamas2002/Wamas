@@ -439,7 +439,7 @@ def main():
         st.subheader("📊 Market Regime Detection")
         
         try:
-            market_data = st.session_state.trading_engine.get_market_data(selected_symbol, selected_timeframe)
+            market_data = st.session_state.okx_data_service.get_historical_data(selected_symbol, selected_timeframe, 500)
             
             if not market_data.empty and len(market_data) > 100:
                 # Detect current market regime
@@ -495,7 +495,7 @@ def main():
                                 # Collect price data for selected assets
                                 price_data = {}
                                 for symbol in selected_assets:
-                                    asset_data = st.session_state.trading_engine.get_market_data(symbol, selected_timeframe)
+                                    asset_data = st.session_state.okx_data_service.get_historical_data(symbol, selected_timeframe, lookback_days)
                                     if not asset_data.empty:
                                         price_data[symbol] = asset_data.tail(lookback_days)
                                 
