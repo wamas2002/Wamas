@@ -7,6 +7,7 @@ import threading
 import plotly.graph_objects as go
 import plotly.express as px
 from frontend.dashboard import TradingDashboard
+from frontend.tradingview_charts import TradingViewCharts
 from trading.engine import TradingEngine
 from ai.predictor import AIPredictor
 from ai.lstm_predictor import LSTMPredictor
@@ -76,6 +77,9 @@ def initialize_session_state():
     
     if 'dashboard' not in st.session_state:
         st.session_state.dashboard = TradingDashboard()
+    
+    if 'tradingview_charts' not in st.session_state:
+        st.session_state.tradingview_charts = TradingViewCharts()
     
     if 'logger' not in st.session_state:
         st.session_state.logger = TradingLogger()
@@ -199,7 +203,7 @@ def main():
             st.warning(f"Using {leverage}x leverage increases risk significantly")
     
     # Main dashboard tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
         "📊 Live Trading", 
         "🧠 AI Insights", 
         "📈 Backtesting", 
@@ -207,7 +211,8 @@ def main():
         "📋 Performance",
         "🔬 Advanced ML",
         "⚖️ Risk Analysis",
-        "🗄️ Database"
+        "🗄️ Database",
+        "📈 Live Charts"
     ])
     
     with tab1:
