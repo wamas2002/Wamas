@@ -23,6 +23,7 @@ from ai.smart_alert_system import SmartAlertSystem
 from ai.asset_explorer import AssetExplorer
 from ai.auto_strategy_analyzer import AutoStrategyAnalyzer
 from frontend.visual_strategy_builder import show_visual_strategy_builder
+from frontend.explainable_ai_panel import show_explainable_ai_panel
 from trading.okx_data_service import OKXDataService
 from trading.advanced_risk_manager import AdvancedRiskManager
 from strategies.smart_strategy_selector import SmartStrategySelector
@@ -134,6 +135,9 @@ def initialize_components():
         )
         # Start the Smart Strategy Selector evaluation cycle
         st.session_state.smart_strategy_selector.start_evaluation_cycle()
+    if 'trade_reason_logger' not in st.session_state:
+        from ai.trade_reason_logger import TradeReasonLogger
+        st.session_state.trade_reason_logger = TradeReasonLogger()
 
 def create_sidebar():
     """Create enhanced sidebar with mode toggle"""
@@ -175,6 +179,7 @@ def create_sidebar():
                 "🎨 Strategy Builder": "visual_builder",
                 "📈 Auto Analyzer": "auto_analyzer",
                 "🛡️ Risk Manager": "risk_manager",
+                "🧩 AI Explain": "explainable_ai",
                 "🚨 Alerts": "alerts"
             }
         

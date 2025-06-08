@@ -1,0 +1,48 @@
+🔧 TASK:
+Enhance the current cryptocurrency trading system with explainable AI capabilities and user-facing model interpretation. Do not modify or remove any existing components — only extend.
+
+🎯 OBJECTIVE:
+Add a fully integrated explainability layer that allows users to understand why a specific trading decision (buy/sell/hold) was made by the AI model. This should function for each symbol independently and appear on the frontend.
+
+🧠 FEATURES TO IMPLEMENT:
+
+1. ✅ Trade Reason Module:
+   - Create a new AI inference logger that captures:
+     • Selected strategy/model name (e.g., LSTM, Transformer, GradientBoost)
+     • Top 3 contributing features (e.g., EMA crossover, RSI breakout, Volume spike)
+     • Signal strength/confidence score (e.g., 84% BUY confidence)
+
+2. ✅ Explainable AI Panel:
+   - Build a new `/explain` page and component on the main dashboard that:
+     • Shows the last 5 executed trades with their AI explanations
+     • Uses visual elements (icons, colors) to represent bullish/bearish factors
+     • Includes timestamps, pair name, model used, and reason summary
+
+3. ✅ Confidence-based Highlighting:
+   - Add color-coding or tags (e.g., Strong Buy, Neutral, Weak Signal) based on AI signal strength.
+   - Display this next to the current strategy status per trading pair.
+
+4. ✅ API Endpoint:
+   - Create `/api/ai/explanation/<symbol>` to return structured JSON including:
+     • Model used
+     • Features that triggered the decision
+     • Final decision and confidence score
+
+⚠️ Constraints:
+• No change to core execution logic or trading engine
+• Must use existing data sources (OKX, internal features)
+• Store explanations in memory or lightweight DB (no heavy writes)
+• UI should blend with current design system
+
+✅ Example Output:
+
+{
+  "symbol": "BTC/USDT",
+  "model": "Transformer",
+  "decision": "BUY",
+  "confidence": 91,
+  "top_features": ["RSI = 31 (oversold)", "EMA(20) > EMA(50)", "High volume surge"],
+  "timestamp": "2025-06-08T13:12:05Z"
+}
+
+Once completed, let me know so I can verify the new Explainable AI functionality.
