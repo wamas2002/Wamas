@@ -161,7 +161,7 @@ class AdvancedMLInterface:
             )
     
     def _execute_training(self, symbol: str, data_points: int, horizon: int,
-                         train_ml: bool, train_transformer: bool, train_freqai: bool,
+                         train_ml: bool, train_enhanced_gbm: bool, train_transformer: bool, train_freqai: bool,
                          auto_features: bool, cross_val: bool, hyper_opt: bool):
         """Execute model training"""
         try:
@@ -185,23 +185,40 @@ class AdvancedMLInterface:
             
             results = {}
             
-            # Train ML Pipeline
-            if train_ml and hasattr(st.session_state, 'advanced_ml_pipeline'):
-                status_text.text("Training gradient boosting models...")
-                progress_bar.progress(40)
+            # Train Basic ML Pipeline
+            if train_ml and hasattr(st.session_state, 'comprehensive_ml_pipeline'):
+                status_text.text("Training comprehensive ML models...")
+                progress_bar.progress(25)
                 
-                ml_results = st.session_state.advanced_ml_pipeline.train_all_models(data)
+                ml_results = st.session_state.comprehensive_ml_pipeline.train_all_models(data)
                 results['ml_pipeline'] = ml_results
                 
                 if ml_results.get('success'):
-                    st.success("✅ Gradient boosting models trained successfully!")
+                    st.success("✅ Comprehensive ML models trained successfully!")
                 else:
                     st.error(f"❌ ML training failed: {ml_results.get('error', 'Unknown error')}")
+            
+            # Train Enhanced Gradient Boosting
+            if train_enhanced_gbm and hasattr(st.session_state, 'comprehensive_ml_pipeline'):
+                status_text.text("Training enhanced gradient boosting ensemble...")
+                progress_bar.progress(35)
+                
+                # Create a separate instance for enhanced training
+                from ai.comprehensive_ml_pipeline import ComprehensiveMLPipeline
+                enhanced_pipeline = ComprehensiveMLPipeline(prediction_horizon=horizon)
+                
+                gbm_results = enhanced_pipeline.train_all_models(data)
+                results['enhanced_gbm'] = gbm_results
+                
+                if gbm_results.get('success'):
+                    st.success("✅ Enhanced gradient boosting ensemble trained successfully!")
+                else:
+                    st.error(f"❌ Enhanced GBM training failed: {gbm_results.get('error', 'Unknown error')}")
             
             # Train Transformer
             if train_transformer and hasattr(st.session_state, 'transformer_ensemble'):
                 status_text.text("Training transformer ensemble...")
-                progress_bar.progress(60)
+                progress_bar.progress(50)
                 
                 transformer_results = st.session_state.transformer_ensemble.train(data, epochs=30)
                 results['transformer'] = transformer_results
@@ -214,7 +231,7 @@ class AdvancedMLInterface:
             # Train FreqAI Pipeline
             if train_freqai and hasattr(st.session_state, 'freqai_pipeline'):
                 status_text.text("Training complete FreqAI pipeline...")
-                progress_bar.progress(80)
+                progress_bar.progress(70)
                 
                 freqai_results = st.session_state.freqai_pipeline.train_all_models(data)
                 results['freqai'] = freqai_results

@@ -12,20 +12,23 @@ warnings.filterwarnings('ignore')
 try:
     import lightgbm as lgb
     LIGHTGBM_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError) as e:
     LIGHTGBM_AVAILABLE = False
+    lgb = None
 
 try:
     import xgboost as xgb
     XGBOOST_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError) as e:
     XGBOOST_AVAILABLE = False
+    xgb = None
 
 try:
     import catboost as cb
     CATBOOST_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError) as e:
     CATBOOST_AVAILABLE = False
+    cb = None
 
 class EnhancedGradientBoostingPipeline:
     """Enhanced gradient boosting pipeline with LightGBM, XGBoost, and CatBoost"""
