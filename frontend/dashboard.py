@@ -571,26 +571,21 @@ class TradingDashboard:
     def _render_market_regime(self, symbol: str):
         """Render market regime detection"""
         try:
-            if ('trading_engine' in st.session_state and 
-                symbol in st.session_state.trading_engine.market_data):
+            if 'regime_detector' in st.session_state and 'okx_data_service' in st.session_state:
+                okx_service = st.session_state.okx_data_service
+                data = okx_service.get_historical_data(symbol, '1h', 500)
                 
-                # Simulate market regime detection
-                regimes = ['trending', 'ranging', 'volatile', 'stable']
-                current_regime = np.random.choice(regimes)  # Placeholder
-                
-                st.metric("Current Market Regime", current_regime.upper())
-                
-                # Regime characteristics
-                regime_info = {
-                    'trending': "Strong directional movement detected",
-                    'ranging': "Price moving within defined range",
-                    'volatile': "High volatility and uncertainty",
-                    'stable': "Low volatility, predictable movements"
-                }
-                
-                st.info(regime_info.get(current_regime, "Unknown regime characteristics"))
+                if not data.empty:
+                    regime_detector = st.session_state.regime_detector
+                    regime_result = regime_detector.detect_regime(data)
+                    
+                    st.metric("Current Market Regime", regime_result['regime'].upper())
+                    st.metric("Confidence", f"{regime_result['confidence']:.1%}")
+                    st.info(regime_result['description'])
+                else:
+                    st.warning("Unable to fetch market data for regime detection")
             else:
-                st.warning("No market data available for regime detection")
+                st.warning("Regime detection not available")
                 
         except Exception as e:
             st.error(f"Error rendering market regime: {e}")
@@ -598,21 +593,23 @@ class TradingDashboard:
     def _train_ai_models(self, symbol: str):
         """Train AI models"""
         try:
-            if ('trading_engine' in st.session_state and 
-                symbol in st.session_state.trading_engine.market_data):
+            if 'okx_data_service' in st.session_state and 'ai_predictor' in st.session_state:
+                okx_service = st.session_state.okx_data_service
+                data = okx_service.get_historical_data(symbol, '1h', 1000)
                 
-                with st.spinner("Training AI models..."):
-                    data = st.session_state.trading_engine.market_data[symbol]
-                    predictor = st.session_state.ai_predictor
-                    
-                    results = predictor.train_models(data)
-                    
-                    if 'error' not in results:
-                        st.success("AI models trained successfully!")
-                    else:
-                        st.error(f"Training failed: {results['error']}")
+                if not data.empty:
+                    with st.spinner("Training AI models..."):
+                        predictor = st.session_state.ai_predictor
+                        results = predictor.train_models(data)
+                        
+                        if 'error' not in results:
+                            st.success("AI models trained successfully!")
+                        else:
+                            st.error(f"Training failed: {results['error']}")
+                else:
+                    st.error("Unable to fetch market data for training")
             else:
-                st.error("No market data available for training")
+                st.error("AI components not available")
                 
         except Exception as e:
             st.error(f"Error training AI models: {e}")
