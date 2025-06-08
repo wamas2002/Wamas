@@ -620,12 +620,11 @@ def show_advanced_ml_page():
     st.subheader("📊 Model Performance Overview")
     
     # Initialize ML components if needed
-    from ai.comprehensive_ml_pipeline import TradingMLPipeline
-    from ai.lstm_predictor import AdvancedLSTMPredictor
-    from ai.enhanced_gradient_boosting import EnhancedGradientBoosting
+    from ai.advanced_ml_pipeline import AdvancedMLPipeline
+    from ai.enhanced_gradient_boosting import EnhancedGradientBoostingPipeline
     
     if 'ml_pipeline' not in st.session_state:
-        st.session_state.ml_pipeline = TradingMLPipeline()
+        st.session_state.ml_pipeline = AdvancedMLPipeline()
     
     # Model selection
     col1, col2 = st.columns(2)
@@ -642,101 +641,107 @@ def show_advanced_ml_page():
                 data = st.session_state.okx_data_service.get_historical_data(selected_symbol, '1h', limit=200)
                 
                 if not data.empty:
-                    # Get prediction
-                    prediction = st.session_state.ml_pipeline.predict(selected_symbol, data.tail(1))
+                    # Train and get predictions from ML pipeline
+                    training_results = st.session_state.ml_pipeline.train_all_models(data)
                     
-                    # Display prediction results
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        signal_color = "🟢" if prediction['signal'] > 0.6 else "🔴" if prediction['signal'] < 0.4 else "🟡"
-                        st.metric("ML Signal", f"{signal_color} {prediction['signal']:.3f}")
-                    
-                    with col2:
-                        st.metric("Confidence", f"{prediction['confidence']:.1%}")
-                    
-                    with col3:
-                        direction = "BULLISH" if prediction['signal'] > 0.6 else "BEARISH" if prediction['signal'] < 0.4 else "NEUTRAL"
-                        st.metric("Direction", direction)
-                    
-                    with col4:
-                        st.metric("Model Accuracy", f"{prediction.get('accuracy', 0.65):.1%}")
-                    
-                    # Feature importance visualization
-                    st.subheader("🎯 Feature Importance Analysis")
-                    
-                    # Simulated feature importance for visualization
-                    feature_importance = {
-                        'Price Momentum': prediction['signal'] * 0.25,
-                        'Volume Profile': prediction['confidence'] * 0.20,
-                        'Technical Indicators': 0.18,
-                        'Market Sentiment': 0.15,
-                        'Volatility Patterns': 0.12,
-                        'Support/Resistance': 0.10
-                    }
-                    
-                    importance_df = pd.DataFrame(
-                        list(feature_importance.items()), 
-                        columns=['Feature', 'Importance']
-                    )
-                    
-                    fig = px.bar(
-                        importance_df, 
-                        x='Importance', 
-                        y='Feature', 
-                        orientation='h',
-                        title="Feature Importance in ML Prediction"
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Model ensemble breakdown
-                    st.subheader("🔧 Model Ensemble Breakdown")
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        ensemble_weights = {
-                            'LSTM': 0.35,
-                            'XGBoost': 0.30,
-                            'LightGBM': 0.25,
-                            'Random Forest': 0.10
-                        }
+                    if training_results and len(training_results) > 0:
+                        # Get ensemble prediction
+                        ensemble_prediction = st.session_state.ml_pipeline.predict_ensemble(data)
                         
-                        weights_df = pd.DataFrame(
-                            list(ensemble_weights.items()),
-                            columns=['Model', 'Weight']
-                        )
+                        # Display prediction results
+                        col1, col2, col3, col4 = st.columns(4)
                         
-                        fig = px.pie(
-                            weights_df, 
-                            values='Weight', 
-                            names='Model',
-                            title="Ensemble Model Weights"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                    
-                    with col2:
-                        # Individual model predictions
-                        model_predictions = {
-                            'LSTM': prediction['signal'] + np.random.normal(0, 0.05),
-                            'XGBoost': prediction['signal'] + np.random.normal(0, 0.03),
-                            'LightGBM': prediction['signal'] + np.random.normal(0, 0.04),
-                            'Random Forest': prediction['signal'] + np.random.normal(0, 0.06)
-                        }
+                        signal_strength = ensemble_prediction.get('ensemble_prediction', 0.5)
+                        confidence = ensemble_prediction.get('ensemble_confidence', 0.65)
                         
-                        pred_df = pd.DataFrame(
-                            list(model_predictions.items()),
-                            columns=['Model', 'Prediction']
-                        )
-                        pred_df['Prediction'] = pred_df['Prediction'].clip(0, 1)
+                        with col1:
+                            signal_color = "🟢" if signal_strength > 0.6 else "🔴" if signal_strength < 0.4 else "🟡"
+                            st.metric("ML Signal", f"{signal_color} {signal_strength:.3f}")
                         
-                        fig = px.bar(
-                            pred_df,
-                            x='Model',
-                            y='Prediction',
-                            title="Individual Model Predictions"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                        with col2:
+                            st.metric("Confidence", f"{confidence:.1%}")
+                        
+                        with col3:
+                            direction = "BULLISH" if signal_strength > 0.6 else "BEARISH" if signal_strength < 0.4 else "NEUTRAL"
+                            st.metric("Direction", direction)
+                        
+                        with col4:
+                            avg_score = np.mean([result.get('test_score', 0.65) for result in training_results.values()])
+                            st.metric("Model Accuracy", f"{avg_score:.1%}")
+                        
+                        # Feature importance visualization
+                        st.subheader("🎯 Feature Importance Analysis")
+                        
+                        # Get feature importance from trained models
+                        feature_summary = st.session_state.ml_pipeline.get_feature_importance_summary()
+                        if feature_summary and 'top_features' in feature_summary:
+                            importance_data = feature_summary['top_features'][:6]  # Top 6 features
+                            importance_df = pd.DataFrame(importance_data)
+                            
+                            fig = px.bar(
+                                importance_df, 
+                                x='importance', 
+                                y='feature', 
+                                orientation='h',
+                                title="Feature Importance in ML Prediction"
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Model ensemble breakdown
+                        st.subheader("🔧 Model Ensemble Breakdown")
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            # Show model weights based on performance
+                            model_scores = {name: result.get('test_score', 0) 
+                                          for name, result in training_results.items()}
+                            total_score = sum(model_scores.values())
+                            
+                            if total_score > 0:
+                                ensemble_weights = {name: score/total_score 
+                                                  for name, score in model_scores.items()}
+                            else:
+                                ensemble_weights = {name: 1/len(model_scores) 
+                                                  for name in model_scores.keys()}
+                            
+                            weights_df = pd.DataFrame(
+                                list(ensemble_weights.items()),
+                                columns=['Model', 'Weight']
+                            )
+                            
+                            fig = px.pie(
+                                weights_df, 
+                                values='Weight', 
+                                names='Model',
+                                title="Ensemble Model Weights"
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+                        
+                        with col2:
+                            # Individual model predictions
+                            model_predictions = {}
+                            for name, result in training_results.items():
+                                pred = result.get('predictions', [0.5])
+                                if len(pred) > 0:
+                                    model_predictions[name] = pred[-1]  # Latest prediction
+                                else:
+                                    model_predictions[name] = 0.5
+                            
+                            pred_df = pd.DataFrame(
+                                list(model_predictions.items()),
+                                columns=['Model', 'Prediction']
+                            )
+                            
+                            fig = px.bar(
+                                pred_df,
+                                x='Model',
+                                y='Prediction',
+                                title="Individual Model Predictions"
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.warning("Training models with current data...")
                 
                 else:
                     st.error("No market data available for analysis")
