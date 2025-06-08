@@ -381,9 +381,31 @@ class AutoConfigEngine:
         conn.close()
         return results
     
-    def get_strategy_for_symbol(self, symbol: str) -> Optional[str]:
+    def get_strategy_for_symbol(self, symbol: str) -> str:
         """Get currently active strategy for symbol"""
-        return self.active_strategies.get(symbol)
+        if symbol not in self.active_strategies:
+            # Initialize strategy for new symbol using live OKX data
+            try:
+                from trading.okx_data_service import OKXDataService
+                okx_service = OKXDataService()
+                data = okx_service.get_historical_data(symbol, '1h', limit=100)
+                
+                if not data.empty:
+                    # Analyze market conditions and select initial strategy
+                    result = self.analyze_and_select_strategy(symbol, data)
+                    self.active_strategies[symbol] = result['recommended_strategy']
+                    print(f"Strategy initialized for {symbol}: {result['recommended_strategy']} (market-based)")
+                else:
+                    # Use grid strategy as fallback for new symbols
+                    self.active_strategies[symbol] = 'grid'
+                    print(f"Strategy initialized for {symbol}: grid (fallback)")
+                    
+            except Exception as e:
+                # Default to grid strategy for new symbols
+                self.active_strategies[symbol] = 'grid'
+                print(f"Strategy initialized for {symbol}: grid (default)")
+        
+        return self.active_strategies[symbol]
     
     def generate_strategy_signal(self, symbol: str, data: pd.DataFrame, current_price: float) -> Dict[str, Any]:
         """Generate trading signal using the active strategy for symbol"""
