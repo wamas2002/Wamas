@@ -13,6 +13,7 @@ from ai.predictor import AIPredictor
 from utils.logger import TradingLogger
 from utils.performance import PerformanceTracker
 from config import Config
+from database.services import DatabaseService
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -25,6 +26,13 @@ class TradingEngine:
         self.risk_manager = RiskManager()
         self.logger = TradingLogger()
         self.performance_tracker = PerformanceTracker()
+        
+        # Database integration
+        try:
+            self.db_service = DatabaseService()
+        except Exception as e:
+            self.logger.log_error(f"Database connection failed: {e}")
+            self.db_service = None
         
         # Strategies
         self.strategies = {
@@ -43,10 +51,11 @@ class TradingEngine:
         self.cash_balance = 10000.0
         self.paper_trading = True
         
-        # Performance tracking
+        # Performance tracking with database persistence
         self.trade_history = []
         self.portfolio_history = []
         self.signals_history = []
+        self.market_data = {}
         
         # Threading
         self.trading_thread = None
@@ -146,7 +155,7 @@ class TradingEngine:
         print("Trading stopped")
     
     def _data_update_loop(self, symbol: str, timeframe: str):
-        """Background thread for updating market data"""
+        """Background thread for updating market data with database persistence"""
         while self.is_running:
             try:
                 # Update market data
@@ -154,14 +163,30 @@ class TradingEngine:
                 if not new_data.empty:
                     self.market_data[symbol] = new_data
                     self.latest_prices[symbol] = new_data['close'].iloc[-1]
+                    
+                    # Store market data in database
+                    if self.db_service:
+                        try:
+                            self.db_service.store_market_data(symbol, timeframe, new_data.tail(10))
+                        except Exception as db_error:
+                            self.logger.log_error(f"Database storage failed: {db_error}")
                 
-                # Update portfolio value
+                # Update portfolio value and store portfolio snapshot
                 self._update_portfolio_value()
+                if self.db_service:
+                    try:
+                        self.db_service.store_portfolio_snapshot(
+                            total_value=self.portfolio_value,
+                            cash_balance=self.cash_balance,
+                            positions_value=self.portfolio_value - self.cash_balance
+                        )
+                    except Exception as db_error:
+                        self.logger.log_error(f"Portfolio storage failed: {db_error}")
                 
                 time.sleep(Config.DATA_PARAMS['update_interval'])
                 
             except Exception as e:
-                print(f"Error in data update loop: {e}")
+                self.logger.log_error(f"Error in data update loop: {e}")
                 time.sleep(60)  # Wait longer on error
     
     def _trading_loop(self, symbol: str, strategy_name: str, timeframe: str):
@@ -227,7 +252,7 @@ class TradingEngine:
                     self._prev_rl_state = rl_state
                     self._prev_rl_action = rl_action
                 
-                # Log signal
+                # Log signal and store in database
                 self.logger.log_signal(symbol, final_signal)
                 self.signals_history.append({
                     'timestamp': current_time,
@@ -236,6 +261,22 @@ class TradingEngine:
                     'ai_predictions': ai_predictions,
                     'rl_action': rl_signal
                 })
+                
+                # Store signal in database
+                if self.db_service and symbol in self.latest_prices:
+                    try:
+                        self.db_service.store_trading_signal(
+                            symbol=symbol,
+                            signal_type=final_signal['action'],
+                            strength=final_signal['strength'],
+                            confidence=final_signal['confidence'],
+                            strategy_name=strategy_name,
+                            price=self.latest_prices[symbol],
+                            market_regime=final_signal.get('market_regime', 'unknown'),
+                            indicators=final_signal.get('indicators', {})
+                        )
+                    except Exception as db_error:
+                        self.logger.log_error(f"Signal storage failed: {db_error}")
                 
                 last_signal_time = current_time
                 
@@ -369,6 +410,20 @@ class TradingEngine:
                         self.trade_history.append(trade_record)
                         self.logger.log_trade(trade_record)
                         
+                        # Store trade in database
+                        if self.db_service:
+                            try:
+                                self.db_service.store_trade(
+                                    symbol=symbol,
+                                    trade_type='BUY',
+                                    quantity=position_size,
+                                    entry_price=current_price,
+                                    strategy_used='paper_trading',
+                                    is_paper_trade=True
+                                )
+                            except Exception as db_error:
+                                self.logger.log_error(f"Trade storage failed: {db_error}")
+                        
                         print(f"BUY {position_size:.6f} {symbol} at {current_price:.2f}")
                 else:
                     print(f"Insufficient cash for BUY order: {self.cash_balance:.2f} < {trade_value:.2f}")
@@ -396,6 +451,21 @@ class TradingEngine:
                     
                     self.trade_history.append(trade_record)
                     self.logger.log_trade(trade_record)
+                    
+                    # Store trade in database
+                    if self.db_service:
+                        try:
+                            self.db_service.store_trade(
+                                symbol=symbol,
+                                side='SELL',
+                                quantity=sell_quantity,
+                                price=current_price,
+                                value=trade_value,
+                                strategy_name='paper_trading',
+                                signal_strength=strength
+                            )
+                        except Exception as db_error:
+                            self.logger.log_error(f"Trade storage failed: {db_error}")
                     
                     print(f"SELL {sell_quantity:.6f} {symbol} at {current_price:.2f}")
             
