@@ -1,0 +1,64 @@
+Create a full-stack AI-powered cryptocurrency trading system using Python. The system must be fully compatible with Replit and should not rely on TA-Lib.
+
+✅ Include the following key components and features:
+
+---
+
+🧠 **AI & ML Engine**
+- Ensemble strategy combining LSTM, Prophet, and Transformer models
+- Confidence-based signal weighting with dynamic adaptation
+- Reinforcement Learning strategy (Q-learning with epsilon-greedy policy)
+- Integrated feature engineering (RSI, MACD, Bollinger Bands, etc.)
+- Market regime detection (trending/stable/volatile/sideways)
+- Volatility-adjusted position sizing
+- Self-tuning weights based on performance metrics
+
+---
+
+📊 **FreqAI-Level ML Capabilities**
+- Auto feature generation (`datahandler`)
+- Compatible with LightGBM, XGBoost, CatBoost
+- Walk-forward and k-fold validation modes
+- Custom target building (future price, return, label)
+- ML strategy integration inside live execution loop
+- Auto hyperparameter tuning
+
+---
+
+📉 **Advanced Trading Features**
+- OKX Spot & Futures Trading via API (including leverage 1x–100x)
+- Risk management (stop-loss, take-profit, position limits)
+- Symbol switching (BTCUSDT, ETHUSDT, ADAUSDT, BNBUSDT...)
+- Full market data ingestion (OHLCV + real-time price via WebSocket)
+- Trade logging: timestamps, entry/exit, strategy used, profit/loss
+- Error handling for insufficient balance, invalid orders, API issues
+
+---
+
+📈 **Professional Visualization & UI**
+- Streamlit GUI Dashboard (fully styled)
+- Live TradingView chart integration (symbol/timeframe selector)
+- Tabs: [Live Trading] [Backtesting] [AI Insights] [Futures Mode]
+- Strategy selector with reinforcement learning toggle
+- Portfolio performance graph
+- Real-time log viewer + AI prediction display
+
+---
+
+🛠️ **System Structure**
+- `ai/predictor.py` → AI models and ensemble logic  
+- `strategies/` → Contains base strategy, ensemble, RL, ML models  
+- `trading/engine.py` → Handles trading logic and OKX integration  
+- `frontend/` → Streamlit UI components  
+- `requirements.txt` → Uses `pandas_ta` instead of `ta-lib`  
+- `utils/` → Backtesting, validation, logs, performance tracker
+
+---
+
+🎯 **Deployment Requirements**
+- Must deploy fully on [Replit](https://replit.com/)
+- No TA-Lib dependency
+- Include installation of all needed packages via `requirements.txt`
+- Interface must be in English
+
+Final output should be a zipped folder ready for download and launch.
