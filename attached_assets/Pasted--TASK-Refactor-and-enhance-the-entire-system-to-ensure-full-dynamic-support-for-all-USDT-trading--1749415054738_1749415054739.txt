@@ -1,0 +1,54 @@
+🔧 TASK:
+Refactor and enhance the entire system to ensure full dynamic support for all USDT trading pairs available on OKX, across both Spot and Futures markets. All models, dashboards, and decision systems must automatically adapt to any USDT pair without requiring hardcoded symbols.
+
+📊 OBJECTIVES:
+
+1. ✅ Universal Market Coverage:
+   • Automatically fetch full list of all Spot and Futures symbols ending with `USDT`
+   • Ensure symbol discovery updates daily (or via manual refresh)
+   • Maintain separate symbol lists: `/markets/spot` and `/markets/futures`
+
+2. ✅ Full System Compatibility:
+   • Ensure every core module (AI models, technical indicators, risk engine, backtester, signal generators, dashboards) works with **any pair dynamically**
+   • Eliminate all hardcoded symbol references
+   • Use `symbol_id` abstraction across all systems
+
+3. ✅ Dynamic AI & Strategy Execution:
+   • Train and predict using AI models per symbol
+   • Auto-config strategy per pair based on volume, volatility, and spread
+   • Futures-specific handling:
+     - Leverage detection and margin type
+     - Separate TP/SL logic from Spot logic
+
+4. ✅ Multi-Market Architecture:
+   • `/spot-engine/`: Handles real-time trading logic for spot pairs
+   • `/futures-engine/`: Dedicated futures logic with funding rate handling
+   • Add market tag: `market_type = "spot" | "futures"` in all logs and executions
+
+5. ✅ UI and Monitoring Updates:
+   • Update dropdowns and dashboards to support all USDT pairs
+   • Allow filtering by market type, volume, volatility
+   • Visual performance by pair on portfolio and analytics pages
+
+6. ✅ Risk Management Enhancements:
+   • Different position sizing logic for Futures (e.g., based on leverage)
+   • Distinct drawdown limits for Spot vs. Futures
+   • Monitor funding rates and exposure for futures contracts
+
+📘 API ENDPOINTS:
+• `GET /api/markets/spot` → All available USDT Spot pairs
+• `GET /api/markets/futures` → All available USDT Futures pairs
+• `POST /api/trade/execute` → Accepts symbol and market type
+• `GET /api/portfolio/overview?symbol=ADA-USDT&market=futures`
+
+⚙️ CONSTRAINTS:
+• All components must inherit support for any USDT pair automatically
+• Do not duplicate modules for each symbol — reuse with parameter injection
+• Maintain separation between Spot and Futures logic where needed
+• Ensure real-time streaming, analytics, AI training, and trade execution all use dynamic pair discovery
+
+✅ FINAL OUTPUT EXPECTATION:
+• Fully dynamic trading system supporting 100% of OKX’s USDT market (Spot & Futures)
+• All core features work per symbol: AI, strategies, analytics, execution
+• No need to hardcode or manually add new pairs — system adapts
+• Dashboard supports global portfolio view and per-market analysis

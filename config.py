@@ -16,10 +16,18 @@ class Config:
     OKX_SANDBOX = os.getenv("OKX_SANDBOX", "true").lower() == "true"
     
     # Supported trading pairs
-    SUPPORTED_SYMBOLS = [
-        "BTCUSDT", "ETHUSDT", "ADAUSDT", "BNBUSDT", 
-        "DOTUSDT", "LINKUSDT", "LTCUSDT", "XRPUSDT"
-    ]
+    # Dynamic symbol configuration - will be populated by DynamicSymbolManager
+    SUPPORTED_SYMBOLS = []  # Now populated dynamically
+    
+    # Symbol discovery settings
+    SYMBOL_UPDATE_INTERVAL = 3600  # 1 hour
+    MIN_VOLUME_THRESHOLD = 100000  # Minimum 24h volume for auto-inclusion
+    MAX_SYMBOLS_PER_MARKET = 50  # Maximum symbols to trade per market type
+    
+    # Market type configuration
+    ENABLE_SPOT_TRADING = True
+    ENABLE_FUTURES_TRADING = True
+    DEFAULT_MARKET_TYPE = "spot"
     
     # Technical Analysis Parameters
     TA_PARAMS = {

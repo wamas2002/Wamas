@@ -1620,6 +1620,9 @@ def main():
         show_advisor_page()
     elif selected_page == "charts":
         show_charts_page()
+    elif selected_page == "multi_market" and st.session_state.user_mode == 'expert':
+        from frontend.multi_market_dashboard import show_multi_market_dashboard
+        show_multi_market_dashboard()
     elif selected_page == "feedback_engine" and st.session_state.user_mode == 'expert':
         from frontend.real_time_feedback_engine import show_real_time_feedback_engine
         st.title("🔔 Real-Time Feedback Engine")
