@@ -91,14 +91,10 @@ def initialize_session_state():
     if 'trading_active' not in st.session_state:
         st.session_state.trading_active = False
     
-    if 'market_data' not in st.session_state:
-        st.session_state.market_data = {}
-    
-    if 'predictions' not in st.session_state:
-        st.session_state.predictions = {}
-    
-    if 'portfolio_history' not in st.session_state:
-        st.session_state.portfolio_history = []
+    # Clear any cached market data to force live API calls
+    st.session_state.market_data = {}
+    st.session_state.predictions = {}
+    st.session_state.portfolio_history = []
     
     # API Configuration
     if 'okx_api_configured' not in st.session_state:

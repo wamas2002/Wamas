@@ -55,7 +55,7 @@ class TradingEngine:
         self.trade_history = []
         self.portfolio_history = []
         self.signals_history = []
-        self.market_data = {}
+        self.market_data = {}  # Force fresh OKX API calls only
         
         # Threading
         self.trading_thread = None

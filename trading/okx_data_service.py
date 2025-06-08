@@ -22,10 +22,10 @@ class OKXDataService:
             sandbox=False
         )
         
-        # Data cache
+        # Disable caching to force live data
         self.data_cache = {}
         self.cache_timestamps = {}
-        self.cache_duration = 300  # 5 minutes
+        self.cache_duration = 0  # No caching - always fetch fresh data
         
         # Symbol mapping (Binance format -> OKX format)
         self.symbol_map = {
