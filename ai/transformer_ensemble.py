@@ -118,6 +118,7 @@ class TransformerEnsemble:
         self.feature_scaler = StandardScaler()
         self.transformer_blocks = []
         self.output_layer = None
+        self.input_projection = None  # Dynamic projection layer
         self.is_trained = False
         
         # Initialize transformer blocks
@@ -224,6 +225,10 @@ class TransformerEnsemble:
             
             print(f"Training data shape: {X.shape}")
             
+            # Initialize input projection layer to map features to d_model
+            input_features = X.shape[2]
+            self.input_projection = np.random.normal(0, 0.1, (input_features, self.d_model))
+            
             # Initialize output layer
             self.output_layer = np.random.normal(0, 0.1, (self.d_model, 1))
             
@@ -238,8 +243,11 @@ class TransformerEnsemble:
                     # Forward pass
                     x_input = X[i:i+1]  # Shape: (1, seq_len, features)
                     
+                    # Project input to d_model dimensions
+                    projected_input = np.dot(x_input, self.input_projection)  # Shape: (1, seq_len, d_model)
+                    
                     # Pass through transformer blocks
-                    hidden = x_input
+                    hidden = projected_input
                     attention_maps = []
                     
                     for transformer_block in self.transformer_blocks:
@@ -304,8 +312,11 @@ class TransformerEnsemble:
             # Get last sequence
             x_input = feature_matrix_scaled[-self.sequence_length:].reshape(1, self.sequence_length, -1)
             
+            # Project input to d_model dimensions
+            projected_input = np.dot(x_input, self.input_projection)
+            
             # Forward pass through transformer
-            hidden = x_input
+            hidden = projected_input
             attention_maps = []
             
             for transformer_block in self.transformer_blocks:
