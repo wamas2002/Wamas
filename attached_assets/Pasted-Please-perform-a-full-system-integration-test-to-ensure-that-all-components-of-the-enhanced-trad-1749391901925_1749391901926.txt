@@ -1,0 +1,45 @@
+Please perform a **full-system integration test** to ensure that all components of the enhanced trading system are functioning together correctly, especially after the successful integration of the advanced ML pipeline with 158 features.
+
+✅ Test Objectives:
+
+1. **Machine Learning Pipeline:**
+   - Verify all 158 features are generated correctly from real OKX data.
+   - Confirm training works with both basic and enhanced ensemble models (GradientBoosting, RandomForest, etc.).
+   - Test prediction flow: real-time data → feature engineering → model → prediction.
+
+2. **Trading Engine Integration:**
+   - Ensure trading engine receives AI signals and acts on them with proper position sizing and execution.
+   - Confirm bidirectional data flow between prediction outputs and order placement logic.
+   - Validate that predictions result in trades if conditions are met.
+
+3. **Live Data Feeds:**
+   - Ensure real-time market data from OKX is correctly used across:
+     • ML training
+     • Signal generation
+     • Risk management
+     • Portfolio tracking
+
+4. **Analytics & Dashboards:**
+   - Confirm analytics pages (e.g. `/analytics`, `/ai-dashboard`, `/performance-report`) display results from the updated models and trading logs.
+   - Ensure feature importance, ensemble charts, and model insights render correctly without errors.
+
+5. **Risk Management System:**
+   - Verify integration with new ML outputs (e.g., confidence thresholds, volatility-adjusted sizing).
+   - Test drawdown controls, circuit breakers, and emergency stop functionality.
+
+6. **AI Model Control Interface:**
+   - Validate model retraining scheduler works (24–48 hour cycle).
+   - Test switching between ML strategies in UI and that changes affect trading logic.
+
+7. **System Cohesion:**
+   - Confirm all components (ML engine, trading bot, dashboards, analytics, portfolio) work in sync.
+   - No outdated data or mock placeholders should exist.
+   - Logs should show coordinated execution of signals, trades, and metrics.
+
+📌 Final Deliverables:
+- ✅ Full integration test results
+- ✅ Confirmation that live predictions are powering real trades
+- ✅ No errors in model rendering, analytics, or trading loop
+- ✅ Performance benchmarks post-enhancement
+
+Please verify, fix any integration issues, and provide a summary report of full system health and inter-component synchronization.

@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Dict, List, Any, Optional, Tuple
 from .advanced_ml_pipeline import AdvancedMLPipeline
 from .transformer_ensemble import TransformerEnsemble
-from .lstm_predictor import LSTMPredictor
+from .lstm_predictor import AdvancedLSTMPredictor
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -13,7 +13,7 @@ class FreqAILevelPipeline:
     def __init__(self):
         self.ml_pipeline = AdvancedMLPipeline(prediction_horizon=1)
         self.transformer_ensemble = TransformerEnsemble(sequence_length=60)
-        self.lstm_predictor = LSTMPredictor(lookback_window=60)
+        self.lstm_predictor = AdvancedLSTMPredictor(lookback_window=60)
         
         self.ensemble_weights = {
             'ml_pipeline': 0.4,
