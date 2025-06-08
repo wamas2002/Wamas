@@ -15,6 +15,8 @@ from trading.risk_manager_advanced import AdvancedRiskManager
 from trading.backtesting_engine import BacktestingEngine, WalkForwardAnalyzer
 from utils.logger import TradingLogger
 from config import Config
+from database.services import DatabaseService
+from database.models import DatabaseManager
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -54,6 +56,13 @@ def initialize_session_state():
     
     if 'walk_forward_analyzer' not in st.session_state:
         st.session_state.walk_forward_analyzer = WalkForwardAnalyzer()
+    
+    if 'db_service' not in st.session_state:
+        try:
+            st.session_state.db_service = DatabaseService()
+        except Exception as e:
+            st.session_state.db_service = None
+            st.session_state.db_error = str(e)
     
     if 'dashboard' not in st.session_state:
         st.session_state.dashboard = TradingDashboard()
