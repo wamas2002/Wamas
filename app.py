@@ -492,30 +492,92 @@ def main():
             st.error(f"Error in Advanced ML tab: {e}")
     
     with tab7:
+        st.header("Portfolio Analytics")
         
-        col3, col4 = st.columns(2)
-        
-        with col3:
-            st.write("**Q-Learning Performance**")
-            rl_stats = st.session_state.rl_agent.get_statistics()
+        if st.session_state.market_data is not None and len(st.session_state.market_data) > 0:
+            col1, col2 = st.columns(2)
             
-            if rl_stats:
-                st.metric("States Explored", rl_stats.get('total_states_explored', 0))
-                st.metric("Total Experiences", rl_stats.get('total_experiences', 0))
-                st.metric("Current Epsilon", f"{rl_stats.get('current_epsilon', 0):.3f}")
-                st.metric("Recent Avg Reward", f"{rl_stats.get('recent_avg_reward', 0):.4f}")
-        
-        with col4:
-            st.write("**Action Distribution**")
-            action_dist = rl_stats.get('action_distribution', {})
-            
-            if action_dist:
-                actions = list(action_dist.keys())
-                percentages = [action_dist[action]['percentage'] for action in actions]
+            with col1:
+                st.subheader("Portfolio Optimization")
                 
-                fig = go.Figure(data=[go.Pie(labels=actions, values=percentages)])
-                fig.update_layout(title="RL Agent Action Distribution", height=300)
-                st.plotly_chart(fig, use_container_width=True)
+                optimization_method = st.selectbox(
+                    "Optimization Method",
+                    ["max_sharpe", "min_variance", "risk_parity", "equal_weight"],
+                    help="Choose portfolio optimization strategy"
+                )
+                
+                if st.button("Optimize Portfolio", key="optimize_portfolio"):
+                    with st.spinner("Optimizing portfolio..."):
+                        try:
+                            # Create sample multi-asset data for demonstration
+                            symbols = ["BTC", "ETH", "ADA", "DOT"]
+                            price_data = {}
+                            
+                            base_data = st.session_state.market_data.copy()
+                            for i, symbol in enumerate(symbols):
+                                variation = base_data.copy()
+                                # Create realistic price variations
+                                noise = np.random.normal(1, 0.1, len(base_data))
+                                variation['close'] = variation['close'] * (0.5 + i * 0.3) * noise
+                                price_data[symbol] = variation
+                            
+                            result = st.session_state.portfolio_optimizer.optimize_portfolio(
+                                price_data, optimization_method=optimization_method
+                            )
+                            
+                            if result.get('success'):
+                                weights = result.get('weights', {})
+                                metrics = result.get('metrics', {})
+                                
+                                st.success("Portfolio optimized successfully!")
+                                
+                                # Display optimal weights
+                                st.write("**Optimal Allocation:**")
+                                for symbol, weight in weights.items():
+                                    st.metric(symbol, f"{weight:.1%}")
+                                
+                                # Portfolio metrics
+                                col_a, col_b = st.columns(2)
+                                with col_a:
+                                    st.metric("Expected Return", f"{metrics.get('expected_return', 0):.2%}")
+                                with col_b:
+                                    st.metric("Sharpe Ratio", f"{metrics.get('sharpe_ratio', 0):.2f}")
+                                
+                            else:
+                                st.error(f"Optimization failed: {result.get('error', 'Unknown error')}")
+                                
+                        except Exception as e:
+                            st.error(f"Portfolio optimization error: {e}")
+            
+            with col2:
+                st.subheader("Risk Analytics")
+                
+                # Calculate basic portfolio metrics
+                returns = st.session_state.market_data['close'].pct_change().dropna()
+                
+                if len(returns) > 0:
+                    volatility = returns.std() * np.sqrt(24 * 365)  # Annualized volatility
+                    sharpe = (returns.mean() * 24 * 365) / volatility if volatility > 0 else 0
+                    max_drawdown = (returns.cumsum().cummax() - returns.cumsum()).max()
+                    
+                    st.metric("Annualized Volatility", f"{volatility:.2%}")
+                    st.metric("Sharpe Ratio", f"{sharpe:.2f}")
+                    st.metric("Max Drawdown", f"{max_drawdown:.2%}")
+                    
+                    # Risk distribution chart
+                    fig = go.Figure()
+                    fig.add_trace(go.Histogram(x=returns, nbinsx=30, name="Return Distribution"))
+                    fig.update_layout(
+                        title="Return Distribution",
+                        xaxis_title="Returns",
+                        yaxis_title="Frequency",
+                        height=300
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("Insufficient data for risk analytics")
+        else:
+            st.warning("Load market data to access portfolio analytics")
         
         # Walk-Forward Analysis
         st.subheader("Walk-Forward Analysis")
@@ -540,7 +602,7 @@ def main():
                         }
                     
                     wf_result = st.session_state.walk_forward_analyzer.run_walk_forward(
-                        market_data, test_strategy, param_ranges
+                        st.session_state.market_data, test_strategy, param_ranges
                     )
                     
                     if 'error' not in wf_result:
@@ -563,9 +625,8 @@ def main():
                 except Exception as e:
                     st.error(f"Walk-forward analysis error: {e}")
     
-    with tab7:
-        # Risk Analysis Tab
-        st.header("⚖️ Advanced Risk Analysis")
+    with tab8:
+        st.header("Advanced Risk Analysis")
         
         col1, col2 = st.columns(2)
         
