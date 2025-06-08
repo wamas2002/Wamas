@@ -490,46 +490,8 @@ def main():
         
         except Exception as e:
             st.error(f"Error in Advanced ML tab: {e}")
-                        with st.spinner("Training Prophet model..."):
-                            prophet_result = st.session_state.prophet_predictor.train(market_data)
-                            
-                        if prophet_result.get('success'):
-                            st.success("Prophet trained successfully!")
-                            st.write(f"Training samples: {prophet_result.get('training_samples', 0)}")
-                            st.write(f"Trend changepoints: {prophet_result.get('changepoints', 0)}")
-                            st.write(f"Seasonal components: {prophet_result.get('seasonal_components', 0)}")
-                        else:
-                            st.error(f"Training failed: {prophet_result.get('error', 'Unknown error')}")
-                    
-                    # Generate Prophet predictions
-                    if st.button("Generate Prophet Forecast"):
-                        forecast_periods = st.slider("Forecast Periods (hours)", 1, 48, 24)
-                        
-                        with st.spinner("Generating forecast..."):
-                            forecast = st.session_state.prophet_predictor.predict(market_data, periods=forecast_periods)
-                            
-                        if forecast.get('success'):
-                            next_price = forecast.get('next_price', 0)
-                            price_change = forecast.get('price_change', 0) * 100
-                            confidence = forecast.get('confidence', 0) * 100
-                            
-                            st.metric("Next Price", f"${next_price:.4f}", f"{price_change:+.2f}%")
-                            st.metric("Forecast Confidence", f"{confidence:.1f}%")
-                            
-                            # Show forecast chart
-                            predictions = forecast.get('predictions', [])
-                            if predictions:
-                                forecast_df = pd.DataFrame({
-                                    'Hour': range(1, len(predictions) + 1),
-                                    'Predicted_Price': predictions
-                                })
-                                st.line_chart(forecast_df.set_index('Hour'))
-                        else:
-                            st.error(f"Forecast failed: {forecast.get('error', 'Unknown error')}")
-            except Exception as e:
-                st.error(f"Error with Prophet model: {e}")
-        
-        st.subheader("Reinforcement Learning Agent")
+    
+    with tab7:
         
         col3, col4 = st.columns(2)
         
