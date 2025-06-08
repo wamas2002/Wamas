@@ -84,16 +84,19 @@ class TradingDashboard:
                     
                     if predictor.is_trained:
                         # Get recent predictions
-                        if ('trading_engine' in st.session_state and 
+                        if (hasattr(st.session_state, 'trading_engine') and 
+                            st.session_state.trading_engine and
+                            hasattr(st.session_state.trading_engine, 'market_data') and
                             symbol in st.session_state.trading_engine.market_data):
                             
                             data = st.session_state.trading_engine.market_data[symbol]
                             predictions = predictor.predict(data)
                             
-                            if 'error' not in predictions:
+                            if isinstance(predictions, dict) and 'error' not in predictions:
                                 self._render_ai_predictions(predictions)
                             else:
-                                st.warning(f"AI prediction error: {predictions['error']}")
+                                error_msg = predictions.get('error', 'Unknown error') if isinstance(predictions, dict) else 'Prediction failed'
+                                st.warning(f"AI prediction error: {error_msg}")
                         else:
                             st.info("No market data available for predictions")
                     else:
@@ -502,28 +505,33 @@ class TradingDashboard:
     def _render_feature_importance(self):
         """Render feature importance"""
         try:
-            if ('strategies' in st.session_state.get('trading_engine', {}) and 
+            if (hasattr(st.session_state, 'trading_engine') and 
+                st.session_state.trading_engine and
+                hasattr(st.session_state.trading_engine, 'strategies') and
                 'ml' in st.session_state.trading_engine.strategies):
                 
                 ml_strategy = st.session_state.trading_engine.strategies['ml']
                 importance = ml_strategy.get_feature_importance()
                 
-                if importance:
+                if importance and isinstance(importance, dict):
                     # Show feature importance for first model
                     model_name = list(importance.keys())[0]
                     features = importance[model_name]
                     
-                    # Create bar chart
-                    sorted_features = sorted(features.items(), key=lambda x: x[1], reverse=True)[:10]
-                    
-                    fig = px.bar(
-                        x=[f[1] for f in sorted_features],
-                        y=[f[0] for f in sorted_features],
-                        orientation='h',
-                        title="Top 10 Important Features"
-                    )
-                    fig.update_layout(height=400)
-                    st.plotly_chart(fig, use_container_width=True)
+                    if isinstance(features, dict) and features:
+                        # Create bar chart
+                        sorted_features = sorted(features.items(), key=lambda x: x[1], reverse=True)[:10]
+                        
+                        fig = px.bar(
+                            x=[f[1] for f in sorted_features],
+                            y=[f[0] for f in sorted_features],
+                            orientation='h',
+                            title="Top 10 Important Features"
+                        )
+                        fig.update_layout(height=400)
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("No feature importance data available")
                 else:
                     st.info("No feature importance data available")
             else:
@@ -535,13 +543,15 @@ class TradingDashboard:
     def _render_ensemble_insights(self, symbol: str):
         """Render ensemble strategy insights"""
         try:
-            if ('strategies' in st.session_state.get('trading_engine', {}) and 
+            if (hasattr(st.session_state, 'trading_engine') and 
+                st.session_state.trading_engine and
+                hasattr(st.session_state.trading_engine, 'strategies') and
                 'ensemble' in st.session_state.trading_engine.strategies):
                 
                 ensemble = st.session_state.trading_engine.strategies['ensemble']
                 summary = ensemble.get_strategy_summary()
                 
-                if 'error' not in summary:
+                if isinstance(summary, dict) and 'error' not in summary:
                     col1, col2 = st.columns(2)
                     
                     with col1:
@@ -553,7 +563,7 @@ class TradingDashboard:
                     
                     # Signal distribution
                     signal_dist = summary.get('signal_distribution', {})
-                    if signal_dist:
+                    if signal_dist and isinstance(signal_dist, dict):
                         fig = px.pie(
                             values=list(signal_dist.values()),
                             names=list(signal_dist.keys()),
