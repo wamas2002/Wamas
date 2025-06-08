@@ -87,30 +87,25 @@ class OKXDataService:
                 print(f"OKX API error for {symbol}: {result['error']}")
                 return pd.DataFrame()
             
-            if 'data' not in result or not result['data']:
+            if 'data' not in result:
                 print(f"No data returned for {symbol}")
                 return pd.DataFrame()
             
-            # Convert OKX data to pandas DataFrame
-            data = []
-            for candle in result['data']:
-                data.append({
-                    'timestamp': pd.to_datetime(int(candle[0]), unit='ms'),
-                    'open': float(candle[1]),
-                    'high': float(candle[2]),
-                    'low': float(candle[3]),
-                    'close': float(candle[4]),
-                    'volume': float(candle[5])
-                })
+            # Extract the DataFrame from the result
+            df = result['data']
             
-            df = pd.DataFrame(data)
-            if not df.empty:
-                df.set_index('timestamp', inplace=True)
-                df.sort_index(inplace=True)
-                
-                # Cache the data
-                self.data_cache[cache_key] = df.copy()
-                self.cache_timestamps[cache_key] = time.time()
+            # Validate that we got a proper DataFrame
+            if not isinstance(df, pd.DataFrame) or df.empty:
+                print(f"Invalid or empty data for {symbol}")
+                return pd.DataFrame()
+            
+            # Set timestamp as index
+            df.set_index('timestamp', inplace=True)
+            df.sort_index(inplace=True)
+            
+            # Cache the data
+            self.data_cache[cache_key] = df.copy()
+            self.cache_timestamps[cache_key] = time.time()
             
             return df
             

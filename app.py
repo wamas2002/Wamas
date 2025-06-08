@@ -1119,15 +1119,19 @@ def main():
                                 if selected_symbol in st.session_state.trading_engine.market_data:
                                     current_data = st.session_state.trading_engine.market_data[selected_symbol]
                                     if not current_data.empty:
-                                        current_price = current_data['close'].iloc[-1]
-                                        predicted_price = current_price * (1 + np.random.normal(0, 0.02))
+                                        current_price = st.session_state.okx_data_service.get_current_price(selected_symbol)
+                                        
+                                        # Generate real AI prediction using trained model
+                                        prediction_result = st.session_state.lstm_predictor.predict(current_data)
+                                        predicted_price = prediction_result.get('predicted_price', current_price)
+                                        confidence = prediction_result.get('confidence', 0.0)
                                         
                                         prediction_id = st.session_state.db_service.store_prediction(
                                             model_id=active_model['id'],
                                             symbol=selected_symbol,
                                             predicted_price=predicted_price,
                                             prediction_horizon=24,  # 24 hours
-                                            confidence=np.random.uniform(0.6, 0.9)
+                                            confidence=confidence
                                         )
                                         st.success(f"Prediction stored with ID: {prediction_id}")
                             except Exception as e:
