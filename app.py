@@ -44,10 +44,10 @@ def initialize_session_state():
         st.session_state.ai_predictor = AIPredictor()
     
     if 'lstm_predictor' not in st.session_state:
-        st.session_state.lstm_predictor = LSTMPredictor()
+        st.session_state.lstm_predictor = AdvancedLSTMPredictor()
     
     if 'prophet_predictor' not in st.session_state:
-        st.session_state.prophet_predictor = ProphetPredictor()
+        st.session_state.prophet_predictor = AdvancedProphetPredictor()
     
     if 'rl_agent' not in st.session_state:
         st.session_state.rl_agent = AdvancedQLearningAgent()
