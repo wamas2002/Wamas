@@ -275,6 +275,7 @@ class TransformerEnsemble:
             r2 = r2_score(y, final_predictions)
             
             self.is_trained = True
+            self.feature_names = feature_names  # Store feature names for consistent prediction
             
             return {
                 'success': True,
@@ -295,15 +296,24 @@ class TransformerEnsemble:
             if not self.is_trained:
                 return {'error': 'Model not trained'}
             
-            # Extract features
+            # Use stored feature columns from training to ensure consistency
+            if not hasattr(self, 'feature_names') or len(self.feature_names) == 0:
+                return {'error': 'No feature names stored from training'}
+            
+            # Extract features using the same method as training
             features_df = self.extract_features(df)
             
-            # Select feature columns
-            exclude_cols = ['open', 'high', 'low', 'close', 'volume']
-            feature_cols = [col for col in features_df.columns if col not in exclude_cols]
+            # Use only the features that were used during training
+            available_features = [col for col in self.feature_names if col in features_df.columns]
             
-            # Get recent sequence
-            feature_matrix = features_df[feature_cols].values
+            if len(available_features) != len(self.feature_names):
+                print(f"Warning: Feature mismatch. Expected {len(self.feature_names)}, got {len(available_features)}")
+                # Fill missing features with zeros
+                for missing_feature in set(self.feature_names) - set(available_features):
+                    features_df[missing_feature] = 0
+            
+            # Get recent sequence using stored feature names
+            feature_matrix = features_df[self.feature_names].values
             feature_matrix_scaled = self.feature_scaler.transform(feature_matrix)
             
             if len(feature_matrix_scaled) < self.sequence_length:
