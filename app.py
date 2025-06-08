@@ -97,6 +97,10 @@ def initialize_session_state():
         from ai.freqai_pipeline import FreqAILevelPipeline
         st.session_state.freqai_pipeline = FreqAILevelPipeline()
     
+    if 'advanced_ml_interface' not in st.session_state:
+        from frontend.advanced_ml_interface import AdvancedMLInterface
+        st.session_state.advanced_ml_interface = AdvancedMLInterface()
+    
     if 'logger' not in st.session_state:
         st.session_state.logger = TradingLogger()
     

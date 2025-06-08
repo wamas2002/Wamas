@@ -1,15 +1,31 @@
 import numpy as np
 import pandas as pd
-import lightgbm as lgb
-import xgboost as xgb
-import catboost as cb
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from typing import Dict, List, Any, Optional, Tuple
 import warnings
 warnings.filterwarnings('ignore')
+
+# Import additional models with fallbacks
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    XGBOOST_AVAILABLE = False
+
+try:
+    import catboost as cb
+    CATBOOST_AVAILABLE = True
+except ImportError:
+    CATBOOST_AVAILABLE = False
+
+try:
+    import lightgbm as lgb
+    LIGHTGBM_AVAILABLE = True
+except ImportError:
+    LIGHTGBM_AVAILABLE = False
 
 class AdvancedMLPipeline:
     """Comprehensive ML pipeline with gradient boosting models and auto feature generation"""
@@ -23,8 +39,51 @@ class AdvancedMLPipeline:
         self.is_trained = False
         
         # Initialize models with optimized parameters
-        self.model_configs = {
-            'lightgbm': {
+        self.model_configs = {}
+        
+        # Always available models
+        self.model_configs['random_forest'] = {
+            'n_estimators': 100,
+            'max_depth': 10,
+            'min_samples_split': 5,
+            'min_samples_leaf': 2,
+            'random_state': 42,
+            'n_jobs': -1
+        }
+        
+        self.model_configs['gradient_boosting'] = {
+            'n_estimators': 100,
+            'max_depth': 6,
+            'learning_rate': 0.05,
+            'random_state': 42
+        }
+        
+        # Conditional model configurations
+        if XGBOOST_AVAILABLE:
+            self.model_configs['xgboost'] = {
+                'objective': 'reg:squarederror',
+                'eval_metric': 'rmse',
+                'max_depth': 6,
+                'learning_rate': 0.05,
+                'n_estimators': 100,
+                'subsample': 0.8,
+                'colsample_bytree': 0.9,
+                'random_state': 42,
+                'verbosity': 0
+            }
+        
+        if CATBOOST_AVAILABLE:
+            self.model_configs['catboost'] = {
+                'iterations': 100,
+                'learning_rate': 0.05,
+                'depth': 6,
+                'loss_function': 'RMSE',
+                'verbose': False,
+                'random_seed': 42
+            }
+        
+        if LIGHTGBM_AVAILABLE:
+            self.model_configs['lightgbm'] = {
                 'objective': 'regression',
                 'metric': 'rmse',
                 'boosting_type': 'gbdt',
@@ -35,35 +94,7 @@ class AdvancedMLPipeline:
                 'bagging_freq': 5,
                 'verbose': -1,
                 'random_state': 42
-            },
-            'xgboost': {
-                'objective': 'reg:squarederror',
-                'eval_metric': 'rmse',
-                'max_depth': 6,
-                'learning_rate': 0.05,
-                'n_estimators': 100,
-                'subsample': 0.8,
-                'colsample_bytree': 0.9,
-                'random_state': 42,
-                'verbosity': 0
-            },
-            'catboost': {
-                'iterations': 100,
-                'learning_rate': 0.05,
-                'depth': 6,
-                'loss_function': 'RMSE',
-                'verbose': False,
-                'random_seed': 42
-            },
-            'random_forest': {
-                'n_estimators': 100,
-                'max_depth': 10,
-                'min_samples_split': 5,
-                'min_samples_leaf': 2,
-                'random_state': 42,
-                'n_jobs': -1
             }
-        }
         
         # Feature generation parameters
         self.feature_windows = [5, 10, 20, 50]
@@ -220,7 +251,7 @@ class AdvancedMLPipeline:
     def train_model(self, model_name: str, X: np.ndarray, y: np.ndarray, feature_names: List[str]) -> Dict[str, Any]:
         """Train individual model"""
         try:
-            if model_name == 'lightgbm':
+            if model_name == 'lightgbm' and LIGHTGBM_AVAILABLE:
                 # LightGBM training
                 train_data = lgb.Dataset(X, label=y, feature_name=feature_names)
                 model = lgb.train(
@@ -234,7 +265,7 @@ class AdvancedMLPipeline:
                 # Feature importance
                 importance = dict(zip(feature_names, model.feature_importance()))
                 
-            elif model_name == 'xgboost':
+            elif model_name == 'xgboost' and XGBOOST_AVAILABLE:
                 # XGBoost training
                 model = xgb.XGBRegressor(**self.model_configs['xgboost'])
                 model.fit(X, y)
@@ -242,7 +273,7 @@ class AdvancedMLPipeline:
                 # Feature importance
                 importance = dict(zip(feature_names, model.feature_importances_))
                 
-            elif model_name == 'catboost':
+            elif model_name == 'catboost' and CATBOOST_AVAILABLE:
                 # CatBoost training
                 model = cb.CatBoostRegressor(**self.model_configs['catboost'])
                 model.fit(X, y)
@@ -257,9 +288,17 @@ class AdvancedMLPipeline:
                 
                 # Feature importance
                 importance = dict(zip(feature_names, model.feature_importances_))
+                
+            elif model_name == 'gradient_boosting':
+                # Gradient Boosting training
+                model = GradientBoostingRegressor(**self.model_configs['gradient_boosting'])
+                model.fit(X, y)
+                
+                # Feature importance
+                importance = dict(zip(feature_names, model.feature_importances_))
             
             else:
-                raise ValueError(f"Unknown model: {model_name}")
+                raise ValueError(f"Model {model_name} not available or unknown")
             
             # Cross-validation score
             cv_scores = cross_val_score(model, X, y, cv=TimeSeriesSplit(n_splits=3), 
@@ -272,7 +311,7 @@ class AdvancedMLPipeline:
             self.model_scores[model_name] = {
                 'cv_score': cv_score,
                 'cv_std': cv_scores.std(),
-                'train_score': mean_squared_error(y, model.predict(X) if hasattr(model, 'predict') else model.predict(X))
+                'train_score': mean_squared_error(y, model.predict(X))
             }
             
             return {
@@ -299,8 +338,11 @@ class AdvancedMLPipeline:
             
             results = {}
             
-            # Train each model
-            for model_name in ['lightgbm', 'xgboost', 'catboost', 'random_forest']:
+            # Train available models
+            available_models = list(self.model_configs.keys())
+            print(f"Available models: {available_models}")
+            
+            for model_name in available_models:
                 print(f"Training {model_name}...")
                 result = self.train_model(model_name, X, y, feature_names)
                 results[model_name] = result
@@ -311,7 +353,8 @@ class AdvancedMLPipeline:
                 'success': True,
                 'results': results,
                 'feature_count': len(feature_names),
-                'sample_count': len(X)
+                'sample_count': len(X),
+                'available_models': available_models
             }
             
         except Exception as e:
