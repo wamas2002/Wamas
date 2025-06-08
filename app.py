@@ -446,111 +446,12 @@ def main():
     with tab6:
         # Advanced ML Laboratory Interface
         st.session_state.advanced_ml_interface.render_ml_dashboard()
-                                            # Display optimization results
-                                            st.success("Portfolio optimization completed!")
-                                            
-                                            col1, col2 = st.columns(2)
-                                            
-                                            with col1:
-                                                st.write("**Optimal Weights**")
-                                                weights_df = pd.DataFrame(
-                                                    list(optimization_result['weights'].items()),
-                                                    columns=['Asset', 'Weight']
-                                                )
-                                                weights_df['Weight'] = weights_df['Weight'].apply(lambda x: f"{x:.1%}")
-                                                st.dataframe(weights_df, use_container_width=True)
-                                                
-                                                # Portfolio metrics
-                                                metrics = optimization_result['metrics']
-                                                st.metric("Expected Return", f"{metrics.get('expected_return', 0):.1%}")
-                                                st.metric("Volatility", f"{metrics.get('volatility', 0):.1%}")
-                                                st.metric("Sharpe Ratio", f"{metrics.get('sharpe_ratio', 0):.2f}")
-                                            
-                                            with col2:
-                                                # Portfolio allocation pie chart
-                                                import plotly.express as px
-                                                
-                                                weights_data = optimization_result['weights']
-                                                fig = px.pie(
-                                                    values=list(weights_data.values()),
-                                                    names=list(weights_data.keys()),
-                                                    title="Portfolio Allocation"
-                                                )
-                                                st.plotly_chart(fig, use_container_width=True)
-                                        else:
-                                            st.error(f"Optimization failed: {optimization_result['error']}")
-                                    else:
-                                        st.warning("Unable to calculate returns for selected assets")
-                                else:
-                                    st.warning("Insufficient price data for optimization")
-                
-                # Advanced ML Models Section
-                st.markdown("---")
-                st.subheader("🧠 AI Model Training & Predictions")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.write("**LSTM Neural Network**")
-                    
-                    if len(market_data) > 100:
-                        if st.button("Train LSTM Model", key="train_lstm"):
-                            with st.spinner("Training LSTM model..."):
-                                lstm_result = st.session_state.lstm_predictor.train(market_data)
-                                
-                                if lstm_result['success']:
-                                    st.success("LSTM model trained successfully!")
-                                    st.metric("Training Accuracy", f"{lstm_result.get('training_accuracy', 0):.2%}")
-                                    st.metric("Validation Accuracy", f"{lstm_result.get('validation_accuracy', 0):.2%}")
-                                    
-                                    # Store model state in database
-                                    try:
-                                        model_id = st.session_state.db_service.store_ai_model_state(
-                                            model_type="LSTM",
-                                            symbol=selected_symbol,
-                                            model_state=lstm_result,
-                                            performance_metrics=lstm_result.get('metrics', {})
-                                        )
-                                        st.info(f"Model saved to database (ID: {model_id})")
-                                    except Exception as e:
-                                        st.warning(f"Could not save model to database: {e}")
-                                else:
-                                    st.error("LSTM training failed")
-                        
-                        if st.button("Generate LSTM Prediction", key="predict_lstm"):
-                            with st.spinner("Generating LSTM prediction..."):
-                                lstm_prediction = st.session_state.lstm_predictor.predict(market_data)
-                                
-                                if lstm_prediction.get('success'):
-                                    pred_price = lstm_prediction.get('predicted_price', 0)
-                                    confidence = lstm_prediction.get('confidence', 0)
-                                    current_price = market_data['close'].iloc[-1]
-                                    
-                                    st.metric("Predicted Price", f"${pred_price:.2f}")
-                                    st.metric("Confidence", f"{confidence:.1%}")
-                                    st.metric("Price Change", f"{((pred_price - current_price) / current_price):.2%}")
-                                    
-                                    # Store prediction in database
-                                    try:
-                                        active_model = st.session_state.db_service.get_active_ai_model("LSTM", selected_symbol)
-                                        if active_model:
-                                            pred_id = st.session_state.db_service.store_prediction(
-                                                model_id=active_model['id'],
-                                                symbol=selected_symbol,
-                                                predicted_price=pred_price,
-                                                prediction_horizon=24,
-                                                confidence=confidence
-                                            )
-                                            st.info(f"Prediction saved (ID: {pred_id})")
-                                    except Exception as e:
-                                        st.warning(f"Could not save prediction: {e}")
-                                else:
-                                    st.error("LSTM prediction failed")
-                    else:
-                        st.warning("Need at least 100 data points for LSTM training")
-                
-                with col2:
-                    st.write("**Prophet Time Series Model**")
+    
+    # Optional: Additional ML Laboratory Features (if needed)
+    # Can be extended with custom model configurations here
+    
+if __name__ == "__main__":
+    main()
                     
                     if len(market_data) > 60:
                         if st.button("Train Prophet Model", key="train_prophet"):
