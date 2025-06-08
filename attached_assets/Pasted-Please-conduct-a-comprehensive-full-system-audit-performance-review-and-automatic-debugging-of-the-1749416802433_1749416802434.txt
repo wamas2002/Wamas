@@ -1,0 +1,44 @@
+Please conduct a comprehensive full-system audit, performance review, and automatic debugging of the entire cryptocurrency trading system, including all modules. Focus areas:
+
+1. ✅ System Functionality Verification:
+   - Verify that real-time OKX market data is functioning for all USDT pairs (both Spot and Futures).
+   - Confirm that all AI models (LSTM, Prophet, FreqAI, Ensemble) are receiving data and generating predictions correctly.
+   - Ensure strategy execution logic is working for all active symbols and portfolios.
+
+2. ⚙️ Risk Management & Performance:
+   - Check if all multi-level Take Profit / Stop Loss protections are active and functional.
+   - Review portfolio allocation logic and the 6-hour smart strategy switching cycles.
+   - Confirm Circuit Breaker, Drawdown tracking, and Emergency Stop mechanisms are working.
+
+3. 📊 Results Analysis:
+   - Generate a report for the past 72 hours: number of trades, win rate, average ROI per pair.
+   - Identify anomalies like skipped signals or delayed executions.
+   - Confirm each executed trade aligns with its assigned strategy and market conditions.
+
+4. 🧠 AI & Indicator Health Check:
+   - Verify that all 215+ technical indicators are generated from authentic OKX data.
+   - Confirm that all ML models are being retrained automatically using the latest data.
+   - Ensure there are no dimensionality or missing feature issues during training/inference.
+
+5. 🖥 UI & UX Validation:
+   - Ensure all user-facing pages (Dashboard, Portfolio, Analytics, Strategy Builder) are rendering correctly with live data.
+   - Fix any broken links, unresponsive components, or delayed refreshes.
+   - Ensure both beginner and expert modes display appropriate functionality.
+
+6. 📁 Database & Data Stream Integrity:
+   - Ensure all mock/test/sandbox data is removed.
+   - Validate that balances, trades, and signals are synced in real-time with OKX live API.
+   - Check for schema issues, missing columns, or malformed records and fix them.
+
+7. 🛠 Automatic Debugging & Error Fixes:
+   - Log and fix all runtime errors, API call failures, or null response issues.
+   - Resolve any application context or object reference bugs.
+   - Restart inactive or failed services automatically.
+   - Activate live alerting for recurring failures or latency spikes.
+
+📌 Finally:
+- Provide a summarized diagnostic report that includes:
+   - ✅ Components fully working
+   - ⚠️ Detected issues and warnings
+   - 🔧 Fixes applied during the run
+   - 📈 Live system performance metrics and audit results

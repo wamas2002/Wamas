@@ -1,0 +1,88 @@
+{
+  "timestamp": "2025-06-08T21:10:39.150337",
+  "overall_health": {
+    "status": "GOOD",
+    "score": 85.0
+  },
+  "okx_integration": {
+    "pairs_tested": {
+      "BTCUSDT": {
+        "live_price": 106163.3,
+        "data_points": 5,
+        "status": "OPERATIONAL"
+      },
+      "ETHUSDT": {
+        "live_price": 2534.31,
+        "data_points": 5,
+        "status": "OPERATIONAL"
+      },
+      "BNBUSDT": {
+        "live_price": 655.6,
+        "data_points": 5,
+        "status": "OPERATIONAL"
+      }
+    },
+    "operational": "3/3",
+    "overall_status": "HEALTHY"
+  },
+  "database_health": {
+    "databases": {
+      "ai_performance.db": {
+        "tables": 3,
+        "records": 13672,
+        "size_mb": 2.74,
+        "status": "HEALTHY"
+      },
+      "trading_data.db": {
+        "tables": 8,
+        "records": 76,
+        "size_mb": 0.11,
+        "status": "HEALTHY"
+      },
+      "autoconfig.db": {
+        "tables": 3,
+        "records": 1932,
+        "size_mb": 0.2,
+        "status": "HEALTHY"
+      },
+      "smart_selector.db": {
+        "tables": 3,
+        "records": 443,
+        "size_mb": 0.08,
+        "status": "HEALTHY"
+      },
+      "sentiment_data.db": {
+        "tables": 5,
+        "records": 145,
+        "size_mb": 0.04,
+        "status": "HEALTHY"
+      }
+    },
+    "healthy_count": "5/5",
+    "total_records": 16268
+  },
+  "ai_models": {
+    "performance_data": {
+      "performance_records": 13652,
+      "model_aggregates": 20
+    },
+    "model_files": 0,
+    "recent_activity": true
+  },
+  "trading_performance": {
+    "trades_72h": 0,
+    "active_strategies": {
+      "strategy_switches": 966,
+      "sqlite_sequence": 2,
+      "market_conditions": 966
+    },
+    "risk_events": 0
+  },
+  "ui_accessibility": {
+    "streamlit_app": true,
+    "main_files": {
+      "intellectia_app.py": "VALID",
+      "app.py": "VALID"
+    }
+  }
+}
