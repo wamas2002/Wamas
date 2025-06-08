@@ -107,8 +107,8 @@ def initialize_session_state():
         st.session_state.market_sentiment_analyzer = MarketSentimentAnalyzer()
     
     if 'comprehensive_ml_pipeline' not in st.session_state:
-        from ai.comprehensive_ml_pipeline import ComprehensiveMLPipeline
-        st.session_state.comprehensive_ml_pipeline = ComprehensiveMLPipeline()
+        from ai.comprehensive_ml_pipeline import TradingMLPipeline
+        st.session_state.comprehensive_ml_pipeline = TradingMLPipeline()
     
     if 'logger' not in st.session_state:
         st.session_state.logger = TradingLogger()

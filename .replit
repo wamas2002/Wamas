@@ -24,6 +24,10 @@ args = "Server"
 task = "workflow.run"
 args = "install_packages"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "ML Training System"
+
 [[workflows.workflow]]
 name = "Server"
 author = "agent"
@@ -40,6 +44,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "uv add pandas plotly scikit-learn pandas-ta requests websocket-client"
+
+[[workflows.workflow]]
+name = "ML Training System"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_autonomous_training.py train"
 
 [[ports]]
 localPort = 5000

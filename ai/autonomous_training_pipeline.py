@@ -11,8 +11,22 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, precision_score, recall_score
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
-import lightgbm as lgb
-import catboost as cb
+
+# Handle optional dependencies
+LIGHTGBM_AVAILABLE = False
+CATBOOST_AVAILABLE = False
+
+try:
+    import lightgbm as lgb
+    LIGHTGBM_AVAILABLE = True
+except (ImportError, OSError):
+    lgb = None
+    
+try:
+    import catboost as cb
+    CATBOOST_AVAILABLE = True
+except (ImportError, OSError):
+    cb = None
 import joblib
 import sqlite3
 import logging
