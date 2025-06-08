@@ -86,8 +86,8 @@ def initialize_session_state():
         st.session_state.tradingview_charts = TradingViewCharts()
     
     if 'advanced_ml_pipeline' not in st.session_state:
-        from ai.advanced_ml_pipeline import AdvancedMLPipeline
-        st.session_state.advanced_ml_pipeline = AdvancedMLPipeline()
+        from ai.simple_ml_pipeline import SimpleMLPipeline
+        st.session_state.advanced_ml_pipeline = SimpleMLPipeline()
     
     if 'transformer_ensemble' not in st.session_state:
         from ai.transformer_ensemble import TransformerEnsemble
@@ -444,60 +444,8 @@ def main():
         st.session_state.dashboard.render_performance_tab()
     
     with tab6:
-        # Advanced ML Models Tab
-        st.header("🔬 Advanced Machine Learning Models")
-        
-        # Market Regime Detection Section
-        st.subheader("📊 Market Regime Detection")
-        
-        try:
-            market_data = st.session_state.okx_data_service.get_historical_data(selected_symbol, selected_timeframe, 500)
-            
-            if not market_data.empty and len(market_data) > 100:
-                # Detect current market regime
-                if st.button("Analyze Market Regime", key="analyze_regime"):
-                    with st.spinner("Analyzing market regime..."):
-                        regime_result = st.session_state.regime_detector.detect_regime(market_data)
-                        
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.metric("Current Regime", regime_result['regime'].title())
-                            st.metric("Confidence", f"{regime_result['confidence']:.1%}")
-                        
-                        with col2:
-                            st.write("**Regime Probabilities**")
-                            for regime, prob in regime_result['probabilities'].items():
-                                st.write(f"{regime.title()}: {prob:.1%}")
-                        
-                        with col3:
-                            st.write("**Description**")
-                            st.write(regime_result['description'])
-                
-                # Portfolio Optimization Section
-                st.markdown("---")
-                st.subheader("💼 Portfolio Optimization")
-                
-                # Multi-asset selection for portfolio
-                available_symbols = Config.SUPPORTED_SYMBOLS
-                selected_assets = st.multiselect(
-                    "Select Assets for Portfolio",
-                    available_symbols,
-                    default=available_symbols[:4],
-                    key="portfolio_assets"
-                )
-                
-                if len(selected_assets) >= 2:
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        optimization_method = st.selectbox(
-                            "Optimization Method",
-                            ["max_sharpe", "min_variance", "risk_parity", "max_diversification", "hierarchical_risk_parity"],
-                            key="opt_method"
-                        )
-                        
-                        max_weight = st.slider("Maximum Asset Weight", 0.1, 1.0, 0.4, 0.05)
+        # Advanced ML Laboratory Interface
+        st.session_state.advanced_ml_interface.render_ml_dashboard()
                         
                     with col2:
                         lookback_days = st.slider("Lookback Period (days)", 30, 252, 90)

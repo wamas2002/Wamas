@@ -12,20 +12,23 @@ warnings.filterwarnings('ignore')
 try:
     import xgboost as xgb
     XGBOOST_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     XGBOOST_AVAILABLE = False
+    xgb = None
 
 try:
     import catboost as cb
     CATBOOST_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     CATBOOST_AVAILABLE = False
+    cb = None
 
 try:
     import lightgbm as lgb
     LIGHTGBM_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     LIGHTGBM_AVAILABLE = False
+    lgb = None
 
 class AdvancedMLPipeline:
     """Comprehensive ML pipeline with gradient boosting models and auto feature generation"""
