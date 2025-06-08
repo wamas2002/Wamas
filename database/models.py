@@ -243,7 +243,13 @@ class DatabaseManager:
         if not self.database_url:
             raise ValueError("DATABASE_URL environment variable not set")
         
-        self.engine = create_engine(self.database_url)
+        # Add connection pooling and error handling
+        self.engine = create_engine(
+            self.database_url,
+            pool_pre_ping=True,
+            pool_recycle=300,
+            echo=False
+        )
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
         
     def create_tables(self):

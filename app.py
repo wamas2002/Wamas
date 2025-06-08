@@ -4,6 +4,8 @@ import numpy as np
 from datetime import datetime, timedelta
 import time
 import threading
+import plotly.graph_objects as go
+import plotly.express as px
 from frontend.dashboard import TradingDashboard
 from trading.engine import TradingEngine
 from ai.predictor import AIPredictor
@@ -189,14 +191,15 @@ def main():
             st.warning(f"Using {leverage}x leverage increases risk significantly")
     
     # Main dashboard tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "📊 Live Trading", 
         "🧠 AI Insights", 
         "📈 Backtesting", 
         "⚡ Futures Mode",
         "📋 Performance",
         "🔬 Advanced ML",
-        "⚖️ Risk Analysis"
+        "⚖️ Risk Analysis",
+        "🗄️ Database"
     ])
     
     with tab1:
@@ -558,6 +561,384 @@ def main():
                         
                 except Exception as e:
                     st.error(f"Monte Carlo simulation error: {e}")
+    
+    with tab8:
+        # Database Dashboard Tab
+        st.header("🗄️ Database Analytics & Management")
+        
+        # Check database connection
+        if st.session_state.db_service is None:
+            st.error("Database connection failed. Please check DATABASE_URL environment variable.")
+            if hasattr(st.session_state, 'db_error'):
+                st.error(f"Error: {st.session_state.db_error}")
+            return
+        
+        # Database overview
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            try:
+                trading_stats = st.session_state.db_service.get_trading_statistics(30)
+                st.metric("Total Trades (30d)", trading_stats.get('total_trades', 0))
+            except Exception as e:
+                st.metric("Total Trades (30d)", "Error")
+        
+        with col2:
+            try:
+                recent_signals = st.session_state.db_service.get_recent_signals(limit=10)
+                st.metric("Recent Signals", len(recent_signals))
+            except Exception as e:
+                st.metric("Recent Signals", "Error")
+        
+        with col3:
+            try:
+                portfolio_data = st.session_state.db_service.get_portfolio_history(7)
+                st.metric("Portfolio Records", len(portfolio_data))
+            except Exception as e:
+                st.metric("Portfolio Records", "Error")
+        
+        with col4:
+            try:
+                backtest_results = st.session_state.db_service.get_backtest_results(limit=10)
+                st.metric("Backtest Results", len(backtest_results))
+            except Exception as e:
+                st.metric("Backtest Results", "Error")
+        
+        st.markdown("---")
+        
+        # Database tabs for different data types
+        db_tab1, db_tab2, db_tab3, db_tab4, db_tab5 = st.tabs([
+            "📈 Trading History", 
+            "🔮 AI Models & Predictions", 
+            "📊 Portfolio Analytics", 
+            "⚡ Signals & Alerts",
+            "🔧 Database Management"
+        ])
+        
+        with db_tab1:
+            st.subheader("Trading History & Performance")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Recent Trades**")
+                try:
+                    trades = st.session_state.db_service.get_trades(limit=20)
+                    if trades:
+                        trades_df = pd.DataFrame(trades)
+                        st.dataframe(trades_df[['symbol', 'trade_type', 'quantity', 'entry_price', 'pnl', 'entry_time']])
+                        
+                        # Trading performance chart
+                        if not trades_df.empty and 'pnl' in trades_df.columns:
+                            cumulative_pnl = trades_df['pnl'].fillna(0).cumsum()
+                            fig = px.line(x=range(len(cumulative_pnl)), y=cumulative_pnl, 
+                                        title="Cumulative P&L")
+                            st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("No trading history available")
+                except Exception as e:
+                    st.error(f"Error loading trades: {e}")
+            
+            with col2:
+                st.write("**Trading Statistics**")
+                try:
+                    stats = st.session_state.db_service.get_trading_statistics(30)
+                    if stats:
+                        st.metric("Win Rate", f"{stats.get('win_rate', 0):.1%}")
+                        st.metric("Total P&L", f"${stats.get('total_pnl', 0):.2f}")
+                        st.metric("Average P&L", f"${stats.get('average_pnl', 0):.2f}")
+                        st.metric("Net P&L", f"${stats.get('net_pnl', 0):.2f}")
+                        
+                        # P&L distribution
+                        if trades:
+                            pnl_values = [t['pnl'] for t in trades if t['pnl'] is not None]
+                            if pnl_values:
+                                fig = px.histogram(x=pnl_values, title="P&L Distribution", 
+                                                 nbins=20, color_discrete_sequence=['lightblue'])
+                                st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error loading statistics: {e}")
+        
+        with db_tab2:
+            st.subheader("AI Models & Predictions Analytics")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Model Performance Tracking**")
+                
+                # Model type selector
+                model_type = st.selectbox("Select Model Type", 
+                                        ["LSTM", "PROPHET", "QLEARNING"], 
+                                        key="db_model_type")
+                
+                try:
+                    # Get active model for selected symbol
+                    active_model = st.session_state.db_service.get_active_ai_model(
+                        model_type, selected_symbol
+                    )
+                    
+                    if active_model:
+                        st.success(f"Active {model_type} model found")
+                        st.json(active_model['performance_metrics'])
+                        
+                        # Store prediction button
+                        if st.button(f"Store Test Prediction ({model_type})"):
+                            try:
+                                # Get current price for prediction
+                                if selected_symbol in st.session_state.trading_engine.market_data:
+                                    current_data = st.session_state.trading_engine.market_data[selected_symbol]
+                                    if not current_data.empty:
+                                        current_price = current_data['close'].iloc[-1]
+                                        predicted_price = current_price * (1 + np.random.normal(0, 0.02))
+                                        
+                                        prediction_id = st.session_state.db_service.store_prediction(
+                                            model_id=active_model['id'],
+                                            symbol=selected_symbol,
+                                            predicted_price=predicted_price,
+                                            prediction_horizon=24,  # 24 hours
+                                            confidence=np.random.uniform(0.6, 0.9)
+                                        )
+                                        st.success(f"Prediction stored with ID: {prediction_id}")
+                            except Exception as e:
+                                st.error(f"Error storing prediction: {e}")
+                    else:
+                        st.info(f"No active {model_type} model for {selected_symbol}")
+                        
+                        # Store sample model button
+                        if st.button(f"Store Sample {model_type} Model"):
+                            try:
+                                model_id = st.session_state.db_service.store_ai_model(
+                                    model_name=f"{model_type}_{selected_symbol}",
+                                    model_type=model_type,
+                                    symbol=selected_symbol,
+                                    model_state="sample_model_state",
+                                    training_data_hash="sample_hash",
+                                    performance_metrics={
+                                        "accuracy": np.random.uniform(0.6, 0.85),
+                                        "mse": np.random.uniform(0.001, 0.01),
+                                        "training_time": np.random.uniform(30, 300)
+                                    }
+                                )
+                                st.success(f"Sample model stored with ID: {model_id}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error storing model: {e}")
+                
+                except Exception as e:
+                    st.error(f"Error with model operations: {e}")
+            
+            with col2:
+                st.write("**Prediction Accuracy Analysis**")
+                
+                # Note: In a real implementation, you would have actual predictions to analyze
+                st.info("Prediction accuracy tracking will be populated as models make predictions and actual prices are recorded.")
+                
+                # Simulate some prediction accuracy data for demonstration
+                if st.button("Generate Sample Prediction Analytics"):
+                    dates = pd.date_range(start='2024-01-01', periods=30, freq='D')
+                    accuracy_scores = np.random.uniform(0.4, 0.9, 30)
+                    
+                    fig = px.line(x=dates, y=accuracy_scores, 
+                                title="Model Prediction Accuracy Over Time",
+                                labels={'x': 'Date', 'y': 'Accuracy Score'})
+                    st.plotly_chart(fig, use_container_width=True)
+        
+        with db_tab3:
+            st.subheader("Portfolio Analytics Dashboard")
+            
+            try:
+                portfolio_history = st.session_state.db_service.get_portfolio_history(30)
+                
+                if not portfolio_history.empty:
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Portfolio value over time
+                        fig = px.line(portfolio_history, x=portfolio_history.index, 
+                                    y='total_value', title="Portfolio Value Over Time")
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Returns distribution
+                        if 'daily_return' in portfolio_history.columns:
+                            returns = portfolio_history['daily_return'].dropna()
+                            if not returns.empty:
+                                fig = px.histogram(x=returns, title="Daily Returns Distribution",
+                                                 nbins=20, color_discrete_sequence=['lightgreen'])
+                                st.plotly_chart(fig, use_container_width=True)
+                    
+                    with col2:
+                        # Portfolio composition
+                        latest_portfolio = portfolio_history.iloc[-1]
+                        
+                        labels = ['Cash', 'Positions']
+                        values = [latest_portfolio.get('cash_balance', 0), 
+                                latest_portfolio.get('positions_value', 0)]
+                        
+                        fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
+                        fig.update_layout(title="Portfolio Composition")
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Risk metrics
+                        st.write("**Risk Metrics**")
+                        if 'sharpe_ratio' in portfolio_history.columns:
+                            latest_sharpe = portfolio_history['sharpe_ratio'].iloc[-1]
+                            st.metric("Sharpe Ratio", f"{latest_sharpe:.2f}" if pd.notna(latest_sharpe) else "N/A")
+                        
+                        if 'volatility' in portfolio_history.columns:
+                            latest_vol = portfolio_history['volatility'].iloc[-1]
+                            st.metric("Volatility", f"{latest_vol:.2%}" if pd.notna(latest_vol) else "N/A")
+                        
+                        if 'drawdown' in portfolio_history.columns:
+                            latest_dd = portfolio_history['drawdown'].iloc[-1]
+                            st.metric("Current Drawdown", f"{latest_dd:.2%}" if pd.notna(latest_dd) else "N/A")
+                
+                else:
+                    st.info("No portfolio history available. Start trading to see analytics.")
+                    
+                    # Store sample portfolio data button
+                    if st.button("Store Sample Portfolio Data"):
+                        try:
+                            st.session_state.db_service.store_portfolio_snapshot(
+                                total_value=10000.0,
+                                cash_balance=5000.0,
+                                positions_value=5000.0,
+                                daily_return=0.02,
+                                total_return=0.15,
+                                sharpe_ratio=1.5,
+                                volatility=0.20
+                            )
+                            st.success("Sample portfolio data stored")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error storing portfolio data: {e}")
+                            
+            except Exception as e:
+                st.error(f"Error loading portfolio data: {e}")
+        
+        with db_tab4:
+            st.subheader("Trading Signals & Alert Management")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Recent Trading Signals**")
+                try:
+                    signals = st.session_state.db_service.get_recent_signals(selected_symbol, 20)
+                    
+                    if signals:
+                        signals_df = pd.DataFrame(signals)
+                        st.dataframe(signals_df[['timestamp', 'signal_type', 'strength', 'confidence', 'strategy_name']])
+                        
+                        # Signal distribution
+                        signal_counts = signals_df['signal_type'].value_counts()
+                        fig = px.pie(values=signal_counts.values, names=signal_counts.index, 
+                                   title="Signal Type Distribution")
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("No recent signals available")
+                        
+                        # Store sample signal button
+                        if st.button("Store Sample Signal"):
+                            try:
+                                signal_id = st.session_state.db_service.store_trading_signal(
+                                    symbol=selected_symbol,
+                                    signal_type=np.random.choice(['BUY', 'SELL', 'HOLD']),
+                                    strength=np.random.uniform(0.5, 1.0),
+                                    confidence=np.random.uniform(0.6, 0.95),
+                                    strategy_name="Sample Strategy",
+                                    price=50000.0,
+                                    market_regime="trending"
+                                )
+                                st.success(f"Sample signal stored with ID: {signal_id}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error storing signal: {e}")
+                
+                except Exception as e:
+                    st.error(f"Error loading signals: {e}")
+            
+            with col2:
+                st.write("**Signal Performance Analysis**")
+                
+                try:
+                    if signals:
+                        # Signal strength over time
+                        signals_df['timestamp'] = pd.to_datetime(signals_df['timestamp'])
+                        fig = px.scatter(signals_df, x='timestamp', y='strength', 
+                                       color='signal_type', title="Signal Strength Over Time")
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Confidence analysis
+                        avg_confidence = signals_df.groupby('signal_type')['confidence'].mean()
+                        fig = px.bar(x=avg_confidence.index, y=avg_confidence.values,
+                                   title="Average Confidence by Signal Type")
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("Generate signals to see performance analysis")
+                
+                except Exception as e:
+                    st.error(f"Error analyzing signals: {e}")
+        
+        with db_tab5:
+            st.subheader("Database Management & Maintenance")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Database Operations**")
+                
+                # Data cleanup
+                if st.button("Clean Old Data (>1 year)"):
+                    try:
+                        cleanup_result = st.session_state.db_service.cleanup_old_data(365)
+                        st.success("Data cleanup completed")
+                        st.json(cleanup_result)
+                    except Exception as e:
+                        st.error(f"Cleanup failed: {e}")
+                
+                # Export data
+                if st.button("Export Trading Data"):
+                    try:
+                        trades = st.session_state.db_service.get_trades(limit=1000)
+                        if trades:
+                            trades_df = pd.DataFrame(trades)
+                            csv = trades_df.to_csv(index=False)
+                            st.download_button(
+                                label="Download CSV",
+                                data=csv,
+                                file_name=f"trading_data_{datetime.now().strftime('%Y%m%d')}.csv",
+                                mime="text/csv"
+                            )
+                        else:
+                            st.info("No data to export")
+                    except Exception as e:
+                        st.error(f"Export failed: {e}")
+            
+            with col2:
+                st.write("**System Health**")
+                
+                # Database connection test
+                if st.button("Test Database Connection"):
+                    try:
+                        test_stats = st.session_state.db_service.get_trading_statistics(1)
+                        st.success("Database connection successful")
+                    except Exception as e:
+                        st.error(f"Database connection failed: {e}")
+                
+                # System logs
+                st.write("**Recent System Activity**")
+                try:
+                    # Log current access
+                    st.session_state.db_service.log_system_event(
+                        log_level="INFO",
+                        component="DATABASE_DASHBOARD",
+                        message="Database dashboard accessed",
+                        details={"user_action": "view_dashboard", "symbol": selected_symbol}
+                    )
+                    st.info("System activity logged successfully")
+                except Exception as e:
+                    st.warning(f"Logging error: {e}")
     
     # Auto refresh functionality
     if auto_refresh and st.session_state.trading_active:
