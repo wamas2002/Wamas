@@ -62,7 +62,6 @@ class TradingEngine:
         self.data_update_thread = None
         
         # Current market data
-        self.market_data = {}
         self.latest_prices = {}
         
     def initialize(self) -> bool:
@@ -288,12 +287,27 @@ class TradingEngine:
                 time.sleep(60)
     
     def _train_ai_models(self, data: pd.DataFrame):
-        """Train AI models with latest data"""
+        """Train AI models with latest data and store state in database"""
         try:
             # Train AI predictor
             training_result = self.ai_predictor.train_models(data)
             if 'error' not in training_result:
                 print("AI models trained successfully")
+                
+                # Store AI model state in database
+                if self.db_service:
+                    try:
+                        for model_name, result in training_result.items():
+                            if isinstance(result, dict) and 'accuracy' in result:
+                                self.db_service.store_ai_model_state(
+                                    model_name=model_name,
+                                    model_type='predictor',
+                                    training_accuracy=result.get('accuracy', 0.0),
+                                    model_parameters=result,
+                                    data_size=len(data)
+                                )
+                    except Exception as db_error:
+                        self.logger.log_error(f"AI model state storage failed: {db_error}")
             else:
                 print(f"AI training error: {training_result['error']}")
             
@@ -302,11 +316,25 @@ class TradingEngine:
                 ml_result = self.strategies['ml'].train_models(data)
                 if 'error' not in ml_result:
                     print("ML strategy trained successfully")
+                    
+                    # Store ML strategy state in database
+                    if self.db_service:
+                        try:
+                            self.db_service.store_ai_model_state(
+                                model_name='ml_strategy',
+                                model_type='strategy',
+                                training_accuracy=ml_result.get('accuracy', 0.0),
+                                model_parameters=ml_result,
+                                data_size=len(data)
+                            )
+                        except Exception as db_error:
+                            self.logger.log_error(f"ML strategy state storage failed: {db_error}")
                 else:
                     print(f"ML training error: {ml_result['error']}")
             
         except Exception as e:
             print(f"Error training AI models: {e}")
+            self.logger.log_error(f"AI training error: {e}")
     
     def _combine_signals(self, strategy_signal: Dict[str, Any], 
                         rl_signal: str, ai_predictions: Dict[str, float]) -> Dict[str, Any]:
@@ -457,12 +485,11 @@ class TradingEngine:
                         try:
                             self.db_service.store_trade(
                                 symbol=symbol,
-                                side='SELL',
+                                trade_type='SELL',
                                 quantity=sell_quantity,
-                                price=current_price,
-                                value=trade_value,
-                                strategy_name='paper_trading',
-                                signal_strength=strength
+                                entry_price=current_price,
+                                strategy_used='paper_trading',
+                                is_paper_trade=True
                             )
                         except Exception as db_error:
                             self.logger.log_error(f"Trade storage failed: {db_error}")
