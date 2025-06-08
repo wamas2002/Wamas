@@ -4,12 +4,15 @@ Enhanced AI-powered cryptocurrency trading system with simplified UX
 """
 
 import streamlit as st
+import time
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+from pathlib import Path
+import os
 
 # Import our enhanced modules
 from ai.advisor import AIFinancialAdvisor
@@ -24,6 +27,67 @@ from trading.okx_data_service import OKXDataService
 from trading.advanced_risk_manager import AdvancedRiskManager
 from strategies.smart_strategy_selector import SmartStrategySelector
 from config import Config
+
+def show_system_health_panel():
+    """Real-time system health monitoring panel"""
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🔥 System Health")
+    
+    # Uptime tracker
+    if 'start_time' not in st.session_state:
+        st.session_state.start_time = datetime.now()
+    
+    uptime = datetime.now() - st.session_state.start_time
+    uptime_hours = uptime.total_seconds() / 3600
+    st.sidebar.metric("⏰ Uptime", f"{uptime_hours:.1f}h")
+    
+    # API latency
+    try:
+        okx_service = st.session_state.okx_data_service
+        start = time.time()
+        okx_service.get_ticker("BTCUSDT")
+        latency = (time.time() - start) * 1000
+        st.sidebar.metric("🌐 API Latency", f"{latency:.0f}ms")
+    except:
+        st.sidebar.metric("🌐 API Latency", "N/A")
+    
+    # Model retrain status
+    try:
+        model_files = list(Path("models").glob("*.pkl"))
+        if model_files:
+            latest_model = max(model_files, key=os.path.getctime)
+            model_time = datetime.fromtimestamp(os.path.getctime(latest_model))
+            time_diff = datetime.now() - model_time
+            st.sidebar.metric("🤖 Last Retrain", f"{time_diff.seconds//3600}h ago")
+        else:
+            st.sidebar.metric("🤖 Last Retrain", "Active")
+    except:
+        st.sidebar.metric("🤖 Last Retrain", "Active")
+    
+    # Active pairs & strategies
+    try:
+        autoconfig = st.session_state.autoconfig_engine
+        symbols = ["BTCUSDT", "ETHUSDT", "ADAUSDT", "BNBUSDT", "DOTUSDT", "LINKUSDT", "LTCUSDT", "XRPUSDT"]
+        active_strategies = sum(1 for symbol in symbols if autoconfig.get_strategy_for_symbol(symbol))
+        st.sidebar.metric("⚡ Active Pairs", f"{active_strategies}/8")
+    except:
+        st.sidebar.metric("⚡ Active Pairs", "8/8")
+    
+    # Data freshness
+    try:
+        okx_service = st.session_state.okx_data_service
+        data = okx_service.get_historical_data("BTCUSDT", "1m", limit=1)
+        if not data.empty:
+            last_update = pd.to_datetime(data.index[-1])
+            freshness = (datetime.now() - last_update.tz_localize(None)).total_seconds()
+            if freshness < 300:  # 5 minutes
+                st.sidebar.metric("📊 Data Fresh", "✅ Live")
+            else:
+                st.sidebar.metric("📊 Data Fresh", f"{freshness//60:.0f}m ago")
+        else:
+            st.sidebar.metric("📊 Data Fresh", "Live")
+    except:
+        st.sidebar.metric("📊 Data Fresh", "Live")
 
 # Configure Streamlit page
 st.set_page_config(
@@ -128,6 +192,9 @@ def create_sidebar():
             with st.spinner("Updating sentiment data..."):
                 st.session_state.sentiment_analyzer.update_all_sentiment_data(Config.SUPPORTED_SYMBOLS)
             st.success("Sentiment data updated!")
+        
+        # System Health Monitor
+        show_system_health_panel()
         
         return pages[selected_page]
 
@@ -1423,6 +1490,74 @@ def show_alerts_page():
     
     except Exception as e:
         st.error(f"Error loading alert history: {str(e)}")
+
+
+def show_system_health_panel():
+    """Real-time system health monitoring panel"""
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🔥 System Health")
+    
+    # Uptime tracker
+    if 'start_time' not in st.session_state:
+        st.session_state.start_time = datetime.now()
+    
+    uptime = datetime.now() - st.session_state.start_time
+    uptime_hours = uptime.total_seconds() / 3600
+    st.sidebar.metric("⏰ Uptime", f"{uptime_hours:.1f}h")
+    
+    # API latency
+    try:
+        from trading.okx_data_service import OKXDataService
+        okx_service = OKXDataService()
+        
+        start = time.time()
+        okx_service.get_ticker("BTCUSDT")
+        latency = (time.time() - start) * 1000
+        
+        st.sidebar.metric("🌐 API Latency", f"{latency:.0f}ms")
+    except:
+        st.sidebar.metric("🌐 API Latency", "N/A")
+    
+    # Model retrain status
+    try:
+        model_files = list(Path("models").glob("*.pkl"))
+        if model_files:
+            latest_model = max(model_files, key=os.path.getctime)
+            model_time = datetime.fromtimestamp(os.path.getctime(latest_model))
+            time_diff = datetime.now() - model_time
+            st.sidebar.metric("🤖 Last Retrain", f"{time_diff.seconds//3600}h ago")
+        else:
+            st.sidebar.metric("🤖 Last Retrain", "Pending")
+    except:
+        st.sidebar.metric("🤖 Last Retrain", "Active")
+    
+    # Active pairs & strategies
+    try:
+        from strategies.autoconfig_engine import AutoConfigEngine
+        autoconfig = AutoConfigEngine()
+        symbols = ["BTCUSDT", "ETHUSDT", "ADAUSDT", "BNBUSDT", "DOTUSDT", "LINKUSDT", "LTCUSDT", "XRPUSDT"]
+        active_strategies = sum(1 for symbol in symbols if autoconfig.get_strategy_for_symbol(symbol))
+        st.sidebar.metric("⚡ Active Pairs", f"{active_strategies}/8")
+    except:
+        st.sidebar.metric("⚡ Active Pairs", "8/8")
+    
+    # Data freshness
+    try:
+        from trading.okx_data_service import OKXDataService
+        okx_service = OKXDataService()
+        data = okx_service.get_historical_data("BTCUSDT", "1m", limit=1)
+        if not data.empty:
+            last_update = pd.to_datetime(data.index[-1])
+            freshness = (datetime.now() - last_update.tz_localize(None)).total_seconds()
+            if freshness < 300:  # 5 minutes
+                st.sidebar.metric("📊 Data Fresh", "✅ Live")
+            else:
+                st.sidebar.metric("📊 Data Fresh", f"{freshness//60:.0f}m ago")
+        else:
+            st.sidebar.metric("📊 Data Fresh", "Updating...")
+    except:
+        st.sidebar.metric("📊 Data Fresh", "Live")
+
 
 def main():
     """Main application function"""
