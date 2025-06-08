@@ -116,6 +116,31 @@ def initialize_session_state():
     if 'trading_active' not in st.session_state:
         st.session_state.trading_active = False
     
+    # Initialize monitoring and autonomous systems
+    if 'monitoring_active' not in st.session_state:
+        st.session_state.monitoring_active = False
+        
+    if 'autonomous_mode' not in st.session_state:
+        st.session_state.autonomous_mode = False
+        
+    # Start production monitoring system
+    if not st.session_state.monitoring_active:
+        try:
+            from monitoring.system_monitor import start_production_monitoring
+            start_production_monitoring()
+            st.session_state.monitoring_active = True
+        except Exception as e:
+            pass  # Continue without monitoring if there's an issue
+            
+    # Start autonomous controller
+    if not st.session_state.autonomous_mode:
+        try:
+            from monitoring.autonomous_controller import start_autonomous_trading
+            start_autonomous_trading()
+            st.session_state.autonomous_mode = True
+        except Exception as e:
+            pass  # Continue without autonomous mode if there's an issue
+
     # Clear any cached market data to force live API calls
     st.session_state.market_data = {}
     st.session_state.predictions = {}
