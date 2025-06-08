@@ -446,36 +446,6 @@ def main():
     with tab6:
         # Advanced ML Laboratory Interface
         st.session_state.advanced_ml_interface.render_ml_dashboard()
-                        
-                    with col2:
-                        lookback_days = st.slider("Lookback Period (days)", 30, 252, 90)
-                        
-                        if st.button("Optimize Portfolio", key="optimize_portfolio"):
-                            with st.spinner("Optimizing portfolio..."):
-                                # Collect price data for selected assets
-                                price_data = {}
-                                for symbol in selected_assets:
-                                    asset_data = st.session_state.okx_data_service.get_historical_data(symbol, selected_timeframe, lookback_days)
-                                    if not asset_data.empty:
-                                        price_data[symbol] = asset_data.tail(lookback_days)
-                                
-                                if len(price_data) >= 2:
-                                    # Calculate returns
-                                    returns_df = st.session_state.portfolio_optimizer.calculate_returns(price_data)
-                                    
-                                    if not returns_df.empty:
-                                        # Optimize portfolio
-                                        constraints = {
-                                            'max_weight': max_weight,
-                                            'min_weight': 0.0,
-                                            'long_only': True
-                                        }
-                                        
-                                        optimization_result = st.session_state.portfolio_optimizer.optimize_portfolio(
-                                            returns_df, optimization_method, constraints
-                                        )
-                                        
-                                        if 'error' not in optimization_result:
                                             # Display optimization results
                                             st.success("Portfolio optimization completed!")
                                             
