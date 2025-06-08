@@ -12,6 +12,8 @@ from ai.predictor import AIPredictor
 from ai.lstm_predictor import LSTMPredictor
 from ai.prophet_predictor import ProphetPredictor
 from ai.reinforcement_advanced import AdvancedQLearningAgent
+from ai.market_regime_detector import MarketRegimeDetector
+from ai.portfolio_optimizer import PortfolioOptimizer
 from trading.okx_connector import OKXConnector
 from trading.risk_manager_advanced import AdvancedRiskManager
 from trading.backtesting_engine import BacktestingEngine, WalkForwardAnalyzer
@@ -46,6 +48,12 @@ def initialize_session_state():
     
     if 'rl_agent' not in st.session_state:
         st.session_state.rl_agent = AdvancedQLearningAgent()
+    
+    if 'regime_detector' not in st.session_state:
+        st.session_state.regime_detector = MarketRegimeDetector()
+    
+    if 'portfolio_optimizer' not in st.session_state:
+        st.session_state.portfolio_optimizer = PortfolioOptimizer()
     
     if 'okx_connector' not in st.session_state:
         st.session_state.okx_connector = OKXConnector()
@@ -229,58 +237,259 @@ def main():
         # Advanced ML Models Tab
         st.header("🔬 Advanced Machine Learning Models")
         
-        col1, col2 = st.columns(2)
+        # Market Regime Detection Section
+        st.subheader("📊 Market Regime Detection")
         
-        with col1:
-            st.subheader("LSTM Neural Network")
+        try:
+            market_data = st.session_state.trading_engine.get_market_data(selected_symbol, selected_timeframe)
             
-            # Get market data for training
-            try:
-                market_data = st.session_state.trading_engine.get_market_data(selected_symbol, selected_timeframe)
+            if not market_data.empty and len(market_data) > 100:
+                # Detect current market regime
+                if st.button("Analyze Market Regime", key="analyze_regime"):
+                    with st.spinner("Analyzing market regime..."):
+                        regime_result = st.session_state.regime_detector.detect_regime(market_data)
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.metric("Current Regime", regime_result['regime'].title())
+                            st.metric("Confidence", f"{regime_result['confidence']:.1%}")
+                        
+                        with col2:
+                            st.write("**Regime Probabilities**")
+                            for regime, prob in regime_result['probabilities'].items():
+                                st.write(f"{regime.title()}: {prob:.1%}")
+                        
+                        with col3:
+                            st.write("**Description**")
+                            st.write(regime_result['description'])
                 
-                if len(market_data) > 100:
-                    # Train LSTM model
-                    if st.button("Train LSTM Model"):
-                        with st.spinner("Training LSTM model..."):
-                            lstm_result = st.session_state.lstm_predictor.train(market_data)
-                            
-                        if lstm_result.get('success'):
-                            st.success(f"LSTM trained successfully!")
-                            st.write(f"Training samples: {lstm_result.get('training_samples', 0)}")
-                            st.write(f"Validation MSE: {lstm_result.get('val_mse', 0):.6f}")
-                        else:
-                            st.error(f"Training failed: {lstm_result.get('error', 'Unknown error')}")
+                # Portfolio Optimization Section
+                st.markdown("---")
+                st.subheader("💼 Portfolio Optimization")
+                
+                # Multi-asset selection for portfolio
+                available_symbols = Config.SUPPORTED_SYMBOLS
+                selected_assets = st.multiselect(
+                    "Select Assets for Portfolio",
+                    available_symbols,
+                    default=available_symbols[:4],
+                    key="portfolio_assets"
+                )
+                
+                if len(selected_assets) >= 2:
+                    col1, col2 = st.columns(2)
                     
-                    # Generate LSTM predictions
-                    if st.button("Generate LSTM Prediction"):
-                        with st.spinner("Generating prediction..."):
-                            prediction = st.session_state.lstm_predictor.predict(market_data)
-                            
-                        if prediction.get('success'):
-                            current_price = prediction.get('current_price', 0)
-                            predicted_price = prediction.get('prediction', 0)
-                            change_pct = prediction.get('predicted_change', 0) * 100
-                            confidence = prediction.get('confidence', 0) * 100
-                            
-                            st.metric("Current Price", f"${current_price:.4f}")
-                            st.metric("Predicted Price", f"${predicted_price:.4f}", 
-                                    f"{change_pct:+.2f}%")
-                            st.metric("Confidence", f"{confidence:.1f}%")
-                        else:
-                            st.error(f"Prediction failed: {prediction.get('error', 'Unknown error')}")
-                else:
-                    st.warning("Insufficient data for LSTM training (need >100 samples)")
+                    with col1:
+                        optimization_method = st.selectbox(
+                            "Optimization Method",
+                            ["max_sharpe", "min_variance", "risk_parity", "max_diversification", "hierarchical_risk_parity"],
+                            key="opt_method"
+                        )
+                        
+                        max_weight = st.slider("Maximum Asset Weight", 0.1, 1.0, 0.4, 0.05)
+                        
+                    with col2:
+                        lookback_days = st.slider("Lookback Period (days)", 30, 252, 90)
+                        
+                        if st.button("Optimize Portfolio", key="optimize_portfolio"):
+                            with st.spinner("Optimizing portfolio..."):
+                                # Collect price data for selected assets
+                                price_data = {}
+                                for symbol in selected_assets:
+                                    asset_data = st.session_state.trading_engine.get_market_data(symbol, selected_timeframe)
+                                    if not asset_data.empty:
+                                        price_data[symbol] = asset_data.tail(lookback_days)
+                                
+                                if len(price_data) >= 2:
+                                    # Calculate returns
+                                    returns_df = st.session_state.portfolio_optimizer.calculate_returns(price_data)
+                                    
+                                    if not returns_df.empty:
+                                        # Optimize portfolio
+                                        constraints = {
+                                            'max_weight': max_weight,
+                                            'min_weight': 0.0,
+                                            'long_only': True
+                                        }
+                                        
+                                        optimization_result = st.session_state.portfolio_optimizer.optimize_portfolio(
+                                            returns_df, optimization_method, constraints
+                                        )
+                                        
+                                        if 'error' not in optimization_result:
+                                            # Display optimization results
+                                            st.success("Portfolio optimization completed!")
+                                            
+                                            col1, col2 = st.columns(2)
+                                            
+                                            with col1:
+                                                st.write("**Optimal Weights**")
+                                                weights_df = pd.DataFrame(
+                                                    list(optimization_result['weights'].items()),
+                                                    columns=['Asset', 'Weight']
+                                                )
+                                                weights_df['Weight'] = weights_df['Weight'].apply(lambda x: f"{x:.1%}")
+                                                st.dataframe(weights_df, use_container_width=True)
+                                                
+                                                # Portfolio metrics
+                                                metrics = optimization_result['metrics']
+                                                st.metric("Expected Return", f"{metrics.get('expected_return', 0):.1%}")
+                                                st.metric("Volatility", f"{metrics.get('volatility', 0):.1%}")
+                                                st.metric("Sharpe Ratio", f"{metrics.get('sharpe_ratio', 0):.2f}")
+                                            
+                                            with col2:
+                                                # Portfolio allocation pie chart
+                                                import plotly.express as px
+                                                
+                                                weights_data = optimization_result['weights']
+                                                fig = px.pie(
+                                                    values=list(weights_data.values()),
+                                                    names=list(weights_data.keys()),
+                                                    title="Portfolio Allocation"
+                                                )
+                                                st.plotly_chart(fig, use_container_width=True)
+                                        else:
+                                            st.error(f"Optimization failed: {optimization_result['error']}")
+                                    else:
+                                        st.warning("Unable to calculate returns for selected assets")
+                                else:
+                                    st.warning("Insufficient price data for optimization")
+                
+                # Advanced ML Models Section
+                st.markdown("---")
+                st.subheader("🧠 AI Model Training & Predictions")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.write("**LSTM Neural Network**")
                     
-            except Exception as e:
-                st.error(f"Error accessing market data: {e}")
+                    if len(market_data) > 100:
+                        if st.button("Train LSTM Model", key="train_lstm"):
+                            with st.spinner("Training LSTM model..."):
+                                lstm_result = st.session_state.lstm_predictor.train(market_data)
+                                
+                                if lstm_result['success']:
+                                    st.success("LSTM model trained successfully!")
+                                    st.metric("Training Accuracy", f"{lstm_result.get('training_accuracy', 0):.2%}")
+                                    st.metric("Validation Accuracy", f"{lstm_result.get('validation_accuracy', 0):.2%}")
+                                    
+                                    # Store model state in database
+                                    try:
+                                        model_id = st.session_state.db_service.store_ai_model_state(
+                                            model_type="LSTM",
+                                            symbol=selected_symbol,
+                                            model_state=lstm_result,
+                                            performance_metrics=lstm_result.get('metrics', {})
+                                        )
+                                        st.info(f"Model saved to database (ID: {model_id})")
+                                    except Exception as e:
+                                        st.warning(f"Could not save model to database: {e}")
+                                else:
+                                    st.error("LSTM training failed")
+                        
+                        if st.button("Generate LSTM Prediction", key="predict_lstm"):
+                            with st.spinner("Generating LSTM prediction..."):
+                                lstm_prediction = st.session_state.lstm_predictor.predict(market_data)
+                                
+                                if lstm_prediction.get('success'):
+                                    pred_price = lstm_prediction.get('predicted_price', 0)
+                                    confidence = lstm_prediction.get('confidence', 0)
+                                    current_price = market_data['close'].iloc[-1]
+                                    
+                                    st.metric("Predicted Price", f"${pred_price:.2f}")
+                                    st.metric("Confidence", f"{confidence:.1%}")
+                                    st.metric("Price Change", f"{((pred_price - current_price) / current_price):.2%}")
+                                    
+                                    # Store prediction in database
+                                    try:
+                                        active_model = st.session_state.db_service.get_active_ai_model("LSTM", selected_symbol)
+                                        if active_model:
+                                            pred_id = st.session_state.db_service.store_prediction(
+                                                model_id=active_model['id'],
+                                                symbol=selected_symbol,
+                                                predicted_price=pred_price,
+                                                prediction_horizon=24,
+                                                confidence=confidence
+                                            )
+                                            st.info(f"Prediction saved (ID: {pred_id})")
+                                    except Exception as e:
+                                        st.warning(f"Could not save prediction: {e}")
+                                else:
+                                    st.error("LSTM prediction failed")
+                    else:
+                        st.warning("Need at least 100 data points for LSTM training")
+                
+                with col2:
+                    st.write("**Prophet Time Series Model**")
+                    
+                    if len(market_data) > 60:
+                        if st.button("Train Prophet Model", key="train_prophet"):
+                            with st.spinner("Training Prophet model..."):
+                                prophet_result = st.session_state.prophet_predictor.train(market_data)
+                                
+                                if prophet_result.get('success'):
+                                    st.success("Prophet model trained successfully!")
+                                    st.metric("Training Samples", prophet_result.get('training_samples', 0))
+                                    st.metric("Model Score", f"{prophet_result.get('performance_score', 0):.2%}")
+                                    
+                                    # Store model state in database
+                                    try:
+                                        model_id = st.session_state.db_service.store_ai_model_state(
+                                            model_type="PROPHET",
+                                            symbol=selected_symbol,
+                                            model_state=prophet_result,
+                                            performance_metrics=prophet_result.get('metrics', {})
+                                        )
+                                        st.info(f"Model saved to database (ID: {model_id})")
+                                    except Exception as e:
+                                        st.warning(f"Could not save model to database: {e}")
+                                else:
+                                    st.error("Prophet training failed")
+                        
+                        if st.button("Generate Prophet Forecast", key="predict_prophet"):
+                            with st.spinner("Generating Prophet forecast..."):
+                                prophet_prediction = st.session_state.prophet_predictor.predict(market_data, periods=24)
+                                
+                                if prophet_prediction.get('success'):
+                                    st.success("Prophet forecast generated!")
+                                    
+                                    forecast_data = prophet_prediction.get('predictions', [])
+                                    if forecast_data:
+                                        next_price = forecast_data[0] if isinstance(forecast_data, list) else forecast_data
+                                        confidence = prophet_prediction.get('confidence', 0)
+                                        current_price = market_data['close'].iloc[-1]
+                                        
+                                        st.metric("Forecasted Price", f"${next_price:.2f}")
+                                        st.metric("Confidence", f"{confidence:.1%}")
+                                        st.metric("Price Change", f"{((next_price - current_price) / current_price):.2%}")
+                                        
+                                        # Store prediction in database
+                                        try:
+                                            active_model = st.session_state.db_service.get_active_ai_model("PROPHET", selected_symbol)
+                                            if active_model:
+                                                pred_id = st.session_state.db_service.store_prediction(
+                                                    model_id=active_model['id'],
+                                                    symbol=selected_symbol,
+                                                    predicted_price=next_price,
+                                                    prediction_horizon=24,
+                                                    confidence=confidence
+                                                )
+                                                st.info(f"Forecast saved (ID: {pred_id})")
+                                        except Exception as e:
+                                            st.warning(f"Could not save forecast: {e}")
+                                    else:
+                                        st.warning("No forecast data generated")
+                                else:
+                                    st.error("Prophet forecast failed")
+                    else:
+                        st.warning("Need at least 60 data points for Prophet training")
+            else:
+                st.warning("Insufficient market data for AI analysis")
         
-        with col2:
-            st.subheader("Prophet Time Series Model")
-            
-            try:
-                if len(market_data) > 100:
-                    # Train Prophet model
-                    if st.button("Train Prophet Model"):
+        except Exception as e:
+            st.error(f"Error in Advanced ML tab: {e}")
                         with st.spinner("Training Prophet model..."):
                             prophet_result = st.session_state.prophet_predictor.train(market_data)
                             
