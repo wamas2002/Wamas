@@ -2,7 +2,6 @@
 TradingView Chart Integration for Real-time Price Visualization
 """
 import streamlit as st
-import streamlit.components.v1 as components
 from typing import Dict, Any, Optional, List
 import json
 
@@ -52,75 +51,81 @@ class TradingViewCharts:
             studies: Additional studies to apply
         """
         
-        # Convert symbol to TradingView format
-        tv_symbol = self.supported_symbols.get(symbol, f'BINANCE:{symbol}')
+        # Convert symbol to TradingView format (using OKX for crypto futures)
+        tv_symbol = f"OKX:{symbol}.P"
         
-        # Use default indicators if none provided
-        if indicators is None:
-            indicators = self.default_indicators
-        
-        # Chart configuration
-        chart_config = {
-            "symbol": tv_symbol,
-            "interval": interval,
-            "timezone": "Etc/UTC",
-            "theme": theme,
-            "style": "1",  # Candlestick style
-            "locale": "en",
-            "toolbar_bg": "#f1f3f6" if theme == 'light' else "#131722",
-            "enable_publishing": False,
-            "hide_top_toolbar": False,
-            "hide_legend": False,
-            "save_image": True,
-            "container_id": "tradingview_chart",
-            "height": height,
-            "width": "100%",
-            "allow_symbol_change": allow_symbol_change,
-            "hide_side_toolbar": hide_side_toolbar,
-            "details": True,
-            "hotlist": True,
-            "calendar": True,
-            "studies": indicators if studies is None else studies
+        # Convert interval to TradingView format
+        interval_map = {
+            "1m": "1", "5m": "5", "15m": "15", "30m": "30",
+            "1h": "60", "1H": "60", "4h": "240", "4H": "240", 
+            "1d": "1D", "1D": "1D"
         }
+        tv_interval = interval_map.get(interval, "240")
         
-        # TradingView widget HTML
-        tradingview_html = f"""
-        <div class="tradingview-widget-container" style="height:{height}px;width:100%">
-            <div id="tradingview_chart" style="height:{height-50}px;width:100%"></div>
-            <div class="tradingview-widget-copyright">
-                <a href="https://www.tradingview.com/symbols/{tv_symbol}/" rel="noopener" target="_blank">
-                    <span class="blue-text">{symbol} Chart</span>
-                </a> by TradingView
+        # Generate unique container ID
+        container_id = f"tradingview_{abs(hash(symbol + interval + theme))}"
+        
+        # Create TradingView widget HTML following the proper embedding pattern
+        chart_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{ margin: 0; padding: 0; }}
+                .tradingview-widget-container {{ height: {height}px; width: 100%; }}
+                .tradingview-widget-container__widget {{ height: 100%; width: 100%; }}
+                .tradingview-widget-copyright {{ 
+                    font-size: 13px; 
+                    line-height: 32px; 
+                    text-align: center; 
+                    vertical-align: middle; 
+                    color: #B2B5BE; 
+                    text-decoration: none; 
+                    display: block; 
+                }}
+                .blue-text {{ color: #2962FF; }}
+            </style>
+        </head>
+        <body>
+            <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget" id="{container_id}"></div>
+                <div class="tradingview-widget-copyright">
+                    <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                        <span class="blue-text">Track all markets on TradingView</span>
+                    </a>
+                </div>
             </div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-            {{
-                "autosize": false,
-                "symbol": "{tv_symbol}",
-                "interval": "{interval}",
-                "timezone": "Etc/UTC",
-                "theme": "{theme}",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "{chart_config['toolbar_bg']}",
-                "enable_publishing": false,
-                "hide_top_toolbar": false,
-                "hide_legend": false,
-                "save_image": true,
-                "container_id": "tradingview_chart",
-                "height": {height-50},
-                "width": "100%",
-                "allow_symbol_change": {str(allow_symbol_change).lower()},
-                "hide_side_toolbar": {str(hide_side_toolbar).lower()},
-                "details": true,
-                "hotlist": true,
-                "calendar": true,
-                "studies": {json.dumps(indicators)}
-            }}
+            <script type="text/javascript">
+                // Create script element for TradingView widget
+                const script = document.createElement('script');
+                script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+                script.type = 'text/javascript';
+                script.async = true;
+                script.innerHTML = JSON.stringify({{
+                    "autosize": true,
+                    "symbol": "{tv_symbol}",
+                    "interval": "{tv_interval}",
+                    "timezone": "Etc/UTC",
+                    "theme": "{theme}",
+                    "style": "1",
+                    "locale": "en",
+                    "withdateranges": true,
+                    "hide_side_toolbar": {str(hide_side_toolbar).lower()},
+                    "allow_symbol_change": {str(allow_symbol_change).lower()},
+                    "calendar": false,
+                    "support_host": "https://www.tradingview.com",
+                    "container_id": "{container_id}"
+                }});
+                document.getElementById('{container_id}').appendChild(script);
             </script>
-        </div>
+        </body>
+        </html>
         """
         
-        components.html(tradingview_html, height=height)
+        # Render the chart using Streamlit HTML component
+        st.html(chart_html)
     
     def render_mini_chart(self, 
                          symbol: str = 'BTCUSDT',
