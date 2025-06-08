@@ -1620,6 +1620,10 @@ def main():
         show_advisor_page()
     elif selected_page == "charts":
         show_charts_page()
+    elif selected_page == "feedback_engine" and st.session_state.user_mode == 'expert':
+        from frontend.real_time_feedback_engine import show_real_time_feedback_engine
+        st.title("🔔 Real-Time Feedback Engine")
+        show_real_time_feedback_engine()
     elif selected_page == "advanced_ml" and st.session_state.user_mode == 'expert':
         show_advanced_ml_page()
     elif selected_page == "ai_performance" and st.session_state.user_mode == 'expert':
