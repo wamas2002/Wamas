@@ -1,0 +1,54 @@
+Prompt: Replace Mock Data in New UI (:3000) with Real OKX Data
+
+🧭 Objective:
+Ensure that the new UI served at port :3000 displays only authentic, live data from OKX (or alternative trusted sources), replacing all mock, test, or sandboxed values used during development.
+
+⸻
+
+✅ Instructions:
+
+1. Identify and Remove All Mock Data Sources
+	•	Search for and remove all placeholder/mock/sandbox data such as:
+	•	np.random, fake_price, demo_value, etc.
+	•	Any hardcoded values in dashboard, strategy view, portfolio pages, or analytics
+	•	Check streamlit, React, Jinja2, or JS components for injected static values
+
+2. Connect Real Market Data APIs
+	•	Fetch live OHLCV, price, and volume data for all active USDT trading pairs using:
+	•	✅ OKX API (primary source)
+	•	🔁 Optional fallback: Binance API, CoinGecko API
+	•	Stream price updates into:
+	•	Portfolio tracker
+	•	Strategy performance charts
+	•	AI model status
+	•	Technical and fundamental visualizations
+
+3. Enable Real-Time Portfolio Sync
+	•	Integrate with actual OKX account portfolio:
+	•	Display real balances, token allocations, and P&L
+	•	Reflect real positions from okx_portfolio.json or authenticated API calls
+	•	Replace all placeholder wallet/portfolio data with live values
+
+4. Ensure Real-Time Updates in All UI Pages
+
+Update the following pages on port :3000:
+	•	Dashboard: Live prices, real-time AI status, current portfolio value
+	•	Portfolio: Real token holdings, exposure, volatility, and performance
+	•	Analytics: Real trades, AI logs, prediction accuracy, and historical data
+	•	Strategy Builder: Live validation of strategy signals using market data
+	•	AI Panel: Use real input features (215+) for live model predictions
+
+5. Verify Data Authenticity and Sync
+	•	Validate that all charts, tables, and widgets reflect:
+	•	✅ Authentic values from live feeds
+	•	❌ No remaining demo/sample/test data
+	•	Ensure TradingView widgets use the correct real-time symbol data
+
+⸻
+
+📍 Final Task:
+
+Ensure the new UI (:3000) becomes the primary interface. Do not allow fallback to the legacy port (:5001). Confirm that:
+	•	All real data pipelines are active
+	•	UI reflects live market behavior
+	•	All modules remain interconnected without disruption

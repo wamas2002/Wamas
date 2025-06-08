@@ -437,15 +437,34 @@ def show_portfolio_page():
         
         with col2:
             st.subheader("Portfolio Analytics")
-            st.metric("Concentration Risk", "99.5%", "CRITICAL")
-            st.metric("Volatility", "85.0%", "High Risk")
-            st.metric("Rebalancing Score", "3.80/4.0", "URGENT")
+            try:
+                from real_data_service import real_data_service
+                risk_metrics = real_data_service.get_real_risk_metrics()
+                
+                st.metric("Concentration Risk", f"{risk_metrics['concentration_risk']:.1f}%", 
+                         "CRITICAL" if risk_metrics['concentration_risk'] > 80 else "MODERATE")
+                st.metric("Portfolio Volatility", f"{risk_metrics['portfolio_volatility']:.1f}%", 
+                         "High Risk" if risk_metrics['portfolio_volatility'] > 60 else "Normal")
+                st.metric("Risk Score", f"{risk_metrics['risk_score']:.2f}/4.0", 
+                         "URGENT" if risk_metrics['risk_score'] > 3.0 else "MANAGEABLE")
+            except Exception as e:
+                st.error(f"Risk metrics unavailable: {e}")
+                st.info("Authentic portfolio data required for risk calculations")
         
         with col3:
             st.subheader("AI Performance")
-            st.metric("Overall Accuracy", "68.8%", "5 Models Active")
-            st.metric("Best Model", "GradientBoost", "83.3%")
-            st.metric("Strategy Optimal", "Mean Reversion", "18.36% Returns")
+            try:
+                from real_data_service import real_data_service
+                ai_performance = real_data_service.get_real_ai_performance()
+                
+                st.metric("Overall Accuracy", f"{ai_performance['overall_accuracy']:.1f}%", f"{ai_performance['active_models']} Models Active")
+                if ai_performance['best_model']:
+                    best_accuracy = ai_performance['model_performance'][ai_performance['best_model']]['overall_accuracy']
+                    st.metric("Best Model", ai_performance['best_model'], f"{best_accuracy:.1f}%")
+                st.metric("Recent Predictions", ai_performance['recent_predictions'], "Last 6 Hours")
+            except Exception as e:
+                st.error(f"AI performance data unavailable: {e}")
+                st.info("Ensure AI models are running with authentic data")
         
         # Advanced portfolio analytics section
         st.subheader("🔍 Comprehensive Analysis Results")
@@ -461,12 +480,13 @@ def show_portfolio_page():
         with analysis_tab1:
             st.subheader("Fundamental Analysis Results")
             
-            # Display completed fundamental analysis
-            fundamental_results = {
-                'BTC': {'score': 77.2, 'recommendation': 'BUY', 'upside': '+20%'},
-                'ETH': {'score': 76.7, 'recommendation': 'BUY', 'upside': '+20%'},
-                'PI': {'score': 58.8, 'recommendation': 'HOLD', 'upside': 'Limited'}
-            }
+            # Get authentic fundamental analysis data
+            try:
+                from real_data_service import real_data_service
+                fundamental_results = real_data_service.get_real_fundamental_analysis()
+            except Exception as e:
+                st.error(f"Unable to retrieve fundamental analysis: {e}")
+                fundamental_results = {}
             
             for symbol, data in fundamental_results.items():
                 col1, col2, col3, col4 = st.columns([1, 1, 1, 2])
@@ -492,12 +512,13 @@ def show_portfolio_page():
         with analysis_tab2:
             st.subheader("Technical Analysis Signals")
             
-            # Display technical analysis results
-            technical_signals = {
-                'BTC': {'signal': 'MACD Bullish Crossover', 'direction': 'BUY', 'confidence': 70, 'trend': 'STRONG BULLISH'},
-                'ETH': {'signal': 'Neutral Consolidation', 'direction': 'HOLD', 'confidence': 50, 'trend': 'SIDEWAYS'},
-                'PI': {'signal': 'RSI Oversold', 'direction': 'POTENTIAL BUY', 'confidence': 65, 'trend': 'BEARISH'}
-            }
+            # Get authentic technical analysis signals
+            try:
+                from real_data_service import real_data_service
+                technical_signals = real_data_service.get_real_technical_signals()
+            except Exception as e:
+                st.error(f"Unable to retrieve technical analysis: {e}")
+                technical_signals = {}
             
             for symbol, data in technical_signals.items():
                 with st.container():
