@@ -36,8 +36,9 @@ class AutonomousTrainingOrchestrator:
             'SOL/USDT', 'XRP/USDT', 'DOT/USDT', 'AVAX/USDT'
         ]
         
-        # Initialize components
-        self.binance_collector = BinanceDataCollector()
+        # Initialize components - using OKX instead of Binance due to geographic restrictions
+        from trading.okx_data_service import OKXDataService
+        self.okx_data_service = OKXDataService()
         self.news_collector = NewsSentimentCollector()
         self.feature_engineer = AdvancedFeatureEngineer()
         self.dataset_manager = DatasetManager()
@@ -50,9 +51,19 @@ class AutonomousTrainingOrchestrator:
         
         self.logger.info("Starting historical data collection...")
         
-        # Collect OHLCV data from Binance
-        self.logger.info("Collecting OHLCV data from Binance...")
-        self.binance_collector.collect_multiple_symbols(self.symbols, '1m', days_back)
+        # Collect OHLCV data from OKX
+        self.logger.info("Collecting OHLCV data from OKX...")
+        for symbol in self.symbols:
+            try:
+                # Convert symbol format for OKX (BTC/USDT -> BTCUSDT)
+                okx_symbol = symbol.replace('/', '')
+                data = self.okx_data_service.get_historical_data(okx_symbol, '1m', limit=days_back * 1440)
+                if not data.empty:
+                    self.logger.info(f"Successfully collected {len(data)} records for {symbol}")
+                else:
+                    self.logger.warning(f"No data received for {symbol}")
+            except Exception as e:
+                self.logger.error(f"Error collecting data for {symbol}: {e}")
         
         # Collect news sentiment data
         self.logger.info("Collecting news sentiment data...")

@@ -22,6 +22,9 @@ class OKXDataService:
             sandbox=False
         )
         
+        # Add base_url attribute for compatibility
+        self.base_url = "https://www.okx.com"
+        
         # Disable caching to force live data
         self.data_cache = {}
         self.cache_timestamps = {}
