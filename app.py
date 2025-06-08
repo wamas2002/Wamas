@@ -1177,6 +1177,277 @@ def main():
                 except Exception as e:
                     st.warning(f"Logging error: {e}")
     
+    with tab9:
+        # Live Charts Tab with TradingView Integration
+        st.header("📈 Live Charts - Real-time Price Visualization")
+        
+        # Chart configuration
+        col1, col2 = st.columns([3, 1])
+        
+        with col2:
+            st.subheader("Chart Settings")
+            
+            # Symbol selection for charts
+            chart_symbol = st.selectbox(
+                "Chart Symbol",
+                options=list(st.session_state.tradingview_charts.get_supported_symbols().keys()),
+                index=0,
+                key="chart_symbol"
+            )
+            
+            # Time interval selection
+            chart_interval = st.selectbox(
+                "Time Interval",
+                options=st.session_state.tradingview_charts.get_available_intervals(),
+                index=5,  # Default to 1H
+                key="chart_interval"
+            )
+            
+            # Chart theme
+            chart_theme = st.selectbox(
+                "Theme",
+                options=["dark", "light"],
+                index=0,
+                key="chart_theme"
+            )
+            
+            # Technical indicators
+            st.subheader("Technical Indicators")
+            available_indicators = st.session_state.tradingview_charts.get_available_indicators()
+            
+            selected_indicators = st.multiselect(
+                "Select Indicators",
+                options=list(available_indicators.keys()),
+                default=["RSI", "MACD", "Bollinger Bands", "Volume"],
+                key="selected_indicators"
+            )
+            
+            # Convert to TradingView format
+            tv_indicators = [available_indicators[ind] for ind in selected_indicators]
+            
+            # Chart options
+            st.subheader("Display Options")
+            hide_toolbar = st.checkbox("Hide Side Toolbar", value=False)
+            allow_symbol_change = st.checkbox("Allow Symbol Change", value=True)
+            chart_height = st.slider("Chart Height", 400, 800, 600)
+        
+        with col1:
+            st.subheader(f"Advanced Chart - {chart_symbol}")
+            
+            # Render main TradingView chart
+            st.session_state.tradingview_charts.render_advanced_chart(
+                symbol=chart_symbol,
+                theme=chart_theme,
+                interval=chart_interval,
+                height=chart_height,
+                indicators=tv_indicators,
+                hide_side_toolbar=hide_toolbar,
+                allow_symbol_change=allow_symbol_change
+            )
+        
+        # Additional chart widgets
+        st.markdown("---")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.subheader("Technical Analysis Summary")
+            st.session_state.tradingview_charts.render_technical_analysis_widget(
+                symbol=chart_symbol,
+                theme=chart_theme,
+                height=400
+            )
+        
+        with col2:
+            st.subheader("Market Overview")
+            market_symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT']
+            st.session_state.tradingview_charts.render_market_overview(
+                theme=chart_theme,
+                height=400,
+                symbols=market_symbols
+            )
+        
+        with col3:
+            st.subheader("Mini Chart")
+            st.session_state.tradingview_charts.render_mini_chart(
+                symbol=chart_symbol,
+                theme=chart_theme,
+                height=400
+            )
+        
+        # Cryptocurrency screener
+        st.markdown("---")
+        st.subheader("Cryptocurrency Market Screener")
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.session_state.tradingview_charts.render_crypto_screener(
+                theme=chart_theme,
+                height=500
+            )
+        
+        with col2:
+            st.subheader("Economic Calendar")
+            st.session_state.tradingview_charts.render_economic_calendar(
+                theme=chart_theme,
+                height=500
+            )
+        
+        # Chart integration with AI analysis
+        st.markdown("---")
+        st.subheader("AI Chart Analysis Integration")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("Analyze Current Chart Pattern", key="analyze_chart"):
+                with st.spinner("Analyzing chart pattern..."):
+                    try:
+                        # Get market data for the selected symbol
+                        market_data = st.session_state.trading_engine.get_market_data(
+                            chart_symbol, chart_interval
+                        )
+                        
+                        if not market_data.empty:
+                            # Market regime analysis
+                            regime_result = st.session_state.regime_detector.detect_regime(market_data)
+                            
+                            if 'error' not in regime_result:
+                                current_regime = regime_result.get('current_regime', 'Unknown')
+                                confidence = regime_result.get('confidence', 0) * 100
+                                
+                                st.success(f"Market Regime: **{current_regime}**")
+                                st.metric("Regime Confidence", f"{confidence:.1f}%")
+                                
+                                # Additional regime details
+                                regime_features = regime_result.get('regime_features', {})
+                                if regime_features:
+                                    st.write("**Regime Characteristics:**")
+                                    for feature, value in regime_features.items():
+                                        if isinstance(value, float):
+                                            st.write(f"• {feature}: {value:.3f}")
+                                        else:
+                                            st.write(f"• {feature}: {value}")
+                            else:
+                                st.error(f"Regime analysis failed: {regime_result['error']}")
+                        else:
+                            st.warning("No market data available for analysis")
+                            
+                    except Exception as e:
+                        st.error(f"Chart analysis error: {e}")
+        
+        with col2:
+            if st.button("Generate AI Price Prediction", key="predict_chart"):
+                with st.spinner("Generating AI prediction..."):
+                    try:
+                        # Get market data for prediction
+                        market_data = st.session_state.trading_engine.get_market_data(
+                            chart_symbol, chart_interval
+                        )
+                        
+                        if not market_data.empty and len(market_data) > 60:
+                            # LSTM prediction
+                            lstm_result = st.session_state.lstm_predictor.predict(market_data)
+                            
+                            if lstm_result.get('success'):
+                                next_price = lstm_result.get('next_price', 0)
+                                current_price = market_data['close'].iloc[-1]
+                                price_change = ((next_price - current_price) / current_price) * 100
+                                confidence = lstm_result.get('confidence', 0) * 100
+                                
+                                st.success("AI Prediction Generated!")
+                                st.metric("Predicted Next Price", f"${next_price:.4f}", f"{price_change:+.2f}%")
+                                st.metric("Prediction Confidence", f"{confidence:.1f}%")
+                                
+                                # Prediction details
+                                prediction_horizon = lstm_result.get('prediction_horizon', 1)
+                                st.info(f"Prediction horizon: {prediction_horizon} period(s)")
+                                
+                            else:
+                                st.error("LSTM prediction failed")
+                        else:
+                            st.warning("Insufficient data for AI prediction (need >60 data points)")
+                            
+                    except Exception as e:
+                        st.error(f"Prediction error: {e}")
+        
+        # Real-time trading signals
+        st.markdown("---")
+        st.subheader("Real-time Trading Signals")
+        
+        if st.button("Generate Trading Signal for Current Chart", key="generate_signal"):
+            with st.spinner("Analyzing market conditions..."):
+                try:
+                    # Get current market data
+                    market_data = st.session_state.trading_engine.get_market_data(
+                        chart_symbol, chart_interval
+                    )
+                    
+                    if not market_data.empty:
+                        # Generate trading signal using ensemble strategy
+                        signal_result = st.session_state.trading_engine.generate_signal(
+                            chart_symbol, market_data
+                        )
+                        
+                        if signal_result and 'signal' in signal_result:
+                            signal_type = signal_result['signal']
+                            signal_strength = signal_result.get('strength', 0)
+                            confidence = signal_result.get('confidence', 0) * 100
+                            
+                            # Display signal with appropriate color
+                            if signal_type == 'BUY':
+                                st.success(f"**{signal_type}** Signal Generated")
+                            elif signal_type == 'SELL':
+                                st.error(f"**{signal_type}** Signal Generated")
+                            else:
+                                st.info(f"**{signal_type}** Signal Generated")
+                            
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Signal Strength", f"{signal_strength:.2f}")
+                            with col2:
+                                st.metric("Confidence", f"{confidence:.1f}%")
+                            with col3:
+                                current_price = market_data['close'].iloc[-1]
+                                st.metric("Current Price", f"${current_price:.4f}")
+                            
+                            # Signal details
+                            indicators = signal_result.get('indicators', {})
+                            if indicators:
+                                st.write("**Technical Indicators:**")
+                                for indicator, value in indicators.items():
+                                    if isinstance(value, float):
+                                        st.write(f"• {indicator}: {value:.4f}")
+                                    else:
+                                        st.write(f"• {indicator}: {value}")
+                        else:
+                            st.warning("No clear trading signal detected")
+                    else:
+                        st.warning("No market data available for signal generation")
+                        
+                except Exception as e:
+                    st.error(f"Signal generation error: {e}")
+        
+        # Chart features info
+        st.markdown("---")
+        st.info("""
+        **TradingView Chart Features:**
+        • Real-time price data from Binance
+        • Professional technical analysis tools
+        • Customizable indicators and overlays
+        • Multiple timeframe analysis
+        • Interactive chart controls
+        • Economic calendar integration
+        • Market screener functionality
+        
+        **AI Integration:**
+        • Market regime detection
+        • LSTM price predictions
+        • Automated signal generation
+        • Pattern recognition analysis
+        """)
+    
     # Auto refresh functionality
     if auto_refresh and st.session_state.trading_active:
         time.sleep(30)
