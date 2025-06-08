@@ -102,6 +102,7 @@ class SmartStrategySelector:
         }
         
         self.running = False
+        self.is_running = False
         self.evaluation_thread = None
         self._init_database()
     
@@ -164,6 +165,7 @@ class SmartStrategySelector:
             return
         
         self.running = True
+        self.is_running = True
         
         # Schedule evaluations every 6 hours
         schedule.every(6).hours.do(self._run_full_evaluation)

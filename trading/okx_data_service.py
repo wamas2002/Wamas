@@ -170,6 +170,32 @@ class OKXDataService:
             print(f"Error getting 24hr ticker for {symbol}: {e}")
             return {}
     
+    def get_ticker(self, symbol: str) -> Dict[str, Any]:
+        """Get ticker data for a symbol"""
+        try:
+            okx_symbol = self.symbol_map.get(symbol, symbol)
+            result = self.okx_connector.get_ticker(okx_symbol)
+            
+            if not result:
+                return {}
+            
+            # Convert to expected format
+            return {
+                'symbol': symbol,
+                'last': result.get('last', 0),
+                'bid': result.get('bidPx', 0),
+                'ask': result.get('askPx', 0),
+                'high': result.get('high24h', 0),
+                'low': result.get('low24h', 0),
+                'volume': result.get('vol24h', 0),
+                'change': result.get('chg', 0),
+                'changePercent': result.get('chgUtc', 0)
+            }
+            
+        except Exception as e:
+            print(f"Error getting ticker for {symbol}: {e}")
+            return {}
+    
     def get_market_data_summary(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
         """Get market data summary for multiple symbols"""
         try:
