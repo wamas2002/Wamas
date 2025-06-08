@@ -10,6 +10,12 @@ import plotly.express as px
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 import json
+from utils.confidence_ui import (
+    display_confidence_badge, display_decision_card,
+    display_prediction_highlight, display_feature_importance,
+    display_model_performance_summary, get_confidence_color,
+    get_confidence_emoji
+)
 
 def show_explainable_ai_panel():
     """Main explainable AI dashboard page"""

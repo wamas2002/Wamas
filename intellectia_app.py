@@ -138,6 +138,12 @@ def initialize_components():
     if 'trade_reason_logger' not in st.session_state:
         from ai.trade_reason_logger import TradeReasonLogger
         st.session_state.trade_reason_logger = TradeReasonLogger()
+    if 'live_decision_generator' not in st.session_state:
+        from ai.live_decision_generator import LiveDecisionGenerator
+        st.session_state.live_decision_generator = LiveDecisionGenerator(
+            st.session_state.okx_data_service,
+            st.session_state.trade_reason_logger
+        )
 
 def create_sidebar():
     """Create enhanced sidebar with mode toggle"""
@@ -1597,6 +1603,8 @@ def main():
         show_auto_analyzer_page()
     elif selected_page == "risk_manager" and st.session_state.user_mode == 'expert':
         show_risk_manager_page()
+    elif selected_page == "explainable_ai" and st.session_state.user_mode == 'expert':
+        show_explainable_ai_panel()
     elif selected_page == "alerts" and st.session_state.user_mode == 'expert':
         show_alerts_page()
     else:
