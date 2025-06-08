@@ -1,0 +1,26 @@
+After completing the full transition to real OKX market data and removing all mock data, I am encountering the following critical issues:
+
+1. Feature Importance (AI Model Visualization)
+Error: `argument of type 'TradingEngine' is not iterable`
+→ Action: Fix the code block where the `TradingEngine` class is being incorrectly passed or treated as a dictionary/iterable. Possibly caused by `for key in trading_engine:` or similar. Use proper method to access features from the AI model.
+
+2. Ensemble Strategy Analysis
+Error: `argument of type 'TradingEngine' is not iterable`
+→ Action: Refactor the ensemble analysis logic to avoid trying to iterate over the `TradingEngine` object. Likely a missing `.strategies` or `.model_results` attribute being referenced incorrectly.
+
+3. Futures Trading Panel
+Message: `⚠️ Please configure OKX API credentials in the sidebar to enable live trading`
+→ Action: Fix the sidebar logic to correctly pass the credentials into the futures module. Ensure API key/secret/passphrase are being passed to both spot and futures clients. Also validate the connection using `okx.fetch_balance()`.
+
+4. Model Predictions
+Message: `No market data available for predictions`
+→ Action: Ensure the AI model receives live data from OKX correctly. Possibly a `None` or empty list being passed due to missing symbol or timeframe. Add fallback or error handling if real-time data is not yet fetched.
+
+5. Walk-forward Analysis
+Error: `Insufficient data for walk-forward analysis`
+→ Action: Increase the amount of historical OHLCV data fetched (e.g., fetch 1000+ candles). Validate that the model receives both train/test segments. Add a message to UI if insufficient data is detected.
+
+6. Error: `'TradingEngine' object has no attribute 'get'`
+→ Action: Find where `.get` is being called on `TradingEngine` (likely in a dictionary context). Refactor to use methods like `trading_engine.get_current_price()` or replace with correct dictionary/object usage.
+
+Please resolve the above issues and retest the analytics dashboard, ensemble AI insights, futures panel, and prediction components. Make sure they are fully functional with live OKX market data only.

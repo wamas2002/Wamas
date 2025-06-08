@@ -99,9 +99,13 @@ class OKXDataService:
                 print(f"Invalid or empty data for {symbol}")
                 return pd.DataFrame()
             
-            # Set timestamp as index
+            # Set timestamp as index and handle duplicates
             df.set_index('timestamp', inplace=True)
             df.sort_index(inplace=True)
+            
+            # Remove duplicate timestamps if any
+            if df.index.duplicated().any():
+                df = df[~df.index.duplicated(keep='last')]
             
             # Cache the data
             self.data_cache[cache_key] = df.copy()

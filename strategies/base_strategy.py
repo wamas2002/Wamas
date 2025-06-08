@@ -110,9 +110,21 @@ class TechnicalStrategy(BaseStrategy):
     def calculate_rsi(self, data: pd.DataFrame, period: int = 14) -> pd.Series:
         """Calculate RSI using pandas_ta"""
         try:
-            return ta.rsi(data['close'], length=period)
-        except:
-            return pd.Series([50] * len(data))  # Neutral RSI if calculation fails
+            # Clean data before RSI calculation
+            clean_data = data.copy()
+            if clean_data.index.duplicated().any():
+                clean_data = clean_data[~clean_data.index.duplicated(keep='last')]
+            
+            rsi_result = ta.rsi(clean_data['close'], length=period)
+            
+            # Ensure proper indexing
+            if rsi_result is not None and len(rsi_result) > 0:
+                return rsi_result
+            else:
+                return pd.Series([50.0] * len(data), index=data.index)
+        except Exception as e:
+            print(f"RSI calculation error: {e}")
+            return pd.Series([50.0] * len(data), index=data.index)
     
     def calculate_macd(self, data: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
         """Calculate MACD using pandas_ta"""
