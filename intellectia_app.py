@@ -45,6 +45,12 @@ def initialize_components():
         st.session_state.asset_explorer = AssetExplorer()
     if 'okx_data_service' not in st.session_state:
         st.session_state.okx_data_service = OKXDataService()
+    if 'autoconfig_engine' not in st.session_state:
+        from strategies.autoconfig_engine import AutoConfigEngine
+        st.session_state.autoconfig_engine = AutoConfigEngine()
+    if 'strategy_engine' not in st.session_state:
+        from strategies.strategy_engine import StrategyEngine
+        st.session_state.strategy_engine = StrategyEngine()
     if 'user_mode' not in st.session_state:
         st.session_state.user_mode = 'beginner'
 
@@ -84,6 +90,7 @@ def create_sidebar():
                 "🔍 Asset Explorer": "explorer",
                 "📊 Sentiment": "sentiment",
                 "⚙️ Strategies": "strategies",
+                "🎯 Strategy Monitor": "strategy_monitor",
                 "🚨 Alerts": "alerts"
             }
         
@@ -132,9 +139,68 @@ def show_portfolio_page():
             st.info("💰 BTC: +$125.30 (+2.1%)")
             st.info("📉 ETH: -$45.20 (-1.8%)")
             
-            # Simple buy/sell buttons
+            # Simple buy/sell buttons with strategy selector
             selected_symbol = st.selectbox("Select Asset", Config.SUPPORTED_SYMBOLS)
             trade_amount = st.number_input("Amount ($)", min_value=10, value=100, step=10)
+            
+            # Strategy selector for beginners (simplified)
+            current_strategy = st.session_state.autoconfig_engine.get_strategy_for_symbol(selected_symbol)
+            strategy_options = ['Auto', 'Safe (DCA)', 'Balanced (Grid)', 'Aggressive (Breakout)']
+            
+            strategy_map = {
+                'Auto': None,
+                'Safe (DCA)': 'dca',
+                'Balanced (Grid)': 'grid', 
+                'Aggressive (Breakout)': 'breakout'
+            }
+            
+            # Find current selection
+            current_display = 'Auto'
+            for display, strategy in strategy_map.items():
+                if strategy == current_strategy:
+                    current_display = display
+                    break
+            
+            selected_display = st.selectbox(
+                "Trading Style:", 
+                strategy_options,
+                index=strategy_options.index(current_display),
+                help="Auto lets AI choose the best strategy based on market conditions"
+            )
+            
+            # Apply strategy change if needed
+            new_strategy = strategy_map[selected_display]
+            if new_strategy != current_strategy and new_strategy is not None:
+                try:
+                    st.session_state.autoconfig_engine.force_strategy_switch(
+                        selected_symbol, new_strategy, "User selection"
+                    )
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Strategy change failed: {str(e)}")
+            
+            # Show strategy status
+            if current_strategy:
+                status = st.session_state.autoconfig_engine.get_strategy_status(selected_symbol)
+                market_condition = status.get('recent_conditions', [{}])
+                if market_condition:
+                    regime = market_condition[0].get('regime', 'unknown')
+                    st.caption(f"Market condition: {regime.replace('_', ' ').title()}")
+            
+            # Generate trading signal
+            try:
+                data = st.session_state.okx_data_service.get_historical_data(selected_symbol, '1h', limit=50)
+                if not data.empty:
+                    current_price = data['close'].iloc[-1]
+                    signal = st.session_state.autoconfig_engine.generate_strategy_signal(
+                        selected_symbol, data, current_price
+                    )
+                    
+                    if signal.get('action') != 'hold':
+                        action_color = "🟢" if signal['action'] == 'buy' else "🔴"
+                        st.info(f"{action_color} AI suggests: {signal['action'].upper()}")
+            except Exception:
+                pass
             
             col_buy, col_sell = st.columns(2)
             with col_buy:
@@ -780,6 +846,157 @@ def show_advanced_ml_page():
         title="Model Performance Over Time"
     )
     st.plotly_chart(fig, use_container_width=True)
+
+def show_strategy_monitor_page():
+    """Strategy Monitor page - comprehensive strategy management dashboard"""
+    st.title("🎯 Strategy Monitor")
+    st.markdown("Advanced strategy management and AutoConfig Engine monitoring")
+    
+    # AutoConfig Engine Status
+    st.subheader("🤖 AutoConfig Engine Status")
+    
+    try:
+        performance_summary = st.session_state.autoconfig_engine.get_performance_summary(days=7)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Active Symbols", performance_summary['active_symbols'])
+        with col2:
+            st.metric("Total Switches (7d)", performance_summary['total_switches'])
+        with col3:
+            st.metric("Available Strategies", len(performance_summary['available_strategies']))
+        with col4:
+            st.metric("Auto Mode", "ON", delta="Monitoring")
+        
+        # Strategy usage chart
+        if performance_summary['strategy_usage']:
+            st.subheader("📊 Strategy Usage Distribution (7 days)")
+            usage_df = pd.DataFrame(
+                list(performance_summary['strategy_usage'].items()),
+                columns=['Strategy', 'Switches']
+            )
+            fig = px.pie(usage_df, values='Switches', names='Strategy', 
+                        title="Strategy Selection Frequency")
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Market regime distribution
+        if performance_summary['regime_distribution']:
+            st.subheader("🌍 Market Regime Distribution")
+            regime_df = pd.DataFrame(
+                list(performance_summary['regime_distribution'].items()),
+                columns=['Regime', 'Frequency']
+            )
+            fig = px.bar(regime_df, x='Regime', y='Frequency',
+                        title="Market Conditions Detected")
+            st.plotly_chart(fig, use_container_width=True)
+    
+    except Exception as e:
+        st.error(f"Error loading AutoConfig data: {str(e)}")
+    
+    # Per-Symbol Strategy Status
+    st.subheader("📈 Symbol Strategy Status")
+    
+    try:
+        symbols_status = st.session_state.autoconfig_engine.get_all_strategies_status(Config.SUPPORTED_SYMBOLS)
+        
+        # Create status table
+        status_data = []
+        for symbol, status in symbols_status.items():
+            active_strategy = status.get('active_strategy', 'None')
+            last_rebalance = status.get('last_rebalance')
+            recent_conditions = status.get('recent_conditions', [])
+            
+            current_regime = 'Unknown'
+            if recent_conditions:
+                current_regime = recent_conditions[0].get('regime', 'Unknown').replace('_', ' ').title()
+            
+            time_since_rebalance = 'Never'
+            if last_rebalance:
+                from datetime import datetime
+                if isinstance(last_rebalance, str):
+                    last_rebalance = datetime.fromisoformat(last_rebalance.replace('Z', '+00:00'))
+                time_diff = datetime.now() - last_rebalance.replace(tzinfo=None)
+                hours = int(time_diff.total_seconds() / 3600)
+                time_since_rebalance = f"{hours}h ago"
+            
+            status_data.append({
+                'Symbol': symbol,
+                'Active Strategy': active_strategy.upper() if active_strategy else 'AUTO',
+                'Market Regime': current_regime,
+                'Last Rebalance': time_since_rebalance,
+                'Status': '🟢 Active' if active_strategy else '🟡 Auto'
+            })
+        
+        if status_data:
+            status_df = pd.DataFrame(status_data)
+            st.dataframe(status_df, use_container_width=True)
+        
+        # Manual strategy override
+        st.subheader("⚙️ Manual Strategy Override")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            override_symbol = st.selectbox("Select Symbol:", Config.SUPPORTED_SYMBOLS)
+        with col2:
+            available_strategies = st.session_state.strategy_engine.get_available_strategies()
+            override_strategy = st.selectbox("Force Strategy:", 
+                                           ['Auto'] + [s.replace('_', ' ').title() for s in available_strategies])
+        with col3:
+            if st.button("Apply Override", type="primary"):
+                if override_strategy != 'Auto':
+                    strategy_key = override_strategy.lower().replace(' ', '_')
+                    try:
+                        st.session_state.autoconfig_engine.force_strategy_switch(
+                            override_symbol, strategy_key, "Manual override from Strategy Monitor"
+                        )
+                        st.success(f"Strategy switched to {override_strategy} for {override_symbol}")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Strategy override failed: {str(e)}")
+                else:
+                    st.info("Auto mode will let the AI choose the optimal strategy")
+    
+    except Exception as e:
+        st.error(f"Error loading symbol status: {str(e)}")
+    
+    # Recent Strategy Switches Log
+    st.subheader("📝 Recent Strategy Switches")
+    
+    try:
+        all_switches = []
+        for symbol in Config.SUPPORTED_SYMBOLS:
+            status = st.session_state.autoconfig_engine.get_strategy_status(symbol)
+            recent_switches = status.get('recent_switches', [])
+            for switch in recent_switches:
+                switch['symbol'] = symbol
+                all_switches.append(switch)
+        
+        if all_switches:
+            # Sort by timestamp
+            all_switches.sort(key=lambda x: x.get('timestamp', datetime.now()), reverse=True)
+            
+            switch_data = []
+            for switch in all_switches[:10]:  # Show last 10 switches
+                timestamp = switch.get('timestamp', datetime.now())
+                if isinstance(timestamp, str):
+                    timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                
+                switch_data.append({
+                    'Time': timestamp.strftime('%Y-%m-%d %H:%M'),
+                    'Symbol': switch['symbol'],
+                    'From': switch.get('old_strategy', 'None'),
+                    'To': switch.get('new_strategy', 'Unknown'),
+                    'Reason': switch.get('reason', 'Unknown'),
+                    'Regime': switch.get('regime', 'Unknown')
+                })
+            
+            switches_df = pd.DataFrame(switch_data)
+            st.dataframe(switches_df, use_container_width=True)
+        else:
+            st.info("No recent strategy switches found")
+    
+    except Exception as e:
+        st.error(f"Error loading switch history: {str(e)}")
 
 def show_alerts_page():
     """Alert system page (Expert mode only)"""
