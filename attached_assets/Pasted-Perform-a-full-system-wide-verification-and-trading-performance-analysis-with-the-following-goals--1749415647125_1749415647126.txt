@@ -1,0 +1,52 @@
+Perform a full system-wide verification and trading performance analysis with the following goals:
+
+⸻
+
+🧩 System Health Check
+	1.	Validate that all components (frontend, backend, database, API) are running without errors.
+	2.	Confirm that all modules (AI engine, trading execution, analytics, dashboards) are connected and responding correctly.
+	3.	Verify that all symbols are fetched from OKX in both Spot and Futures, with real-time prices.
+	4.	Ensure all background services (model retraining, strategy assignment, risk alerts) are active.
+
+⸻
+
+📊 Trading Data Verification
+	1.	Check last 72 hours of executed trades: entry time, symbol, buy/sell action, price, result (P/L).
+	2.	Identify number of trades executed per symbol and per strategy.
+	3.	Highlight any missing SELL signals or trades that didn’t close positions.
+
+⸻
+
+🧠 AI Model Evaluation
+	1.	Compare model predictions with actual price movements — calculate directional accuracy and average prediction error.
+	2.	Identify the best-performing models (LSTM, Prophet, Gradient Boosting, etc.) and their current win rate.
+	3.	Log retraining success or errors for each model.
+
+⸻
+
+📈 Strategy Effectiveness
+	1.	Evaluate performance of each assigned strategy across the top 10 USDT pairs.
+	2.	List strategies with over 60% win rate.
+	3.	Analyze effectiveness of Smart Strategy Selector over last 5 cycles.
+
+⸻
+
+⚠️ Risk & Protection System
+	1.	Confirm Stop Loss / Take Profit rules were triggered correctly.
+	2.	Check if any Circuit Breaker or Emergency Stop event occurred.
+	3.	Report any symbol breaching drawdown limits or loss thresholds.
+
+⸻
+
+📂 Final Report Output
+
+Return a structured summary including:
+	•	✅ Operational modules
+	•	⚙️ Active strategies per symbol
+	•	📊 Trades executed + success rate
+	•	🧠 AI model accuracy summary
+	•	📉 Portfolio performance chart
+	•	🚨 Risk trigger log (if any)
+
+📌 Ensure the data shown is live, not cached, and reflects only authentic OKX production data. Exclude any test, mock, or demo data.
+🛠 Return system errors or logs if any component failed.

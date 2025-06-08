@@ -1,0 +1,96 @@
+{
+  "timestamp": "2025-06-08T20:50:28.917543",
+  "system_health": {
+    "okx_connectivity": {
+      "BTC-USDT": {
+        "status": "Connected",
+        "latest_price": 106235.5,
+        "data_points": 5,
+        "last_update": "2025-06-08T20:00:00"
+      },
+      "ETH-USDT": {
+        "status": "Connected",
+        "latest_price": 2531.51,
+        "data_points": 5,
+        "last_update": "2025-06-08T20:00:00"
+      },
+      "BNB-USDT": {
+        "status": "Connected",
+        "latest_price": 654.3,
+        "data_points": 5,
+        "last_update": "2025-06-08T20:00:00"
+      }
+    },
+    "market_data": {
+      "status": "Operational",
+      "last_price": 0,
+      "volume_24h": "N/A"
+    },
+    "databases": {
+      "ai_performance.db": {
+        "status": "Connected",
+        "tables": 3,
+        "total_records": 7901,
+        "size_mb": 1.6
+      },
+      "trading_decisions.db": {
+        "status": "Not Found"
+      },
+      "market_data.db": {
+        "status": "Not Found"
+      },
+      "news_sentiment.db": {
+        "status": "Not Found"
+      }
+    }
+  },
+  "trading_performance": {
+    "trades_72h": [],
+    "symbol_performance": {},
+    "strategy_performance": {},
+    "pnl_analysis": {},
+    "execution_analysis": {}
+  },
+  "ai_models": {
+    "model_performance": {},
+    "prediction_accuracy": {},
+    "model_files": {},
+    "retraining_status": {}
+  },
+  "strategies": {
+    "active_strategies": {},
+    "strategy_switches": [],
+    "performance_by_strategy": {}
+  },
+  "risk_analysis": {
+    "stop_loss_events": [],
+    "take_profit_events": [],
+    "risk_alerts": [],
+    "drawdown_analysis": {},
+    "protection_status": {
+      "stop_loss_active": false,
+      "take_profit_active": false,
+      "total_risk_events": 0
+    }
+  },
+  "errors": [],
+  "warnings": [
+    "Database not found: trading_decisions.db",
+    "Database not found: market_data.db",
+    "Database not found: news_sentiment.db",
+    "Trading decisions database not found",
+    "Could not analyze table sqlite_sequence: Execution failed on sql 'SELECT * FROM sqlite_sequence ORDER BY timestamp DESC LIMIT 100': no such column: timestamp",
+    "Could not analyze table model_aggregates: Execution failed on sql 'SELECT * FROM model_aggregates ORDER BY timestamp DESC LIMIT 100': no such column: timestamp"
+  ],
+  "executive_summary": {
+    "report_timestamp": "2025-06-08T20:50:28.917543",
+    "data_source": "Live OKX Production Data",
+    "okx_connectivity": "3 pairs connected",
+    "total_trades_72h": 0,
+    "active_ai_models": 0,
+    "risk_events_72h": 0,
+    "system_errors": 0,
+    "system_warnings": 6,
+    "overall_status": "Operational"
+  }
+}
