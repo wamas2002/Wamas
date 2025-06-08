@@ -44,7 +44,7 @@ class RealDataService:
             
             # Get current portfolio positions
             positions = conn.execute('''
-                SELECT symbol, quantity, current_value, avg_price, unrealized_pnl, last_updated
+                SELECT symbol, quantity, current_value, current_price, 0 as unrealized_pnl, last_updated
                 FROM portfolio_positions 
                 WHERE quantity > 0
                 ORDER BY current_value DESC
@@ -52,9 +52,9 @@ class RealDataService:
             
             # Get portfolio summary
             summary = conn.execute('''
-                SELECT total_value, cash_balance, data_source, last_updated
+                SELECT total_value, 0 as cash_balance, data_source, timestamp
                 FROM portfolio_summary
-                ORDER BY last_updated DESC 
+                ORDER BY timestamp DESC 
                 LIMIT 1
             ''').fetchone()
             

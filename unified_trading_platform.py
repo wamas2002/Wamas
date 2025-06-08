@@ -339,6 +339,6 @@ def health_check():
         })
 
 if __name__ == '__main__':
-    logger.info("Starting Unified Trading Platform on port 5001")
+    logger.info("Starting Unified Trading Platform on port 5000")
     logger.info("All features migrated from Streamlit to Flask interface")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
