@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from frontend.dashboard import TradingDashboard
 from frontend.tradingview_charts import TradingViewCharts
+from frontend.advanced_ml_interface import AdvancedMLInterface
 from trading.engine import TradingEngine
 from ai.predictor import AIPredictor
 from ai.lstm_predictor import LSTMPredictor
@@ -100,6 +101,10 @@ def initialize_session_state():
     if 'advanced_ml_interface' not in st.session_state:
         from frontend.advanced_ml_interface import AdvancedMLInterface
         st.session_state.advanced_ml_interface = AdvancedMLInterface()
+    
+    if 'market_sentiment_analyzer' not in st.session_state:
+        from ai.market_sentiment_analyzer import MarketSentimentAnalyzer
+        st.session_state.market_sentiment_analyzer = MarketSentimentAnalyzer()
     
     if 'logger' not in st.session_state:
         st.session_state.logger = TradingLogger()

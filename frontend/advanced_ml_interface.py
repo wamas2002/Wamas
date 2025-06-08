@@ -22,12 +22,13 @@ class AdvancedMLInterface:
         self._render_model_status()
         
         # Main tabs
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
             "🏗️ Model Training", 
             "🔮 Predictions", 
             "📊 Performance Analysis", 
             "🎯 Feature Engineering", 
-            "🧪 Model Insights"
+            "🧪 Model Insights",
+            "🎭 Market Sentiment"
         ])
         
         with tab1:
@@ -44,6 +45,9 @@ class AdvancedMLInterface:
         
         with tab5:
             self._render_model_insights()
+        
+        with tab6:
+            self._render_market_sentiment_analysis()
     
     def _render_model_status(self):
         """Render model availability and status"""
