@@ -106,6 +106,10 @@ def initialize_session_state():
         from ai.market_sentiment_analyzer import MarketSentimentAnalyzer
         st.session_state.market_sentiment_analyzer = MarketSentimentAnalyzer()
     
+    if 'enhanced_gradient_boosting' not in st.session_state:
+        from ai.enhanced_gradient_boosting import EnhancedGradientBoostingPipeline
+        st.session_state.enhanced_gradient_boosting = EnhancedGradientBoostingPipeline()
+    
     if 'logger' not in st.session_state:
         st.session_state.logger = TradingLogger()
     

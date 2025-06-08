@@ -139,8 +139,9 @@ class AdvancedMLInterface:
         
         with col1:
             st.markdown("**Model Selection**")
-            train_ml_pipeline = st.checkbox("Train Gradient Boosting Models", value=True)
-            train_transformer = st.checkbox("Train Transformer Ensemble", value=True)
+            train_ml_pipeline = st.checkbox("Train Basic ML Pipeline", value=True)
+            train_enhanced_gbm = st.checkbox("Train Enhanced Gradient Boosting (LightGBM/XGBoost/CatBoost)", value=True)
+            train_transformer = st.checkbox("Train Transformer Ensemble", value=False)
             train_freqai = st.checkbox("Train Complete FreqAI Pipeline", value=False)
         
         with col2:
@@ -155,7 +156,7 @@ class AdvancedMLInterface:
         if st.button("🚀 Start Training", type="primary", key="start_ml_training"):
             self._execute_training(
                 symbol, data_points, prediction_horizon,
-                train_ml_pipeline, train_transformer, train_freqai,
+                train_ml_pipeline, train_enhanced_gbm, train_transformer, train_freqai,
                 auto_feature_engineering, cross_validation, hyperparameter_tuning
             )
     
