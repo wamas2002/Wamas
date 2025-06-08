@@ -1633,7 +1633,11 @@ def main():
         show_strategies_page()
     elif selected_page == "strategy_monitor" and st.session_state.user_mode == 'expert':
         show_strategy_monitor_page()
+    elif selected_page == "enhanced_dashboard" and st.session_state.user_mode == 'expert':
+        from frontend.enhanced_dashboard import show_enhanced_dashboard
+        show_enhanced_dashboard()
     elif selected_page == "visual_builder" and st.session_state.user_mode == 'expert':
+        from frontend.visual_strategy_builder import show_visual_strategy_builder
         show_visual_strategy_builder()
     elif selected_page == "auto_analyzer" and st.session_state.user_mode == 'expert':
         show_auto_analyzer_page()

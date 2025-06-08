@@ -1,0 +1,52 @@
+🔧 TASK:
+Upgrade the visual and user experience layer of the trading bot to make it more accessible, user-friendly, and professional. Integrate a drag-and-drop strategy editor and real-time feedback engine to assist non-technical users while preserving the full power of the backend AI and trading engine.
+
+🎯 OBJECTIVE:
+Improve front-end usability while keeping the backend logic and architecture untouched. Enhance accessibility, provide clear control panels, and simplify strategy editing for both beginners and experts.
+
+🖥️ FEATURES TO IMPLEMENT:
+
+1. ✅ Visual Strategy Editor (Drag & Drop):
+   - Build a visual interface that allows:
+     • Constructing strategies via blocks (e.g., "If RSI < 30 → Buy")
+     • Linking indicators, risk settings, and signal conditions
+   - Save to backend JSON strategy schema
+   - Compatible with current AI/strategy engine
+
+2. ✅ Beginner & Expert Modes:
+   - Beginner Mode:
+     • Hide advanced options
+     • Show only essential controls: start/stop bot, select symbol, see performance
+   - Expert Mode:
+     • Full access to AI settings, logs, custom strategy builder, multi-symbol control
+
+3. ✅ Live Strategy Tester:
+   - When editing a strategy in drag-and-drop builder:
+     • Simulate it against the past 100 trades or 7 days of data
+     • Return performance stats: win rate, drawdown, profit
+     • Show live chart preview and indicator triggers
+
+4. ✅ Dashboard Redesign:
+   - Introduce a modern, responsive dashboard:
+     • Symbols overview panel with status (active/inactive, PnL, strategy used)
+     • Risk dashboard with alerts (TP/SL breaches, circuit breaker triggered)
+     • AI performance panel showing best models per pair
+
+5. ✅ Usability Enhancements:
+   - Tooltips for each element with friendly explanations
+   - Integrated light/dark mode
+   - Real-time feedback for invalid inputs or strategy conflicts
+   - Save/load strategies and preferences to local storage or DB
+
+⚠️ CONSTRAINTS:
+• Must reuse existing data sources and API endpoints
+• Do not modify or override backend trading logic
+• Ensure responsive design works on desktop and mobile
+• Use minimal dependencies (prefer Flask + JS + lightweight front-end libraries)
+
+✅ Example Output:
+• `POST /api/strategy/visual-editor/save` → Accepts strategy design as JSON
+• `GET /api/ui/mode` → Returns current UI mode: beginner / expert
+• Strategy Simulator Component shows: backtest stats, visual timeline, error markers
+
+Once implemented, confirm that the new UI connects seamlessly to the existing backend and strategies can be executed without code using the new visual tools.
