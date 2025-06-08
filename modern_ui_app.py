@@ -384,6 +384,7 @@ if __name__ == '__main__':
     
     app.run(
         host='0.0.0.0',
-        port=5001,  # Using different port to avoid conflict with existing Streamlit app
-        debug=True
+        port=5001,
+        debug=False,  # Disable debug mode for workflow compatibility
+        threaded=True
     )
