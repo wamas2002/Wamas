@@ -18,7 +18,11 @@ from ai.enhanced_sentiment_analyzer import EnhancedSentimentAnalyzer
 from ai.strategy_selector import StrategySelector, StrategyType
 from ai.smart_alert_system import SmartAlertSystem
 from ai.asset_explorer import AssetExplorer
+from ai.auto_strategy_analyzer import AutoStrategyAnalyzer
+from frontend.visual_strategy_builder import show_visual_strategy_builder
 from trading.okx_data_service import OKXDataService
+from trading.advanced_risk_manager import AdvancedRiskManager
+from strategies.smart_strategy_selector import SmartStrategySelector
 from config import Config
 
 # Configure Streamlit page
@@ -53,6 +57,17 @@ def initialize_components():
         st.session_state.strategy_engine = StrategyEngine()
     if 'user_mode' not in st.session_state:
         st.session_state.user_mode = 'beginner'
+    if 'auto_strategy_analyzer' not in st.session_state:
+        st.session_state.auto_strategy_analyzer = AutoStrategyAnalyzer()
+    if 'advanced_risk_manager' not in st.session_state:
+        st.session_state.advanced_risk_manager = AdvancedRiskManager()
+    if 'smart_strategy_selector' not in st.session_state:
+        st.session_state.smart_strategy_selector = SmartStrategySelector(
+            st.session_state.autoconfig_engine,
+            st.session_state.strategy_engine,
+            st.session_state.okx_data_service,
+            st.session_state.advanced_risk_manager
+        )
 
 def create_sidebar():
     """Create enhanced sidebar with mode toggle"""
@@ -91,6 +106,9 @@ def create_sidebar():
                 "📊 Sentiment": "sentiment",
                 "⚙️ Strategies": "strategies",
                 "🎯 Strategy Monitor": "strategy_monitor",
+                "🎨 Strategy Builder": "visual_builder",
+                "📈 Auto Analyzer": "auto_analyzer",
+                "🛡️ Risk Manager": "risk_manager",
                 "🚨 Alerts": "alerts"
             }
         

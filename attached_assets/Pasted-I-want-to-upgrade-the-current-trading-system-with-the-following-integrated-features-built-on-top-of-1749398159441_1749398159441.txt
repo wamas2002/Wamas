@@ -1,0 +1,53 @@
+I want to upgrade the current trading system with the following integrated features, built on top of the existing architecture and using the current models, APIs, and execution logic:
+
+ 1. Visual Strategy Builder (Drag & Drop)
+Build a visual interface that allows the user to drag and drop components like indicators (EMA, RSI, ATR), logic blocks (IF/THEN), and actions (BUY/SELL).
+
+No coding required — use simple blocks (like in TradingView's Pine Script visualizations or Cryptohopper).
+
+Save and load strategies to/from JSON or database.
+
+ 2. Auto Strategy Analyzer (OKX Data Based)
+Implement a background engine that periodically analyzes:
+
+Real-time OKX market data for each trading pair
+
+Key metrics: ATR, volume, volatility, and historical trends
+
+Based on this analysis, automatically recommend or activate the most suitable strategy per pair (e.g., Grid, DCA, Momentum).
+
+ 3. Multi-level Take Profit / Stop Loss Engine
+Allow users to define multiple TP/SL levels (e.g., TP1 at 3%, TP2 at 6%, SL at -2%).
+
+Support trailing stop logic based on ATR or percentage thresholds.
+
+Make this configurable per strategy or per symbol.
+
+ 4. Smart Strategy Selector (Re-evaluates Every 6 Hours)
+Every 6 hours, evaluate each active symbol using:
+
+Current volatility (ATR)
+
+Trading volume
+
+Historical PnL of current strategy
+
+If performance is suboptimal, automatically switch to a more appropriate strategy (e.g., switch from Momentum to Grid if market becomes sideways).
+
+ Constraints:
+Do not duplicate existing components — only enhance current execution engine, strategy registry, and UI.
+
+Use existing data pipelines (OKX, market feeds) and model outputs.
+
+All logic should plug cleanly into the live system with no sandbox data or mock modules.
+
+ Final Deliverables:
+Visual Strategy Builder UI page (e.g., /strategy-builder)
+
+Auto Analyzer module with strategy recommendation system
+
+Updated TP/SL engine with multi-level controls
+
+Smart strategy selector with 6-hour re-evaluation cycle
+
+Let me know once each module is fully integrated so I can verify the performance and validate the enhancements.
