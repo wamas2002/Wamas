@@ -729,7 +729,7 @@ class AdvancedMLInterface:
             with st.spinner(f"Analyzing market sentiment for {symbol}..."):
                 # Get market data
                 if hasattr(st.session_state, 'okx_data_service'):
-                    market_data = st.session_state.okx_data_service.get_market_data(symbol, timeframe, limit=200)
+                    market_data = st.session_state.okx_data_service.get_historical_data(symbol, timeframe, limit=200)
                 else:
                     st.error("Market data service not available")
                     return

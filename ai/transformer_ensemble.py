@@ -12,11 +12,11 @@ class AttentionLayer:
     
     def __init__(self, input_dim: int, attention_dim: int = 64):
         self.input_dim = input_dim
-        self.attention_dim = attention_dim
-        self.W_q = np.random.normal(0, 0.1, (input_dim, attention_dim))
-        self.W_k = np.random.normal(0, 0.1, (input_dim, attention_dim))
-        self.W_v = np.random.normal(0, 0.1, (input_dim, attention_dim))
-        self.W_o = np.random.normal(0, 0.1, (attention_dim, input_dim))
+        self.attention_dim = min(attention_dim, input_dim)  # Ensure attention_dim doesn't exceed input_dim
+        self.W_q = np.random.normal(0, 0.1, (input_dim, self.attention_dim))
+        self.W_k = np.random.normal(0, 0.1, (input_dim, self.attention_dim))
+        self.W_v = np.random.normal(0, 0.1, (input_dim, self.attention_dim))
+        self.W_o = np.random.normal(0, 0.1, (self.attention_dim, input_dim))
         
     def forward(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Forward pass with attention"""
