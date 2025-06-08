@@ -1,0 +1,72 @@
+Full Workflow & Fundamental Analysis Integration Check
+
+Objective:
+Perform a complete system audit to ensure that all components of the Intellectia Trading Platform — including real-time data ingestion, AI model predictions, strategy execution, risk management, and fundamental analysis — are fully integrated, synchronized, and working together to maximize system performance and decision accuracy.
+
+⸻
+
+✅ Instructions:
+
+1. System Workflow Integration Audit
+	•	Trace the full lifecycle from:
+	•	Market data ingestion → AI model prediction
+	•	Prediction → Strategy assignment
+	•	Strategy → Order execution → Portfolio update
+	•	Portfolio → Dashboard visualization
+	•	Ensure data flow is uninterrupted and consistent across modules.
+
+2. Real-Time Engine Validation
+	•	Confirm live OKX market data feeds are used across all modules (no mock/sandbox data).
+	•	Validate that latency between prediction and order execution is <1s.
+	•	Ensure 6-hour re-evaluation cycles are functional.
+
+3. Cross-System Synchronization
+	•	Confirm interaction between:
+	•	ai_engine.py ↔ strategy_router.py
+	•	portfolio_tracker.py ↔ risk_manager.py
+	•	alerts.py ↔ dashboard_ui.py
+	•	Verify that all models use the latest market features (215+ indicators) from OKX.
+
+4. Multi-Symbol & Market Mode Support
+	•	Ensure workflows function for all active USDT pairs, including BTC, ETH, ADA, etc.
+	•	Validate spot and futures data is handled correctly in model inference and execution.
+	•	Confirm portfolio metrics reflect true allocation across all pairs.
+
+⸻
+
+📊 Fundamental Analysis Module Check
+	•	Confirm:
+	•	Real-time data sources used (e.g., on-chain metrics, developer activity, volume)
+	•	Each asset receives a 0-100 score with BUY / HOLD / SELL recommendation
+	•	Data output is properly displayed on dashboard and factored into AI signal decisions
+	•	The fundamental_score.py module communicates with both ai_ensemble.py and strategy_evaluator.py
+	•	Example: Ensure BTC score of 77.2/100 correctly triggers BUY bias in AI/strategy layer.
+
+⸻
+
+💻 UI Enforcement
+	•	⚠️ Always use the new UI at port :3000 instead of the legacy port :5001.
+	•	Validate that all dashboards, charts, and data visualizations are pulled from real data and are consistent across views.
+	•	Ensure TradingView widgets are correctly loaded in all relevant pages (dashboard, strategy, analytics, portfolio).
+
+⸻
+
+🔍 Final Validation
+	•	Confirm all risk and strategy logic behaves correctly under live conditions:
+	•	Multi-level TP/SL enforcement
+	•	Risk-adjusted position sizing
+	•	Rebalancing logic based on concentration risk and volatility
+	•	Ensure logging is accurate and system health metrics are visible in the dashboard.
+
+⸻
+
+🧾 Deliverables:
+	•	Summary report of:
+	•	All module connections and data flows
+	•	Integration success/failure points
+	•	Performance and latency stats
+	•	Fundamental analysis synchronization
+	•	UI data consistency and render status on port :3000
+	•	Highlight any inconsistencies or areas of improvement.
+
+⚠️ Do not modify any logic, models, or data sources. This is a diagnostic prompt for verification only.
