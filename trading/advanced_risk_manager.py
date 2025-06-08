@@ -12,6 +12,12 @@ from dataclasses import dataclass, asdict
 import logging
 from config import Config
 
+def datetime_serializer(obj):
+    """JSON serializer for datetime objects"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object {obj} is not JSON serializable")
+
 @dataclass
 class TakeProfitLevel:
     """Take profit level configuration"""
@@ -511,9 +517,9 @@ class AdvancedRiskManager:
                 position.entry_price,
                 position.position_size,
                 position.entry_time,
-                json.dumps([asdict(tp) for tp in position.take_profits]),
-                json.dumps(asdict(position.stop_loss)),
-                json.dumps(position.trailing_stop),
+                json.dumps([asdict(tp) for tp in position.take_profits], default=datetime_serializer),
+                json.dumps(asdict(position.stop_loss), default=datetime_serializer),
+                json.dumps(position.trailing_stop, default=datetime_serializer),
                 position.max_risk_pct
             ))
     
@@ -533,7 +539,7 @@ class AdvancedRiskManager:
                 metrics.distance_to_sl,
                 metrics.distance_to_next_tp,
                 metrics.atr_value,
-                json.dumps(asdict(metrics))
+                json.dumps(asdict(metrics), default=datetime_serializer)
             ))
     
     def _log_risk_event(self, symbol: str, event_type: str, price: float, 
@@ -547,7 +553,7 @@ class AdvancedRiskManager:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
                 symbol, event_type, datetime.now(), price, description, pnl,
-                json.dumps(asdict(self.active_positions.get(symbol, {})))
+                json.dumps(asdict(self.active_positions.get(symbol, {})), default=datetime_serializer)
             ))
     
     def get_risk_events(self, symbol: str = None, days: int = 7) -> pd.DataFrame:
