@@ -205,6 +205,8 @@ class OKXDataService:
     def get_funding_rate(self, symbol: str) -> float:
         """Get current funding rate for futures symbol"""
         try:
+            import requests
+            
             # Convert spot symbol to futures if needed
             if symbol.endswith('-USDT'):
                 futures_symbol = symbol.replace('-USDT', '-USDT-SWAP')
