@@ -216,9 +216,198 @@ def main():
     ])
     
     with tab1:
-        st.session_state.dashboard.render_live_trading_tab(
-            selected_symbol, selected_timeframe, strategy_type
-        )
+        # Live Trading with OKX Futures Integration
+        st.header("📊 Live Futures Trading")
+        
+        if not st.session_state.okx_api_configured:
+            st.warning("⚠️ Please configure OKX API credentials in the sidebar to enable live trading")
+            st.info("📝 You need API Key, Secret Key, and Passphrase from OKX")
+        else:
+            # Trading interface
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.subheader("🎯 Place Order")
+                
+                # Order form
+                order_col1, order_col2 = st.columns(2)
+                
+                with order_col1:
+                    order_side = st.selectbox("Order Side", ["buy", "sell"])
+                    order_type = st.selectbox("Order Type", ["market", "limit"])
+                    order_size = st.number_input("Size (USDT)", min_value=1.0, value=100.0, step=1.0)
+                
+                with order_col2:
+                    order_leverage = st.slider("Leverage", 1, 100, leverage, help="Trading leverage for futures")
+                    
+                    if order_type == "limit":
+                        limit_price = st.number_input("Limit Price", min_value=0.01, value=50000.0, step=0.01)
+                    else:
+                        limit_price = None
+                    
+                    reduce_only = st.checkbox("Reduce Only", help="Close existing position only")
+                
+                # Risk management controls
+                st.subheader("🛡️ Risk Management")
+                risk_col1, risk_col2 = st.columns(2)
+                
+                with risk_col1:
+                    use_stop_loss = st.checkbox("Use Stop Loss")
+                    if use_stop_loss:
+                        stop_loss_price = st.number_input("Stop Loss Price", min_value=0.01, value=45000.0, step=0.01)
+                    else:
+                        stop_loss_price = None
+                
+                with risk_col2:
+                    use_take_profit = st.checkbox("Use Take Profit")
+                    if use_take_profit:
+                        take_profit_price = st.number_input("Take Profit Price", min_value=0.01, value=55000.0, step=0.01)
+                    else:
+                        take_profit_price = None
+                
+                # Place order button
+                if st.button("🚀 Place Order", type="primary"):
+                    if st.session_state.use_real_trading:
+                        # Real trading
+                        order_result = st.session_state.okx_connector.place_futures_order(
+                            symbol=selected_symbol,
+                            side=order_side,
+                            size=order_size,
+                            order_type=order_type,
+                            price=limit_price,
+                            leverage=order_leverage,
+                            reduce_only=reduce_only,
+                            stop_loss=stop_loss_price,
+                            take_profit=take_profit_price
+                        )
+                        
+                        if order_result.get('success'):
+                            st.success(f"✅ Order placed successfully! Order ID: {order_result.get('order_id')}")
+                            if order_result.get('stop_loss_order_id'):
+                                st.info(f"🛡️ Stop loss order: {order_result.get('stop_loss_order_id')}")
+                            if order_result.get('take_profit_order_id'):
+                                st.info(f"🎯 Take profit order: {order_result.get('take_profit_order_id')}")
+                        else:
+                            st.error(f"❌ Order failed: {order_result.get('error')}")
+                    else:
+                        st.info("📝 Paper trading mode - order simulation only")
+            
+            with col2:
+                st.subheader("💰 Account Info")
+                
+                # Get account balance
+                balance_result = st.session_state.okx_connector.get_account_balance()
+                if balance_result.get('success'):
+                    balances = balance_result.get('balances', {})
+                    for currency, balance_info in balances.items():
+                        if currency in ['USDT', 'USD', 'BTC', 'ETH']:
+                            st.metric(
+                                f"{currency} Balance",
+                                f"{balance_info['available']:.2f}",
+                                f"Total: {balance_info['total']:.2f}"
+                            )
+                else:
+                    st.error("Failed to fetch balance")
+                
+                # Funding rate info
+                funding_result = st.session_state.okx_connector.get_funding_rate(selected_symbol)
+                if funding_result.get('success'):
+                    funding_rate = funding_result.get('funding_rate', 0) * 100
+                    st.metric("Funding Rate", f"{funding_rate:.4f}%")
+                
+                # Maximum tradable size
+                max_size_result = st.session_state.okx_connector.get_maximum_tradable_size(
+                    selected_symbol, "buy", order_leverage
+                )
+                if max_size_result.get('success'):
+                    st.metric("Max Buy Size", f"{max_size_result.get('max_buy_size', 0):.2f}")
+            
+            # Current positions
+            st.subheader("📋 Open Positions")
+            positions_result = st.session_state.okx_connector.get_positions()
+            
+            if positions_result.get('success'):
+                positions = positions_result.get('positions', [])
+                
+                if positions:
+                    positions_df = pd.DataFrame(positions)
+                    
+                    # Display positions table
+                    st.dataframe(
+                        positions_df[['symbol', 'side', 'size', 'entry_price', 'mark_price', 
+                                    'unrealized_pnl', 'leverage', 'margin']],
+                        use_container_width=True
+                    )
+                    
+                    # Quick close buttons
+                    st.subheader("⚡ Quick Actions")
+                    for idx, position in enumerate(positions):
+                        col1, col2, col3 = st.columns([2, 1, 1])
+                        
+                        with col1:
+                            st.text(f"{position['symbol']} - {position['side']} - Size: {position['size']}")
+                        
+                        with col2:
+                            if st.button(f"Close 50%", key=f"close_50_{idx}"):
+                                close_result = st.session_state.okx_connector.close_position(
+                                    position['symbol'], position['size'] * 0.5
+                                )
+                                if close_result.get('success'):
+                                    st.success("50% position closed")
+                                else:
+                                    st.error(f"Failed: {close_result.get('error')}")
+                        
+                        with col3:
+                            if st.button(f"Close All", key=f"close_all_{idx}"):
+                                close_result = st.session_state.okx_connector.close_position(position['symbol'])
+                                if close_result.get('success'):
+                                    st.success("Position closed")
+                                else:
+                                    st.error(f"Failed: {close_result.get('error')}")
+                else:
+                    st.info("No open positions")
+            else:
+                st.error("Failed to fetch positions")
+            
+            # Recent orders
+            st.subheader("📊 Recent Orders")
+            orders_result = st.session_state.okx_connector.get_order_history(selected_symbol, 10)
+            
+            if orders_result.get('success'):
+                orders = orders_result.get('orders', [])
+                
+                if orders:
+                    orders_df = pd.DataFrame(orders)
+                    orders_df['timestamp'] = pd.to_datetime(orders_df['timestamp'], unit='ms')
+                    
+                    st.dataframe(
+                        orders_df[['timestamp', 'symbol', 'side', 'order_type', 'size', 
+                                 'filled_size', 'avg_price', 'status']],
+                        use_container_width=True
+                    )
+                else:
+                    st.info("No recent orders")
+            else:
+                st.error("Failed to fetch order history")
+            
+            # Trading instruments info
+            st.subheader("📋 Available Instruments")
+            if st.button("🔄 Refresh Instruments"):
+                instruments_result = st.session_state.okx_connector.get_trading_instruments("SWAP")
+                
+                if instruments_result.get('success'):
+                    instruments = instruments_result.get('instruments', [])
+                    instruments_df = pd.DataFrame(instruments)
+                    
+                    # Filter for popular pairs
+                    popular_pairs = instruments_df[
+                        instruments_df['symbol'].str.contains('BTC|ETH|ADA|BNB|DOT|LINK|LTC|XRP')
+                    ].head(20)
+                    
+                    st.dataframe(
+                        popular_pairs[['symbol', 'max_leverage', 'min_size', 'tick_size', 'status']],
+                        use_container_width=True
+                    )
     
     with tab2:
         st.session_state.dashboard.render_ai_insights_tab(
