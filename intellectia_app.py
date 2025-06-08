@@ -210,6 +210,7 @@ def create_sidebar():
                 "🤖 AI Advisor": "advisor", 
                 "📈 Charts": "charts",
                 "🧠 Advanced ML": "advanced_ml",
+                "🤖 AI Performance": "ai_performance",
                 "🔍 Asset Explorer": "explorer",
                 "📊 Sentiment": "sentiment",
                 "⚙️ Strategies": "strategies",
@@ -1621,6 +1622,9 @@ def main():
         show_charts_page()
     elif selected_page == "advanced_ml" and st.session_state.user_mode == 'expert':
         show_advanced_ml_page()
+    elif selected_page == "ai_performance" and st.session_state.user_mode == 'expert':
+        from frontend.ai_performance_dashboard import show_ai_performance_dashboard
+        show_ai_performance_dashboard()
     elif selected_page == "explorer" and st.session_state.user_mode == 'expert':
         show_explorer_page()
     elif selected_page == "sentiment" and st.session_state.user_mode == 'expert':
