@@ -1,0 +1,172 @@
+{
+  "timestamp": "2025-06-08T20:57:28.615761",
+  "weak_components": {
+    "api_integration": {
+      "severity": "High",
+      "issues": {
+        "okx_method_errors": [
+          "'OKXDataService' object has no attribute 'get_candles'",
+          "'OKXDataService' object has no attribute 'get_instruments'",
+          "OKX API error for None: argument of type 'NoneType' is not iterable"
+        ],
+        "data_access_problems": [
+          "No OHLCV data found for symbols in 1m timeframe",
+          "Database schema inconsistencies in timestamp columns",
+          "Infinite extent warnings in portfolio visualization"
+        ]
+      },
+      "impact": "Prevents AI model evaluation and data collection",
+      "affected_modules": [
+        "adaptive_model_selector",
+        "data_collection",
+        "strategy_evaluation"
+      ]
+    },
+    "ai_models": {
+      "performance_issues": {
+        "BNBUSDT": {
+          "win_rate": 48.78048780487805,
+          "issue": "Below 60% accuracy threshold",
+          "severity": "Medium"
+        },
+        "ADAUSDT": {
+          "win_rate": 58.18181818181818,
+          "issue": "Below 60% accuracy threshold",
+          "severity": "Medium"
+        }
+      },
+      "training_data_shortage": "Insufficient trading history for accurate model training",
+      "model_evaluation_blocked": "Cannot evaluate models due to API method issues"
+    },
+    "strategy_system": {
+      "execution_problems": {
+        "no_live_trades": "System in monitoring mode - no trades executed in 72h",
+        "strategy_evaluation_nan": "Average scores showing NaN values",
+        "limited_strategy_diversity": "All symbols assigned same grid strategy"
+      },
+      "performance_metrics": {
+        "missing_win_rates": "Cannot calculate strategy win rates without trade history",
+        "no_pnl_tracking": "No profit/loss data available for strategy optimization",
+        "switch_frequency": "Initial strategy assignment only, no dynamic switching observed"
+      }
+    },
+    "database_schema": {
+      "ai_performance.db": [
+        "Missing timestamp column in model_aggregates"
+      ],
+      "smart_selector.db": [
+        "Missing timestamp column in strategy_performance",
+        "Missing timestamp column in strategy_evaluations",
+        "Missing timestamp column in strategy_switches"
+      ],
+      "sentiment_data.db": [
+        "Missing timestamp column in news_sentiment"
+      ]
+    },
+    "ui_performance": {
+      "visualization_errors": [
+        "Infinite extent warnings in portfolio charts",
+        "Empty portfolio data causing chart rendering issues",
+        "WebSocket connection errors affecting real-time updates"
+      ],
+      "data_display_problems": [
+        "Portfolio value showing Infinity/-Infinity",
+        "Missing trade history for performance visualization",
+        "Strategy performance metrics unavailable"
+      ],
+      "responsiveness_concerns": [
+        "Chart rendering with insufficient data",
+        "Real-time updates may be delayed due to data collection issues"
+      ]
+    }
+  },
+  "performance_issues": {},
+  "optimization_recommendations": {
+    "api_improvements": [
+      "Implement missing OKX API methods: get_candles, get_instruments",
+      "Add proper error handling for None values in API responses",
+      "Implement retry logic for failed API calls",
+      "Add API rate limiting to prevent connection issues"
+    ],
+    "ai_model_enhancements": [
+      "Implement data collection for 1-minute timeframes",
+      "Add ensemble model voting for better accuracy",
+      "Implement online learning for real-time model updates",
+      "Add model performance monitoring and auto-switching"
+    ],
+    "strategy_optimizations": [
+      "Implement dynamic strategy selection based on market volatility",
+      "Add confirmation indicators for strategy switches",
+      "Implement strategy performance scoring and ranking",
+      "Add market regime detection for strategy adaptation"
+    ],
+    "database_improvements": [
+      "Standardize timestamp columns across all tables",
+      "Implement proper database migration system",
+      "Add data validation and constraint checking",
+      "Optimize database queries for performance"
+    ],
+    "ui_enhancements": [
+      "Add empty state handling for charts",
+      "Implement progressive loading for large datasets",
+      "Add real-time data refresh indicators",
+      "Improve error messaging and user feedback"
+    ],
+    "performance_optimizations": [
+      "Implement async processing for data collection",
+      "Add caching for frequently accessed data",
+      "Optimize database connection pooling",
+      "Implement background task queuing"
+    ]
+  },
+  "priority_fixes": [
+    {
+      "priority": "CRITICAL",
+      "component": "OKX API Integration",
+      "issue": "Missing get_candles and get_instruments methods",
+      "fix": "Implement missing API methods in OKXDataService class",
+      "impact": "Blocks AI model evaluation and data collection",
+      "effort": "High"
+    },
+    {
+      "priority": "HIGH",
+      "component": "Database Schema",
+      "issue": "Missing timestamp columns and schema inconsistencies",
+      "fix": "Standardize database schemas with proper timestamp fields",
+      "impact": "Prevents proper data querying and analysis",
+      "effort": "Medium"
+    },
+    {
+      "priority": "HIGH",
+      "component": "Data Collection Pipeline",
+      "issue": "No 1-minute OHLCV data for model training",
+      "fix": "Implement proper timeframe mapping and data collection",
+      "impact": "AI models cannot train on fresh data",
+      "effort": "Medium"
+    },
+    {
+      "priority": "MEDIUM",
+      "component": "Portfolio Visualization",
+      "issue": "Infinite extent errors in charts",
+      "fix": "Add null/empty data handling in chart components",
+      "impact": "Poor user experience and visualization errors",
+      "effort": "Low"
+    },
+    {
+      "priority": "MEDIUM",
+      "component": "Strategy Diversification",
+      "issue": "All symbols using same grid strategy",
+      "fix": "Enhance strategy selection logic with market condition analysis",
+      "impact": "Limited strategy optimization and performance",
+      "effort": "Medium"
+    },
+    {
+      "priority": "LOW",
+      "component": "Error Handling",
+      "issue": "None type iteration errors",
+      "fix": "Add proper null checks and error handling throughout codebase",
+      "impact": "System stability and error resilience",
+      "effort": "Low"
+    }
+  ]
+}

@@ -57,13 +57,53 @@ class AutonomousTrainingOrchestrator:
             try:
                 # Convert symbol format for OKX (BTC/USDT -> BTCUSDT)
                 okx_symbol = symbol.replace('/', '')
+                
+                # Store data in database for AI model access
                 data = self.okx_data_service.get_historical_data(okx_symbol, '1m', limit=days_back * 1440)
                 if not data.empty:
-                    self.logger.info(f"Successfully collected {len(data)} records for {symbol}")
+                    # Save to database for AI models
+                    self._save_ohlcv_to_database(okx_symbol, data, '1m')
+                    self.logger.info(f"Successfully collected and stored {len(data)} records for {symbol}")
                 else:
                     self.logger.warning(f"No data received for {symbol}")
             except Exception as e:
                 self.logger.error(f"Error collecting data for {symbol}: {e}")
+                
+    def _save_ohlcv_to_database(self, symbol: str, data, timeframe: str):
+        """Save OHLCV data to database for AI model access"""
+        try:
+            import sqlite3
+            db_path = 'data/market_data.db'
+            
+            # Ensure directory exists
+            os.makedirs('data', exist_ok=True)
+            
+            with sqlite3.connect(db_path) as conn:
+                # Create table if not exists
+                table_name = f"ohlcv_{symbol.lower()}_{timeframe}"
+                
+                create_table_sql = f"""
+                CREATE TABLE IF NOT EXISTS {table_name} (
+                    timestamp TEXT PRIMARY KEY,
+                    open REAL,
+                    high REAL,
+                    low REAL,
+                    close REAL,
+                    volume REAL
+                )
+                """
+                
+                conn.execute(create_table_sql)
+                
+                # Prepare data for insertion
+                data_reset = data.reset_index()
+                data_reset['timestamp'] = data_reset['timestamp'].astype(str)
+                
+                # Insert data with replace to handle duplicates
+                data_reset.to_sql(table_name, conn, if_exists='replace', index=False)
+                
+        except Exception as e:
+            self.logger.error(f"Error saving OHLCV data to database: {e}")
         
         # Collect news sentiment data
         self.logger.info("Collecting news sentiment data...")

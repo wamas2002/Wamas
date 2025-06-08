@@ -196,6 +196,29 @@ class OKXDataService:
             print(f"Error getting ticker for {symbol}: {e}")
             return {}
     
+    def get_candles(self, symbol: str, interval: str, limit: int = 500) -> pd.DataFrame:
+        """Get candlestick data - required by AI model evaluation"""
+        return self.get_historical_data(symbol, interval, limit)
+    
+    def get_instruments(self, inst_type: str = "SPOT") -> List[Dict[str, Any]]:
+        """Get trading instruments list"""
+        try:
+            # For now, return our supported symbols
+            instruments = []
+            for symbol in self.symbol_map.keys():
+                instruments.append({
+                    'symbol': symbol,
+                    'instId': self.symbol_map[symbol],
+                    'baseCcy': symbol.replace('USDT', ''),
+                    'quoteCcy': 'USDT',
+                    'instType': inst_type,
+                    'state': 'live'
+                })
+            return instruments
+        except Exception as e:
+            print(f"Error getting instruments: {e}")
+            return []
+    
     def get_market_data_summary(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
         """Get market data summary for multiple symbols"""
         try:
