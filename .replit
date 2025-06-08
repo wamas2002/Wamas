@@ -2,7 +2,7 @@ modules = ["python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["glibcLocales", "ocl-icd", "opencl-headers", "gcc"]
+packages = ["gcc", "glibcLocales", "ocl-icd", "opencl-headers"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -18,24 +18,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Server"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "install_packages"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "ML Training System"
 
-[[workflows.workflow]]
-name = "Server"
-author = "agent"
-
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "uv add pandas_ta plotly scikit-learn requests websocket-client && streamlit run app.py --server.port 5000"
-waitForPort = 5000
+task = "workflow.run"
+args = "Intellectia Trading Platform"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -52,6 +43,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_autonomous_training.py train"
+
+[[workflows.workflow]]
+name = "Intellectia Trading Platform"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run intellectia_app.py --server.port 5000"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
