@@ -46,10 +46,10 @@ class OKXConnector:
             if not self.secret_key:
                 return ""
                 
-            # Create the prehash string
+            # Create the prehash string (timestamp + method + requestPath + body)
             prehash = timestamp + method.upper() + request_path + body
             
-            # Create signature
+            # Create signature using HMAC-SHA256
             signature = base64.b64encode(
                 hmac.new(
                     self.secret_key.encode('utf-8'),
@@ -62,6 +62,7 @@ class OKXConnector:
             
         except Exception as e:
             print(f"Error generating signature: {e}")
+            print(f"Prehash string: {timestamp + method.upper() + request_path + body}")
             return ""
     
     def _make_request(self, method: str, endpoint: str, params: Dict = None, data: Dict = None) -> Dict[str, Any]:
@@ -75,7 +76,7 @@ class OKXConnector:
             
             # Prepare request
             url = f"{self.base_url}{endpoint}"
-            timestamp = str(int(time.time() * 1000))
+            timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
             
             # Handle query parameters
             if params:
