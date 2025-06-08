@@ -790,13 +790,26 @@ def main():
                         'bb_period': [15, 20, 25]
                     }
                     
-                    # Create a dummy strategy function for testing
+                    # Use actual trading strategy with real data
                     def test_strategy(data, **params):
+                        if data.empty:
+                            return {'error': 'No data available'}
+                        
+                        # Simple momentum strategy using real market data
+                        returns = data['close'].pct_change()
+                        momentum_signal = returns.rolling(window=params.get('momentum_window', 10)).mean()
+                        
+                        # Calculate basic performance metrics
+                        strategy_returns = momentum_signal.fillna(0) * returns.shift(-1)
+                        total_return = (1 + strategy_returns).prod() - 1
+                        sharpe_ratio = strategy_returns.mean() / strategy_returns.std() if strategy_returns.std() > 0 else 0
+                        max_drawdown = (strategy_returns.cumsum() - strategy_returns.cumsum().expanding().max()).min()
+                        
                         return {
-                            'total_return': np.random.normal(0.05, 0.15),
-                            'sharpe_ratio': np.random.normal(0.8, 0.3),
-                            'max_drawdown': np.random.uniform(0.05, 0.25),
-                            'total_trades': np.random.randint(10, 50)
+                            'total_return': float(total_return),
+                            'sharpe_ratio': float(sharpe_ratio),
+                            'max_drawdown': abs(float(max_drawdown)),
+                            'total_trades': len(strategy_returns[strategy_returns != 0])
                         }
                     
                     wf_result = st.session_state.walk_forward_analyzer.run_walk_forward(
@@ -1149,9 +1162,10 @@ def main():
                                     model_state="sample_model_state",
                                     training_data_hash="sample_hash",
                                     performance_metrics={
-                                        "accuracy": np.random.uniform(0.6, 0.85),
-                                        "mse": np.random.uniform(0.001, 0.01),
-                                        "training_time": np.random.uniform(30, 300)
+                                        "accuracy": 0.0,
+                                        "mse": 0.0,
+                                        "training_time": 0.0,
+                                        "status": "placeholder_model"
                                     }
                                 )
                                 st.success(f"Sample model stored with ID: {model_id}")
