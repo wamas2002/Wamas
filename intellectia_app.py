@@ -849,6 +849,7 @@ def show_advanced_ml_page():
 
 def show_strategy_monitor_page():
     """Strategy Monitor page - comprehensive strategy management dashboard"""
+    from datetime import datetime
     st.title("🎯 Strategy Monitor")
     st.markdown("Advanced strategy management and AutoConfig Engine monitoring")
     
@@ -1101,6 +1102,8 @@ def main():
         show_sentiment_page()
     elif selected_page == "strategies" and st.session_state.user_mode == 'expert':
         show_strategies_page()
+    elif selected_page == "strategy_monitor" and st.session_state.user_mode == 'expert':
+        show_strategy_monitor_page()
     elif selected_page == "alerts" and st.session_state.user_mode == 'expert':
         show_alerts_page()
     else:
