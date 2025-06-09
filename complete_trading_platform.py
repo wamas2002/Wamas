@@ -914,6 +914,78 @@ def api_save_strategy():
         logger.error(f"Error saving strategy: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/strategies/<int:strategy_id>')
+def api_get_strategy(strategy_id):
+    """Get a specific saved strategy by ID"""
+    try:
+        conn = sqlite3.connect(db_manager.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, description, code, parameters, visual_blocks, 
+                   strategy_type, created_by, tags, created_at
+            FROM saved_strategies
+            WHERE id = ?
+        ''', (strategy_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            strategy = {
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'python_code': row[3],  # Use python_code for compatibility
+                'code': row[3],
+                'parameters': json.loads(row[4]) if row[4] else {},
+                'visual_blocks': json.loads(row[5]) if row[5] else [],
+                'strategy_type': row[6],
+                'created_by': row[7],
+                'tags': json.loads(row[8]) if row[8] else [],
+                'created_at': row[9]
+            }
+            return jsonify({'success': True, 'strategy': strategy})
+        else:
+            return jsonify({'error': 'Strategy not found'}), 404
+            
+    except Exception as e:
+        logger.error(f"Error loading strategy {strategy_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strategies/<int:strategy_id>', methods=['DELETE'])
+def api_delete_strategy(strategy_id):
+    """Delete a saved strategy by ID"""
+    try:
+        conn = sqlite3.connect(db_manager.db_path)
+        cursor = conn.cursor()
+        
+        # Check if strategy exists
+        cursor.execute('SELECT name FROM saved_strategies WHERE id = ?', (strategy_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            conn.close()
+            return jsonify({'error': 'Strategy not found'}), 404
+        
+        strategy_name = row[0]
+        
+        # Delete the strategy
+        cursor.execute('DELETE FROM saved_strategies WHERE id = ?', (strategy_id,))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"Strategy '{strategy_name}' (ID: {strategy_id}) deleted successfully")
+        
+        return jsonify({
+            'success': True,
+            'message': f"Strategy '{strategy_name}' deleted successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting strategy {strategy_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/screener/scan', methods=['POST'])
 def api_screener_scan():
     """Run real-time market screener scan"""

@@ -1875,39 +1875,133 @@
 
         function updateSavedStrategiesTab(strategies) {
             // Update the Saved Strategies tab with the new strategy list
-            const savedStrategiesContent = document.querySelector('#savedStrategies .card-body');
-            if (savedStrategiesContent) {
-                let strategiesHtml = '<div class="row">';
-                
-                strategies.forEach(strategy => {
-                    strategiesHtml += `
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-info">
-                                <div class="card-body">
-                                    <h6 class="card-title">${strategy.name}</h6>
-                                    <p class="card-text small">${strategy.description}</p>
-                                    <div class="mb-2">
-                                        ${strategy.tags ? strategy.tags.map(tag => 
-                                            `<span class="badge bg-secondary me-1">${tag}</span>`
-                                        ).join('') : ''}
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-primary" onclick="loadStrategy(${strategy.id})">
-                                            Load
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-success" onclick="backtestStrategy(${strategy.id})">
-                                            Backtest
-                                        </button>
+            const savedStrategiesList = document.getElementById('savedStrategiesList');
+            if (savedStrategiesList) {
+                if (strategies.length === 0) {
+                    savedStrategiesList.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-robot fa-3x mb-3"></i>
+                            <p>No saved strategies yet. Generate your first AI strategy!</p>
+                        </div>
+                    `;
+                } else {
+                    let strategiesHtml = '<div class="row">';
+                    
+                    strategies.forEach(strategy => {
+                        strategiesHtml += `
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-info">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-robot me-2"></i>${strategy.name}
+                                        </h6>
+                                        <p class="card-text small text-muted">${strategy.description || 'AI-generated strategy'}</p>
+                                        <div class="mb-2">
+                                            ${strategy.tags ? strategy.tags.map(tag => 
+                                                `<span class="badge bg-secondary me-1">${tag}</span>`
+                                            ).join('') : '<span class="badge bg-info">ai-generated</span>'}
+                                        </div>
+                                        <small class="text-muted d-block mb-2">
+                                            <i class="fas fa-user me-1"></i>${strategy.created_by || 'AI Assistant'}
+                                            ${strategy.created_at ? ` • ${new Date(strategy.created_at).toLocaleDateString()}` : ''}
+                                        </small>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-primary" onclick="loadStrategy(${strategy.id})">
+                                                <i class="fas fa-download me-1"></i>Load
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success" onclick="backtestStrategy(${strategy.id})">
+                                                <i class="fas fa-chart-bar me-1"></i>Backtest
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteStrategy(${strategy.id})">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                });
-                
-                strategiesHtml += '</div>';
-                savedStrategiesContent.innerHTML = strategiesHtml;
+                        `;
+                    });
+                    
+                    strategiesHtml += '</div>';
+                    savedStrategiesList.innerHTML = strategiesHtml;
+                }
             }
+        }
+
+        function loadStrategy(strategyId) {
+            fetch(`/api/strategies/${strategyId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentGeneratedStrategy = data.strategy;
+                        currentStrategyId = strategyId;
+                        displayGeneratedStrategy(data.strategy);
+                        showStatus(`Strategy "${data.strategy.name}" loaded successfully!`, 'success');
+                        
+                        // Switch to AI Assistant tab
+                        const aiAssistantTab = document.querySelector('[href="#aiAssistant"]');
+                        if (aiAssistantTab) {
+                            aiAssistantTab.click();
+                        }
+                    } else {
+                        showStatus('Failed to load strategy: ' + data.error, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Load strategy error:', error);
+                    showStatus('Failed to load strategy. Please try again.', 'danger');
+                });
+        }
+
+        function backtestStrategy(strategyId) {
+            showStatus('Running backtest for saved strategy...', 'info');
+            
+            fetch('/api/backtest-strategy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    strategy_id: strategyId,
+                    symbol: 'BTC/USDT'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayBacktestResults(data.results);
+                    showStatus('Backtest completed successfully!', 'success');
+                } else {
+                    showStatus('Backtest failed: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Backtest error:', error);
+                showStatus('Failed to run backtest. Please try again.', 'danger');
+            });
+        }
+
+        function deleteStrategy(strategyId) {
+            if (!confirm('Are you sure you want to delete this strategy? This action cannot be undone.')) {
+                return;
+            }
+
+            fetch(`/api/strategies/${strategyId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Strategy deleted successfully', 'success');
+                    loadSavedStrategies(); // Refresh the list
+                } else {
+                    showStatus('Failed to delete strategy: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Delete strategy error:', error);
+                showStatus('Failed to delete strategy. Please try again.', 'danger');
+            });
         }
 
         function refineStrategy() {
@@ -2397,6 +2491,9 @@
                 loadMTFAAnalysis();
                 refreshModelInsights();
             }, 1000);
+            
+            // Load saved strategies on page load
+            loadSavedStrategies();
         });
 
         // Update charts when symbol changes
