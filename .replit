@@ -28,6 +28,10 @@ args = "Complete Trading Platform"
 task = "workflow.run"
 args = "Live Trading System"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Trading Monitor Dashboard"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -52,6 +56,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python signal_execution_bridge.py"
+
+[[workflows.workflow]]
+name = "Trading Monitor Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run live_trading_monitor_dashboard.py --server.port 5001"
+waitForPort = 5001
 
 [[ports]]
 localPort = 5000
