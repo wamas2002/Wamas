@@ -1382,12 +1382,29 @@
         });
 
         function initializeTradingChart() {
-            tradingWidget = tvManager.createWidget('trading_chart', currentTradingSymbol, {
-                interval: '5',
-                width: '100%',
-                height: 600,
-                studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'BB@tv-basicstudies', 'Volume@tv-basicstudies']
-            });
+            // Check if TradingView is available
+            if (typeof TradingView === 'undefined') {
+                console.log('TradingView library not loaded yet, retrying...');
+                setTimeout(initializeTradingChart, 1000);
+                return;
+            }
+            
+            try {
+                tradingWidget = tvManager.createWidget('trading_chart', currentTradingSymbol, {
+                    interval: '5',
+                    width: '100%',
+                    height: 600,
+                    studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'BB@tv-basicstudies', 'Volume@tv-basicstudies']
+                });
+                console.log('TradingView widget initialized successfully');
+            } catch (error) {
+                console.error('TradingView widget initialization failed:', error);
+                // Show fallback message
+                const chartContainer = document.getElementById('trading_chart');
+                if (chartContainer) {
+                    chartContainer.innerHTML = '<div class="text-center p-4"><i class="fas fa-chart-line fa-3x text-muted mb-3"></i><p class="text-muted">Live chart loading...</p></div>';
+                }
+            }
         }
 
         function setupOrderFormListeners() {
@@ -1492,9 +1509,15 @@
         }
 
         function updateMarketInfo() {
-            // Simulate real-time price updates (in production, fetch from API)
-            const variation = (Math.random() - 0.5) * 100;
-            currentPrice += variation;
+            // Fetch live price data from API
+            fetch('/api/market-data/BTC/USDT')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        currentPrice = data[data.length - 1].close;
+                    }
+                })
+                .catch(error => console.log('Live price fetch error:', error));
             
             document.getElementById('currentPrice').textContent = '$' + currentPrice.toLocaleString(undefined, {
                 minimumFractionDigits: 2,

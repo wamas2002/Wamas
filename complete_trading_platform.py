@@ -947,6 +947,8 @@ def api_save_strategy():
         logger.error(f"Error saving strategy: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Market data endpoint already exists above, updating to handle pair parameter
+
 @app.route('/api/strategies/<int:strategy_id>')
 def api_get_strategy(strategy_id):
     """Get a specific saved strategy by ID"""
