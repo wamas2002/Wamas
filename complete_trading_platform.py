@@ -1554,46 +1554,55 @@ def api_screener_scan():
 def api_ai_model_insights():
     """AI model insights from live market analysis"""
     try:
-        df = data_service.get_ohlcv_data('BTC/USDT', '1h', 100)
-        if df is None or len(df) < 20:
+        market_data = data_service.get_market_data('BTC/USDT', '1h', 100)
+        if market_data is None or len(market_data) < 20:
             return jsonify({'success': False, 'error': 'Insufficient data'})
+        
+        # Extract price data for analysis
+        prices = [candle['close'] for candle in market_data]
+        volumes = [candle['volume'] for candle in market_data]
         
         # Calculate real technical features
         features = []
         
-        # RSI feature importance
-        rsi_values = df['rsi'].dropna()
-        if len(rsi_values) > 0:
-            rsi_volatility = rsi_values.std() / 50  # Normalized volatility
-            features.append({'name': 'RSI Analysis', 'importance': min(0.9, rsi_volatility)})
-        
-        # Price trend importance
-        price_change = (df['close'].iloc[-1] - df['close'].iloc[-20]) / df['close'].iloc[-20]
+        # Price trend analysis
+        recent_prices = prices[-20:]
+        price_change = (recent_prices[-1] - recent_prices[0]) / recent_prices[0]
         trend_strength = min(0.95, abs(price_change) * 10)
         features.append({'name': 'Price Trend', 'importance': trend_strength})
         
+        # Volatility analysis
+        price_changes = [abs(prices[i] - prices[i-1]) / prices[i-1] for i in range(1, len(prices))]
+        volatility = sum(price_changes[-10:]) / 10  # 10-period volatility
+        vol_importance = min(0.8, volatility * 20)
+        features.append({'name': 'Market Volatility', 'importance': vol_importance})
+        
         # Volume analysis
-        volume_trend = df['volume'].rolling(10).mean().iloc[-1] / df['volume'].rolling(20).mean().iloc[-1]
-        volume_importance = min(0.8, abs(volume_trend - 1) * 2)
+        recent_volumes = volumes[-20:]
+        volume_trend = sum(recent_volumes[-10:]) / sum(recent_volumes[-20:-10])
+        volume_importance = min(0.7, abs(volume_trend - 1) * 2)
         features.append({'name': 'Volume Pattern', 'importance': volume_importance})
         
-        # Moving average convergence
-        ma_signal = abs(df['sma_20'].iloc[-1] - df['sma_50'].iloc[-1]) / df['close'].iloc[-1]
-        features.append({'name': 'MA Convergence', 'importance': min(0.7, ma_signal * 100)})
+        # Support/Resistance analysis
+        high_prices = [candle['high'] for candle in market_data[-20:]]
+        low_prices = [candle['low'] for candle in market_data[-20:]]
+        price_range = (max(high_prices) - min(low_prices)) / prices[-1]
+        range_importance = min(0.6, price_range * 50)
+        features.append({'name': 'Support/Resistance', 'importance': range_importance})
         
         # Sort by importance
         features.sort(key=lambda x: x['importance'], reverse=True)
         
         # Calculate overall confidence
         avg_importance = sum(f['importance'] for f in features) / len(features)
-        confidence = 60 + (avg_importance * 35)  # 60-95% range
+        confidence = 65 + (avg_importance * 30)  # 65-95% range
         
         return jsonify({
             'success': True,
             'model': 'Live Market Analysis Engine',
             'confidence': round(confidence, 1),
             'features': features[:4],
-            'explanation': f'Analysis based on {len(df)} live market data points from OKX',
+            'explanation': f'Analysis based on {len(market_data)} live market data points from OKX',
             'data_source': 'live_okx_data'
         })
     except Exception as e:
