@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Interface - AI Trading Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- TradingView Charting Library -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0B1426;
+            --bg-secondary: #1A2332;
+            --card-bg: #252D3D;
+            --accent-blue: #4F8BFF;
+            --accent-green: #00D395;
+            --accent-red: #FF4757;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8B9AAF;
+            --border-color: #2A3441;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .navbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-brand, .nav-link {
+            color: var(--text-primary) !important;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .order-form {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .form-control, .form-select {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-primary);
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 2px rgba(79, 139, 255, 0.25);
+        }
+
+        .btn-buy {
+            background: var(--accent-green);
+            border: none;
+            color: white;
+        }
+
+        .btn-buy:hover {
+            background: #00b87a;
+        }
+
+        .btn-sell {
+            background: var(--accent-red);
+            border: none;
+            color: white;
+        }
+
+        .btn-sell:hover {
+            background: #e63946;
+        }
+
+        .order-book {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .order-book-item {
+            display: flex;
+            justify-content: between;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .bid { color: var(--accent-green); }
+        .ask { color: var(--accent-red); }
+
+        .strategy-builder {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .strategy-node {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem;
+            cursor: move;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-node:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 4px 12px rgba(79, 139, 255, 0.2);
+        }
+
+        .risk-controls {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-online { background: var(--accent-green); }
+        .status-warning { background: #FFB800; }
+        .status-offline { background: var(--accent-red); }
+
+        .order-history-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-change-positive { color: var(--accent-green); }
+        .price-change-negative { color: var(--accent-red); }
+
+        .tab-content {
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--card-bg);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                AI Trading Platform
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="/portfolio">Portfolio</a>
+                <a class="nav-link active" href="/trading">Trading</a>
+                <a class="nav-link" href="/ai-signals">AI Signals</a>
+            </div>
+            
+            <div class="d-flex align-items-center ms-3">
+                <span class="status-indicator status-online"></span>
+                <small class="text-muted">Live Trading Active</small>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Trading Chart -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-candlestick me-2"></i>
+                            Advanced Trading Chart
+                        </h6>
+                        <div class="d-flex align-items-center">
+                            <select class="form-select me-2" id="tradingSymbol" style="width: auto;">
+                                <option value="OKX:BTCUSDT">BTC/USDT</option>
+                                <option value="OKX:ETHUSDT">ETH/USDT</option>
+                                <option value="OKX:BNBUSDT">BNB/USDT</option>
+                                <option value="OKX:ADAUSDT">ADA/USDT</option>
+                                <option value="OKX:SOLUSDT">SOL/USDT</option>
+                                <option value="OKX:XRPUSDT">XRP/USDT</option>
+                                <option value="OKX:DOTUSDT">DOT/USDT</option>
+                                <option value="OKX:AVAXUSDT">AVAX/USDT</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-light" onclick="refreshTradingChart()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="trading_chart" style="height: 600px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Panel -->
+            <div class="col-lg-4 mb-4">
+                <!-- Market Info -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Market Info
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="price-display" id="currentPrice">$46,825.50</div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">24h Change</span>
+                            <span class="price-change-positive" id="priceChange">+2.45%</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">24h Volume</span>
+                            <span id="volume">2.45M USDT</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">24h High</span>
+                            <span id="highPrice">$47,120.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">24h Low</span>
+                            <span id="lowPrice">$45,890.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Place Order
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Order Type Tabs -->
+                        <ul class="nav nav-tabs mb-3" id="orderTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#marketOrder">Market</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#limitOrder">Limit</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#stopOrder">Stop</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Market Order -->
+                            <div class="tab-pane fade show active" id="marketOrder">
+                                <form id="marketOrderForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Quantity</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="marketQuantity" step="0.001" placeholder="0.000">
+                                            <span class="input-group-text">BTC</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Total (Estimated)</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="marketTotal" readonly>
+                                            <span class="input-group-text">USDT</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-buy" onclick="placeOrder('market', 'buy')">
+                                            <i class="fas fa-arrow-up me-2"></i>Buy BTC
+                                        </button>
+                                        <button type="button" class="btn btn-sell" onclick="placeOrder('market', 'sell')">
+                                            <i class="fas fa-arrow-down me-2"></i>Sell BTC
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Limit Order -->
+                            <div class="tab-pane fade" id="limitOrder">
+                                <form id="limitOrderForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Price</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="limitPrice" step="0.01" placeholder="0.00">
+                                            <span class="input-group-text">USDT</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Quantity</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="limitQuantity" step="0.001" placeholder="0.000">
+                                            <span class="input-group-text">BTC</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Total</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="limitTotal" readonly>
+                                            <span class="input-group-text">USDT</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-buy" onclick="placeOrder('limit', 'buy')">
+                                            <i class="fas fa-arrow-up me-2"></i>Buy BTC
+                                        </button>
+                                        <button type="button" class="btn btn-sell" onclick="placeOrder('limit', 'sell')">
+                                            <i class="fas fa-arrow-down me-2"></i>Sell BTC
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Stop Order -->
+                            <div class="tab-pane fade" id="stopOrder">
+                                <form id="stopOrderForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Stop Price</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="stopPrice" step="0.01" placeholder="0.00">
+                                            <span class="input-group-text">USDT</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Quantity</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="stopQuantity" step="0.001" placeholder="0.000">
+                                            <span class="input-group-text">BTC</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-sell" onclick="placeOrder('stop', 'sell')">
+                                            <i class="fas fa-shield-alt me-2"></i>Stop Loss
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategy Builder & Risk Management -->
+        <div class="row">
+            <!-- Visual Strategy Builder -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-project-diagram me-2"></i>
+                            Visual Strategy Builder
+                        </h6>
+                        <div>
+                            <button class="btn btn-sm btn-outline-light me-2" onclick="saveStrategy()">
+                                <i class="fas fa-save me-1"></i>Save
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="executeStrategy()">
+                                <i class="fas fa-play me-1"></i>Execute
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="strategy-builder" id="strategyCanvas">
+                            <!-- Draggable Strategy Nodes -->
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-3">Indicators</h6>
+                                    <div class="strategy-node" draggable="true" data-type="indicator" data-indicator="rsi">
+                                        <i class="fas fa-chart-line me-2"></i>RSI
+                                        <small class="d-block text-muted">Relative Strength Index</small>
+                                    </div>
+                                    <div class="strategy-node" draggable="true" data-type="indicator" data-indicator="macd">
+                                        <i class="fas fa-chart-area me-2"></i>MACD
+                                        <small class="d-block text-muted">Moving Average Convergence</small>
+                                    </div>
+                                    <div class="strategy-node" draggable="true" data-type="indicator" data-indicator="bb">
+                                        <i class="fas fa-chart-bar me-2"></i>Bollinger Bands
+                                        <small class="d-block text-muted">Price Volatility Bands</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-3">Conditions</h6>
+                                    <div class="strategy-node" draggable="true" data-type="condition" data-condition="greater">
+                                        <i class="fas fa-greater-than me-2"></i>Greater Than
+                                        <small class="d-block text-muted">Value > Threshold</small>
+                                    </div>
+                                    <div class="strategy-node" draggable="true" data-type="condition" data-condition="less">
+                                        <i class="fas fa-less-than me-2"></i>Less Than
+                                        <small class="d-block text-muted">Value < Threshold</small>
+                                    </div>
+                                    <div class="strategy-node" draggable="true" data-type="condition" data-condition="crossover">
+                                        <i class="fas fa-exchange-alt me-2"></i>Crossover
+                                        <small class="d-block text-muted">Line crosses above/below</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-3">Actions</h6>
+                                    <div class="strategy-node" draggable="true" data-type="action" data-action="buy">
+                                        <i class="fas fa-arrow-up me-2 text-success"></i>Buy Order
+                                        <small class="d-block text-muted">Market/Limit Buy</small>
+                                    </div>
+                                    <div class="strategy-node" draggable="true" data-type="action" data-action="sell">
+                                        <i class="fas fa-arrow-down me-2 text-danger"></i>Sell Order
+                                        <small class="d-block text-muted">Market/Limit Sell</small>
+                                    </div>
+                                    <div class="strategy-node" draggable="true" data-type="action" data-action="alert">
+                                        <i class="fas fa-bell me-2 text-warning"></i>Send Alert
+                                        <small class="d-block text-muted">Notification/Email</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-3">Strategy Flow</h6>
+                                    <div id="strategyFlow" style="min-height: 200px; border: 2px dashed var(--border-color); border-radius: 8px; padding: 1rem;">
+                                        <p class="text-muted text-center">Drop strategy components here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Management Panel -->
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Risk Management
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="risk-controls">
+                            <div class="mb-3">
+                                <label class="form-label">Stop Loss (%)</label>
+                                <input type="range" class="form-range" id="stopLossRange" min="1" max="20" value="5">
+                                <div class="d-flex justify-content-between">
+                                    <small>1%</small>
+                                    <span id="stopLossValue">5%</span>
+                                    <small>20%</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Take Profit (%)</label>
+                                <input type="range" class="form-range" id="takeProfitRange" min="5" max="50" value="15">
+                                <div class="d-flex justify-content-between">
+                                    <small>5%</small>
+                                    <span id="takeProfitValue">15%</span>
+                                    <small>50%</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Position Size (% of balance)</label>
+                                <input type="range" class="form-range" id="positionSizeRange" min="1" max="25" value="10">
+                                <div class="d-flex justify-content-between">
+                                    <small>1%</small>
+                                    <span id="positionSizeValue">10%</span>
+                                    <small>25%</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="autoTradingSwitch">
+                                    <label class="form-check-label" for="autoTradingSwitch">
+                                        Auto Trading
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button class="btn btn-warning" onclick="emergencyStop()">
+                                    <i class="fas fa-stop me-2"></i>Emergency Stop
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Orders -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Active Orders
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="activeOrders">
+                            <div class="order-history-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>BTC/USDT</strong>
+                                        <small class="d-block text-muted">Limit Buy</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div>$45,500</div>
+                                        <small class="text-muted">0.025 BTC</small>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger mt-2" onclick="cancelOrder(1)">Cancel</button>
+                            </div>
+                            <div class="order-history-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>ETH/USDT</strong>
+                                        <small class="d-block text-muted">Stop Loss</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div>$2,450</div>
+                                        <small class="text-muted">0.5 ETH</small>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger mt-2" onclick="cancelOrder(2)">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Trading Interface JavaScript -->
+    <script>
+        let currentTradingSymbol = 'OKX:BTCUSDT';
+        let tradingWidget = null;
+        let currentPrice = 46825.50;
+        
+        // TradingView Widget Manager
+        class TradingViewManager {
+            constructor() {
+                this.defaultConfig = {
+                    theme: 'dark',
+                    style: '1',
+                    locale: 'en',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    withdateranges: true,
+                    hide_side_toolbar: false,
+                    allow_symbol_change: true,
+                    studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'BB@tv-basicstudies']
+                };
+            }
+
+            createWidget(containerId, symbol, config = {}) {
+                const finalConfig = {
+                    ...this.defaultConfig,
+                    ...config,
+                    symbol: symbol,
+                    container_id: containerId
+                };
+
+                try {
+                    const widget = new TradingView.widget(finalConfig);
+                    return widget;
+                } catch (error) {
+                    console.error('Error creating TradingView widget:', error);
+                    return null;
+                }
+            }
+
+            updateSymbol(widget, newSymbol) {
+                if (widget && widget.chart) {
+                    try {
+                        widget.chart().setSymbol(newSymbol);
+                    } catch (error) {
+                        console.error('Error updating symbol:', error);
+                    }
+                }
+            }
+        }
+
+        const tvManager = new TradingViewManager();
+
+        // Initialize trading interface
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Trading Interface...');
+            
+            initializeTradingChart();
+            setupOrderFormListeners();
+            setupRiskManagementListeners();
+            setupStrategyBuilder();
+            
+            // Symbol selector
+            const symbolSelector = document.getElementById('tradingSymbol');
+            if (symbolSelector) {
+                symbolSelector.addEventListener('change', function(e) {
+                    currentTradingSymbol = e.target.value;
+                    tvManager.updateSymbol(tradingWidget, currentTradingSymbol);
+                    updateMarketInfo();
+                });
+            }
+            
+            // Real-time price updates
+            setInterval(updateMarketInfo, 5000);
+        });
+
+        function initializeTradingChart() {
+            tradingWidget = tvManager.createWidget('trading_chart', currentTradingSymbol, {
+                interval: '5',
+                width: '100%',
+                height: 600,
+                studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'BB@tv-basicstudies', 'Volume@tv-basicstudies']
+            });
+        }
+
+        function setupOrderFormListeners() {
+            // Market order calculations
+            const marketQuantity = document.getElementById('marketQuantity');
+            const marketTotal = document.getElementById('marketTotal');
+            
+            if (marketQuantity) {
+                marketQuantity.addEventListener('input', function() {
+                    const quantity = parseFloat(this.value) || 0;
+                    const total = quantity * currentPrice;
+                    marketTotal.value = total.toFixed(2);
+                });
+            }
+
+            // Limit order calculations
+            const limitPrice = document.getElementById('limitPrice');
+            const limitQuantity = document.getElementById('limitQuantity');
+            const limitTotal = document.getElementById('limitTotal');
+            
+            function calculateLimitTotal() {
+                const price = parseFloat(limitPrice.value) || 0;
+                const quantity = parseFloat(limitQuantity.value) || 0;
+                const total = price * quantity;
+                limitTotal.value = total.toFixed(2);
+            }
+
+            if (limitPrice) limitPrice.addEventListener('input', calculateLimitTotal);
+            if (limitQuantity) limitQuantity.addEventListener('input', calculateLimitTotal);
+        }
+
+        function setupRiskManagementListeners() {
+            // Stop Loss Range
+            const stopLossRange = document.getElementById('stopLossRange');
+            const stopLossValue = document.getElementById('stopLossValue');
+            
+            if (stopLossRange) {
+                stopLossRange.addEventListener('input', function() {
+                    stopLossValue.textContent = this.value + '%';
+                });
+            }
+
+            // Take Profit Range
+            const takeProfitRange = document.getElementById('takeProfitRange');
+            const takeProfitValue = document.getElementById('takeProfitValue');
+            
+            if (takeProfitRange) {
+                takeProfitRange.addEventListener('input', function() {
+                    takeProfitValue.textContent = this.value + '%';
+                });
+            }
+
+            // Position Size Range
+            const positionSizeRange = document.getElementById('positionSizeRange');
+            const positionSizeValue = document.getElementById('positionSizeValue');
+            
+            if (positionSizeRange) {
+                positionSizeRange.addEventListener('input', function() {
+                    positionSizeValue.textContent = this.value + '%';
+                });
+            }
+        }
+
+        function setupStrategyBuilder() {
+            const strategyFlow = document.getElementById('strategyFlow');
+            
+            // Enable drag and drop
+            document.querySelectorAll('.strategy-node').forEach(node => {
+                node.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        type: this.dataset.type,
+                        indicator: this.dataset.indicator,
+                        condition: this.dataset.condition,
+                        action: this.dataset.action,
+                        html: this.outerHTML
+                    }));
+                });
+            });
+
+            if (strategyFlow) {
+                strategyFlow.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+
+                strategyFlow.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    
+                    // Create a copy of the dropped node
+                    const newNode = document.createElement('div');
+                    newNode.innerHTML = data.html;
+                    newNode.firstChild.style.position = 'relative';
+                    newNode.firstChild.style.margin = '0.5rem';
+                    
+                    this.appendChild(newNode.firstChild);
+                    
+                    // Update drop zone message
+                    const message = this.querySelector('p');
+                    if (message) message.style.display = 'none';
+                });
+            }
+        }
+
+        function updateMarketInfo() {
+            // Simulate real-time price updates (in production, fetch from API)
+            const variation = (Math.random() - 0.5) * 100;
+            currentPrice += variation;
+            
+            document.getElementById('currentPrice').textContent = '$' + currentPrice.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // Update market quantity calculation
+            const marketQuantity = document.getElementById('marketQuantity');
+            const marketTotal = document.getElementById('marketTotal');
+            if (marketQuantity && marketTotal && marketQuantity.value) {
+                const quantity = parseFloat(marketQuantity.value);
+                marketTotal.value = (quantity * currentPrice).toFixed(2);
+            }
+        }
+
+        function placeOrder(type, side) {
+            let quantity, price, total;
+            
+            if (type === 'market') {
+                quantity = document.getElementById('marketQuantity').value;
+                price = currentPrice;
+                total = parseFloat(document.getElementById('marketTotal').value);
+            } else if (type === 'limit') {
+                quantity = document.getElementById('limitQuantity').value;
+                price = parseFloat(document.getElementById('limitPrice').value);
+                total = parseFloat(document.getElementById('limitTotal').value);
+            } else if (type === 'stop') {
+                quantity = document.getElementById('stopQuantity').value;
+                price = parseFloat(document.getElementById('stopPrice').value);
+                total = quantity * price;
+            }
+
+            if (!quantity || !price) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const orderData = {
+                symbol: currentTradingSymbol.replace('OKX:', ''),
+                side: side,
+                type: type,
+                quantity: quantity,
+                price: price,
+                total: total
+            };
+
+            // Send order to backend
+            fetch('/api/place-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Order placed successfully: ${data.message}`);
+                    resetOrderForms();
+                    loadActiveOrders();
+                } else {
+                    alert(`Order failed: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error placing order:', error);
+                alert('Error placing order');
+            });
+        }
+
+        function resetOrderForms() {
+            document.getElementById('marketQuantity').value = '';
+            document.getElementById('marketTotal').value = '';
+            document.getElementById('limitQuantity').value = '';
+            document.getElementById('limitPrice').value = '';
+            document.getElementById('limitTotal').value = '';
+            document.getElementById('stopQuantity').value = '';
+            document.getElementById('stopPrice').value = '';
+        }
+
+        function loadActiveOrders() {
+            // In production, fetch from /api/orders
+            console.log('Loading active orders...');
+        }
+
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                // In production, send DELETE request to /api/orders/{orderId}
+                alert('Order cancelled successfully');
+                loadActiveOrders();
+            }
+        }
+
+        function saveStrategy() {
+            const strategyFlow = document.getElementById('strategyFlow');
+            const nodes = strategyFlow.querySelectorAll('.strategy-node');
+            
+            if (nodes.length === 0) {
+                alert('Please add some components to your strategy first');
+                return;
+            }
+
+            // In production, save to backend
+            alert('Strategy saved successfully');
+        }
+
+        function executeStrategy() {
+            const strategyFlow = document.getElementById('strategyFlow');
+            const nodes = strategyFlow.querySelectorAll('.strategy-node');
+            
+            if (nodes.length === 0) {
+                alert('Please build a strategy first');
+                return;
+            }
+
+            if (confirm('Are you sure you want to execute this strategy?')) {
+                // In production, send to strategy execution engine
+                alert('Strategy execution started');
+            }
+        }
+
+        function emergencyStop() {
+            if (confirm('Are you sure you want to stop all trading activities?')) {
+                // In production, stop all active strategies and cancel open orders
+                alert('All trading activities stopped');
+                document.getElementById('autoTradingSwitch').checked = false;
+            }
+        }
+
+        function refreshTradingChart() {
+            if (tradingWidget) {
+                try {
+                    tradingWidget.remove();
+                } catch (e) {}
+                
+                setTimeout(() => {
+                    initializeTradingChart();
+                }, 500);
+            }
+        }
+
+        console.log('Trading Interface loaded successfully');
+    </script>
+</body>
+</html>
