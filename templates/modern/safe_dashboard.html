@@ -174,13 +174,31 @@
         async function loadData() {
             try {
                 const response = await fetch('/api/dashboard-data');
-                if (!response.ok) throw new Error('Network error');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 
-                dashboardData = await response.json();
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                dashboardData = data;
                 updateDisplay();
+                document.getElementById('systemStatus').textContent = 'LIVE';
+                
             } catch (error) {
                 console.error('Data loading error:', error);
                 document.getElementById('systemStatus').textContent = 'ERROR';
+                
+                // Set fallback data to prevent further errors
+                dashboardData = {
+                    portfolio: { total_value: 0, positions: [] },
+                    ai_performance: { overall_accuracy: 0, win_rate: 0 },
+                    technical_signals: {},
+                    system_status: { status: 'error' }
+                };
+                updateDisplay();
             }
         }
 
@@ -239,10 +257,32 @@
             }
         }
 
-        // Initialize
+        // Global error handler to prevent unhandled rejections
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            document.getElementById('systemStatus').textContent = 'ERROR';
+            event.preventDefault(); // Prevent the error from bubbling up
+        });
+
+        // Global error handler for general JavaScript errors
+        window.addEventListener('error', function(event) {
+            console.error('Global JavaScript error:', event.error);
+            document.getElementById('systemStatus').textContent = 'ERROR';
+        });
+
+        // Initialize with comprehensive error protection
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            setInterval(loadData, 30000); // Refresh every 30 seconds
+            try {
+                loadData();
+                setInterval(() => {
+                    loadData().catch(error => {
+                        console.error('Interval data loading error:', error);
+                    });
+                }, 30000); // Refresh every 30 seconds
+            } catch (error) {
+                console.error('Initialization error:', error);
+                document.getElementById('systemStatus').textContent = 'ERROR';
+            }
         });
     </script>
 </body>
