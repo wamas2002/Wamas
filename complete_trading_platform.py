@@ -42,14 +42,30 @@ class OKXDataService:
         self.initialize_exchange()
         
     def initialize_exchange(self):
-        """Initialize OKX exchange connection"""
+        """Initialize OKX exchange connection with API credentials"""
         try:
-            self.exchange = ccxt.okx({
-                'sandbox': False,
-                'rateLimit': 1200,
-                'enableRateLimit': True,
-            })
-            logger.info("OKX exchange connection initialized")
+            # Get API credentials from environment
+            api_key = os.environ.get('OKX_API_KEY')
+            secret_key = os.environ.get('OKX_SECRET_KEY')
+            passphrase = os.environ.get('OKX_PASSPHRASE')
+            
+            if api_key and secret_key and passphrase:
+                self.exchange = ccxt.okx({
+                    'apiKey': api_key,
+                    'secret': secret_key,
+                    'password': passphrase,
+                    'sandbox': False,
+                    'rateLimit': 1200,
+                    'enableRateLimit': True,
+                })
+                logger.info("OKX exchange connection initialized with API credentials")
+            else:
+                self.exchange = ccxt.okx({
+                    'sandbox': False,
+                    'rateLimit': 1200,
+                    'enableRateLimit': True,
+                })
+                logger.warning("OKX exchange initialized without API credentials - portfolio features disabled")
         except Exception as e:
             logger.error(f"Failed to initialize OKX: {e}")
             self.exchange = None
@@ -64,6 +80,51 @@ class OKXDataService:
         except Exception as e:
             logger.error(f"Error fetching price for {symbol}: {e}")
             return 0.0
+
+    def get_portfolio_balance(self) -> Dict:
+        """Get portfolio balance from authenticated OKX account"""
+        try:
+            if not self.exchange:
+                raise Exception("Exchange not initialized")
+            
+            # Check if exchange has credentials
+            if not hasattr(self.exchange, 'apiKey') or not self.exchange.apiKey:
+                raise Exception("okx requires \"apiKey\" credential")
+            
+            balance = self.exchange.fetch_balance()
+            
+            # Format portfolio data
+            positions = []
+            total_balance = 0
+            
+            for currency, data in balance['total'].items():
+                if data > 0:  # Only include currencies with balance
+                    current_price = self.get_current_price(f"{currency}/USDT") if currency != 'USDT' else 1.0
+                    current_value = data * current_price
+                    total_balance += current_value
+                    
+                    positions.append({
+                        'symbol': currency,
+                        'quantity': data,
+                        'current_price': current_price,
+                        'current_value': current_value,
+                        'percentage': 0  # Will calculate after total is known
+                    })
+            
+            # Calculate percentages
+            for position in positions:
+                position['percentage'] = (position['current_value'] / total_balance * 100) if total_balance > 0 else 0
+            
+            return {
+                'total_balance': total_balance,
+                'positions': positions,
+                'cash_balance': balance['total'].get('USDT', 0),
+                'data_source': 'live_okx_api'
+            }
+            
+        except Exception as e:
+            logger.error(f"Portfolio balance error: {e}")
+            raise e
 
     def get_market_data(self, symbol: str, timeframe: str = '1h', limit: int = 100) -> List[Dict]:
         """Get OHLCV market data"""
