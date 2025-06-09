@@ -147,47 +147,7 @@ class OKXDataService:
             logger.error(f"Error fetching market data for {symbol}: {e}")
             return []
 
-    def get_portfolio_balance(self) -> Dict:
-        """Get authentic portfolio balance from exchange API"""
-        try:
-            if not self.exchange:
-                raise Exception("Exchange connection required for authentic portfolio data")
-            
-            # Fetch authentic balance data (requires API keys)
-            balance = self.exchange.fetch_balance()
-            
-            positions = []
-            total_value = 0
-            
-            # Process real positions
-            for currency, amount in balance['total'].items():
-                if amount > 0 and currency != 'USDT':
-                    symbol = f"{currency}/USDT"
-                    try:
-                        current_price = self.get_current_price(symbol)
-                        current_value = amount * current_price
-                        total_value += current_value
-                        
-                        positions.append({
-                            'symbol': symbol,
-                            'quantity': amount,
-                            'current_price': current_price,
-                            'current_value': current_value,
-                            'pnl': 0,  # Would need cost basis from trade history
-                            'pnl_percentage': 0
-                        })
-                    except Exception as e:
-                        logger.warning(f"Could not fetch price for {symbol}: {e}")
-            
-            return {
-                'total_balance': total_value + balance['free'].get('USDT', 0),
-                'available_balance': balance['free'].get('USDT', 0),
-                'positions': positions
-            }
-            
-        except Exception as e:
-            logger.error(f"Portfolio balance error: {e}")
-            raise Exception(f"Unable to fetch authentic portfolio balance. Please configure API keys: {e}")
+
 
 class DatabaseManager:
     """Database operations for trading platform"""
@@ -1209,70 +1169,170 @@ def api_screener_stats():
 
 @app.route('/api/mtfa-analysis', methods=['POST'])
 def api_mtfa_analysis():
-    """Multi-timeframe analysis endpoint"""
+    """Multi-timeframe analysis endpoint using live market data"""
     try:
         data = request.get_json()
         symbol = data.get('symbol', 'BTC/USDT')
         
-        # Generate realistic multi-timeframe analysis
-        trends = [
-            {'direction': 'Bullish', 'strength': 'Strong'},
-            {'direction': 'Bullish', 'strength': 'Moderate'},
-            {'direction': 'Neutral', 'strength': 'Weak'},
-            {'direction': 'Bearish', 'strength': 'Moderate'}
-        ]
+        # Get live market data for analysis
+        timeframes = ['1h', '4h', '1d']
+        trends = []
         
-        levels = {
-            'resistance': {'price': 68450, 'timeframe': '4H'},
-            'support': {'price': 66200, 'timeframe': '1D'},
-            'pivot': {'price': 67325, 'timeframe': 'Current'}
-        }
+        for tf in timeframes:
+            market_data = data_service.get_market_data(symbol, tf, 50)
+            if market_data:
+                df = pd.DataFrame(market_data)
+                if len(df) >= 20:
+                    # Calculate real trend analysis
+                    df['sma_20'] = df['close'].rolling(20).mean()
+                    df['sma_50'] = df['close'].rolling(50).mean() if len(df) >= 50 else df['close'].rolling(len(df)).mean()
+                    
+                    current_price = df['close'].iloc[-1]
+                    sma_20 = df['sma_20'].iloc[-1]
+                    sma_50 = df['sma_50'].iloc[-1]
+                    
+                    if current_price > sma_20 > sma_50:
+                        direction = 'Bullish'
+                        strength = 'Strong' if (current_price - sma_20) / sma_20 > 0.02 else 'Moderate'
+                    elif current_price < sma_20 < sma_50:
+                        direction = 'Bearish'
+                        strength = 'Strong' if (sma_20 - current_price) / sma_20 > 0.02 else 'Moderate'
+                    else:
+                        direction = 'Neutral'
+                        strength = 'Weak'
+                    
+                    trends.append({
+                        'timeframe': tf,
+                        'direction': direction,
+                        'strength': strength
+                    })
         
-        confluence = {
-            'type': 'success',
-            'title': 'Bullish Confluence Detected',
-            'message': '1H and 4H timeframes show aligned upward momentum with volume confirmation. Consider long positions with targets at $68,450 resistance.'
-        }
+        # Calculate support/resistance from live data
+        current_data = data_service.get_market_data(symbol, '1h', 200)
+        levels = {}
+        if current_data:
+            df = pd.DataFrame(current_data)
+            highs = df['high'].rolling(20).max()
+            lows = df['low'].rolling(20).min()
+            current_price = df['close'].iloc[-1]
+            
+            levels = {
+                'resistance': {'price': float(highs.iloc[-1]), 'timeframe': '1H'},
+                'support': {'price': float(lows.iloc[-1]), 'timeframe': '1H'},
+                'pivot': {'price': float(current_price), 'timeframe': 'Current'}
+            }
+        
+        # Determine confluence from actual trends
+        bullish_count = sum(1 for t in trends if t['direction'] == 'Bullish')
+        bearish_count = sum(1 for t in trends if t['direction'] == 'Bearish')
+        
+        if bullish_count > bearish_count:
+            confluence = {
+                'type': 'success',
+                'title': 'Bullish Confluence Detected',
+                'message': f'{bullish_count}/{len(trends)} timeframes show bullish momentum from live market analysis.'
+            }
+        elif bearish_count > bullish_count:
+            confluence = {
+                'type': 'warning',
+                'title': 'Bearish Confluence Detected',
+                'message': f'{bearish_count}/{len(trends)} timeframes show bearish momentum from live market analysis.'
+            }
+        else:
+            confluence = {
+                'type': 'info',
+                'title': 'Mixed Signals',
+                'message': 'Timeframes show conflicting trends - proceed with caution.'
+            }
         
         return jsonify({
             'success': True,
             'trends': trends,
             'levels': levels,
-            'confluence': confluence
+            'confluence': confluence,
+            'data_source': 'live_market_data'
         })
     except Exception as e:
         logger.error(f"MTFA analysis error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unable to analyze live market data: {str(e)}'}), 500
 
 @app.route('/api/model-insights', methods=['POST'])
 def api_model_insights():
-    """AI model explainability insights"""
+    """AI model explainability insights using live market data"""
     try:
         data = request.get_json()
         symbol = data.get('symbol', 'BTC/USDT')
         
-        # Generate realistic model insights
-        import random
-        models = ['XGBoost Ensemble', 'Random Forest', 'LightGBM', 'Neural Network']
-        confidence = random.randint(75, 95)
+        # Get live market data for model analysis
+        market_data = data_service.get_market_data(symbol, '1h', 100)
+        if not market_data:
+            raise Exception("No live market data available for analysis")
         
-        features = [
-            {'name': 'RSI', 'importance': 0.92},
-            {'name': 'MACD', 'importance': 0.78},
-            {'name': 'Volume', 'importance': 0.65},
-            {'name': 'Bollinger', 'importance': 0.54}
-        ]
+        df = pd.DataFrame(market_data)
+        if len(df) < 50:
+            raise Exception("Insufficient market data for model insights")
+        
+        # Calculate real technical indicators
+        df['rsi'] = data_service.calculate_rsi(df['close'])
+        df['sma_20'] = df['close'].rolling(20).mean()
+        df['sma_50'] = df['close'].rolling(50).mean()
+        df['volume_sma'] = df['volume'].rolling(20).mean()
+        
+        # Calculate feature importance based on actual price movement correlation
+        price_change = df['close'].pct_change().dropna()
+        rsi_change = df['rsi'].pct_change().dropna()
+        volume_change = df['volume'].pct_change().dropna()
+        
+        features = []
+        
+        # RSI importance (correlation with price movements)
+        if len(rsi_change) > 0:
+            rsi_corr = abs(price_change.corr(rsi_change))
+            features.append({'name': 'RSI', 'importance': float(rsi_corr) if not pd.isna(rsi_corr) else 0.5})
+        
+        # Volume importance
+        if len(volume_change) > 0:
+            vol_corr = abs(price_change.corr(volume_change))
+            features.append({'name': 'Volume', 'importance': float(vol_corr) if not pd.isna(vol_corr) else 0.3})
+        
+        # Moving average crossover importance
+        ma_signal = (df['sma_20'] > df['sma_50']).astype(int).diff().abs()
+        ma_importance = ma_signal.sum() / len(ma_signal) if len(ma_signal) > 0 else 0.4
+        features.append({'name': 'Moving Averages', 'importance': float(ma_importance)})
+        
+        # Sort features by importance
+        features.sort(key=lambda x: x['importance'], reverse=True)
+        
+        # Calculate model confidence based on signal strength
+        current_rsi = df['rsi'].iloc[-1] if not df['rsi'].iloc[-1] != df['rsi'].iloc[-1] else 50
+        price_trend = (df['close'].iloc[-1] - df['close'].iloc[-20]) / df['close'].iloc[-20]
+        
+        confidence = min(95, max(60, 70 + abs(price_trend) * 100 + (abs(current_rsi - 50) / 50) * 25))
+        
+        # Determine which signals are active
+        active_signals = []
+        if current_rsi > 70:
+            active_signals.append("RSI overbought")
+        elif current_rsi < 30:
+            active_signals.append("RSI oversold")
+        
+        if df['close'].iloc[-1] > df['sma_20'].iloc[-1]:
+            active_signals.append("Above 20-period SMA")
+        
+        explanation = f"Live analysis based on {len(df)} market data points. Active signals: {', '.join(active_signals) if active_signals else 'Neutral conditions'}"
         
         return jsonify({
             'success': True,
-            'model': random.choice(models),
-            'confidence': confidence,
-            'features': features,
-            'explanation': 'Model prediction based on technical indicator confluence'
+            'model': 'Live Technical Analysis Engine',
+            'confidence': round(confidence, 1),
+            'features': features[:4],  # Top 4 features
+            'explanation': explanation,
+            'data_source': 'live_market_data',
+            'data_points': len(df)
         })
     except Exception as e:
         logger.error(f"Model insights error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unable to generate insights from live data: {str(e)}'}), 500
 
 @app.route('/api/health')
 def api_health():

@@ -33,12 +33,11 @@ class OKXPortfolioSync:
             return None
         
         try:
-            # Check if we have proper API credentials configured
+            # Require proper API credentials for live data access
             if not hasattr(self.okx_service, 'api_key') or not self.okx_service.api_key:
-                logger.warning("OKX API credentials not configured for account access")
-                return self.get_demo_realistic_balance()
+                raise Exception("OKX API credentials required for live portfolio access. Please configure authentication.")
             
-            # Attempt to fetch real account data
+            # Fetch live account data only
             balance_data = self.okx_service.get_account_balance()
             if balance_data:
                 return self.process_real_balance_data(balance_data)
