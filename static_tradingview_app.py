@@ -80,50 +80,8 @@ class StaticTradingViewManager:
 tv_manager = StaticTradingViewManager()
 
 def generate_static_portfolio_data():
-    """Generate static portfolio data for demonstration"""
-    return {
-        'total_value': 125840.50,
-        'daily_pnl': 3.42,
-        'cash_balance': 15420.00,
-        'positions': [
-            {
-                'symbol': 'BTC',
-                'quantity': 1.85,
-                'avg_price': 45200.00,
-                'current_price': 46800.00,
-                'current_value': 86580.00,
-                'unrealized_pnl': 3.54,
-                'allocation_pct': 68.8
-            },
-            {
-                'symbol': 'ETH',
-                'quantity': 12.4,
-                'avg_price': 2420.00,
-                'current_price': 2580.00,
-                'current_value': 31992.00,
-                'unrealized_pnl': 6.61,
-                'allocation_pct': 25.4
-            },
-            {
-                'symbol': 'BNB',
-                'quantity': 15.2,
-                'avg_price': 310.00,
-                'current_price': 325.00,
-                'current_value': 4940.00,
-                'unrealized_pnl': 4.84,
-                'allocation_pct': 3.9
-            },
-            {
-                'symbol': 'ADA',
-                'quantity': 850.0,
-                'avg_price': 0.45,
-                'current_price': 0.48,
-                'current_value': 408.00,
-                'unrealized_pnl': 6.67,
-                'allocation_pct': 0.3
-            }
-        ]
-    }
+    """Authentic portfolio data required - static data disabled"""
+    raise Exception("Authentic portfolio data required. Please configure API keys for real exchange access.")
 
 def generate_static_ai_performance():
     """Generate static AI performance data"""

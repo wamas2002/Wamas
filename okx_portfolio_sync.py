@@ -46,79 +46,8 @@ class OKXPortfolioSync:
         except Exception as e:
             logger.warning(f"Could not fetch real OKX account data: {e}")
         
-        # Return realistic demo data if real account access unavailable
-        return self.get_demo_realistic_balance()
-    
-    def get_demo_realistic_balance(self):
-        """Generate realistic demo balance based on current market prices"""
-        try:
-            # Get current market prices
-            symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT']
-            current_prices = {}
-            
-            for symbol in symbols:
-                try:
-                    price = self.okx_service.get_current_price(symbol)
-                    if price:
-                        current_prices[symbol] = float(price)
-                except:
-                    continue
-            
-            # Create realistic portfolio with current prices
-            portfolio = {
-                'total_balance': 0,
-                'available_balance': 3500.0,
-                'positions': []
-            }
-            
-            # Realistic position sizes
-            if 'BTCUSDT' in current_prices:
-                btc_quantity = 0.075
-                btc_value = btc_quantity * current_prices['BTCUSDT']
-                portfolio['positions'].append({
-                    'symbol': 'BTC',
-                    'quantity': btc_quantity,
-                    'avg_price': current_prices['BTCUSDT'] * 0.985,  # Slight profit
-                    'current_price': current_prices['BTCUSDT'],
-                    'current_value': btc_value,
-                    'unrealized_pnl': btc_value * 0.015  # 1.5% profit
-                })
-                portfolio['total_balance'] += btc_value
-            
-            if 'ETHUSDT' in current_prices:
-                eth_quantity = 3.2
-                eth_value = eth_quantity * current_prices['ETHUSDT']
-                portfolio['positions'].append({
-                    'symbol': 'ETH',
-                    'quantity': eth_quantity,
-                    'avg_price': current_prices['ETHUSDT'] * 1.02,  # Slight loss
-                    'current_price': current_prices['ETHUSDT'],
-                    'current_value': eth_value,
-                    'unrealized_pnl': eth_value * -0.02  # 2% loss
-                })
-                portfolio['total_balance'] += eth_value
-            
-            if 'BNBUSDT' in current_prices:
-                bnb_quantity = 12.5
-                bnb_value = bnb_quantity * current_prices['BNBUSDT']
-                portfolio['positions'].append({
-                    'symbol': 'BNB',
-                    'quantity': bnb_quantity,
-                    'avg_price': current_prices['BNBUSDT'] * 0.992,  # Small profit
-                    'current_price': current_prices['BNBUSDT'],
-                    'current_value': bnb_value,
-                    'unrealized_pnl': bnb_value * 0.008  # 0.8% profit
-                })
-                portfolio['total_balance'] += bnb_value
-            
-            portfolio['total_balance'] += portfolio['available_balance']
-            
-            logger.info(f"Generated realistic demo portfolio: ${portfolio['total_balance']:.2f} total")
-            return portfolio
-            
-        except Exception as e:
-            logger.error(f"Error generating demo balance: {e}")
-            return None
+        # Require authentic API access only
+        raise Exception("Authentic OKX API credentials required for portfolio access. Please configure API keys.")
     
     def process_real_balance_data(self, balance_data):
         """Process real OKX balance data"""

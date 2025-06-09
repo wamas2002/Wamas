@@ -137,8 +137,7 @@ class OKXAccountIntegration:
         # Get account balance
         balance_data = self.get_account_balance()
         if not balance_data:
-            logger.warning("Could not fetch account balance, using fallback")
-            return self.create_realistic_fallback()
+            raise Exception("Could not fetch account balance. Authentic OKX API credentials required.")
         
         # Process balance data
         for account in balance_data:

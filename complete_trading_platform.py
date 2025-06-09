@@ -87,37 +87,46 @@ class OKXDataService:
             return []
 
     def get_portfolio_balance(self) -> Dict:
-        """Get portfolio balance (mock for demo)"""
-        return {
-            'total_balance': 125840.50,
-            'available_balance': 23450.75,
-            'positions': [
-                {
-                    'symbol': 'BTC/USDT',
-                    'quantity': 1.85,
-                    'current_price': 46800.0,
-                    'current_value': 86580.0,
-                    'pnl': 2980.50,
-                    'pnl_percentage': 3.54
-                },
-                {
-                    'symbol': 'ETH/USDT',
-                    'quantity': 12.4,
-                    'current_price': 2580.0,
-                    'current_value': 31992.0,
-                    'pnl': 1992.0,
-                    'pnl_percentage': 6.61
-                },
-                {
-                    'symbol': 'BNB/USDT',
-                    'quantity': 15.2,
-                    'current_price': 325.0,
-                    'current_value': 4940.0,
-                    'pnl': 228.0,
-                    'pnl_percentage': 4.84
-                }
-            ]
-        }
+        """Get authentic portfolio balance from exchange API"""
+        try:
+            if not self.exchange:
+                raise Exception("Exchange connection required for authentic portfolio data")
+            
+            # Fetch authentic balance data (requires API keys)
+            balance = self.exchange.fetch_balance()
+            
+            positions = []
+            total_value = 0
+            
+            # Process real positions
+            for currency, amount in balance['total'].items():
+                if amount > 0 and currency != 'USDT':
+                    symbol = f"{currency}/USDT"
+                    try:
+                        current_price = self.get_current_price(symbol)
+                        current_value = amount * current_price
+                        total_value += current_value
+                        
+                        positions.append({
+                            'symbol': symbol,
+                            'quantity': amount,
+                            'current_price': current_price,
+                            'current_value': current_value,
+                            'pnl': 0,  # Would need cost basis from trade history
+                            'pnl_percentage': 0
+                        })
+                    except Exception as e:
+                        logger.warning(f"Could not fetch price for {symbol}: {e}")
+            
+            return {
+                'total_balance': total_value + balance['free'].get('USDT', 0),
+                'available_balance': balance['free'].get('USDT', 0),
+                'positions': positions
+            }
+            
+        except Exception as e:
+            logger.error(f"Portfolio balance error: {e}")
+            raise Exception(f"Unable to fetch authentic portfolio balance. Please configure API keys: {e}")
 
 class DatabaseManager:
     """Database operations for trading platform"""
