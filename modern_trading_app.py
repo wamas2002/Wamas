@@ -201,37 +201,32 @@ if __name__ == '__main__':
     import time
     import socket
     
-    port = int(os.environ.get('PORT', 8080))
+    # Find available port starting from 5000
+    def find_port():
+        for port in [5000, 8080, 8081, 8082, 3000, 3001]:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                result = sock.connect_ex(('127.0.0.1', port))
+                if result != 0:
+                    return port
+            finally:
+                sock.close()
+        return 5000  # fallback
+    
+    port = find_port()
     logger.info(f"Starting Modern Trading Platform on port {port}")
     logger.info("Professional UI with 3Commas/TradingView design")
     
-    # Check if port is available
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('127.0.0.1', port))
-    sock.close()
-    
-    if result == 0:
-        logger.warning(f"Port {port} is already in use, trying alternative ports")
-        for alt_port in [8081, 8082, 8083, 3000, 3001]:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            result = sock.connect_ex(('127.0.0.1', alt_port))
-            sock.close()
-            if result != 0:
-                port = alt_port
-                logger.info(f"Using alternative port {port}")
-                break
-    
-    # Ensure proper server startup with retry mechanism
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            logger.info(f"Starting Flask server (attempt {attempt + 1}/{max_retries})")
+    # Ensure proper server startup
+    try:
+        logger.info("Starting Flask server for production deployment")
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        # Try alternative port if primary fails
+        if port == 5000:
+            port = 8080
+            logger.info(f"Retrying on port {port}")
             app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
-            break
-        except Exception as e:
-            logger.error(f"Failed to start server on attempt {attempt + 1}: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(2)
-            else:
-                logger.error("All startup attempts failed")
-                raise
+        else:
+            raise

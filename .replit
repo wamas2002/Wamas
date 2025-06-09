@@ -24,6 +24,10 @@ args = "install_packages"
 task = "workflow.run"
 args = "ML Training System"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Professional Trading UI"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -39,6 +43,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_autonomous_training.py train"
+
+[[workflows.workflow]]
+name = "Professional Trading UI"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python modern_trading_app.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
