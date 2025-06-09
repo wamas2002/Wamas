@@ -1050,7 +1050,7 @@ def api_exchange_prices():
         
     except Exception as e:
         logger.error(f"Exchange prices error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unable to fetch authentic exchange prices: {str(e)}'}), 500
 
 @app.route('/api/exchange-portfolio/<exchange_name>')
 def api_exchange_portfolio(exchange_name):
@@ -1063,7 +1063,7 @@ def api_exchange_portfolio(exchange_name):
         
     except Exception as e:
         logger.error(f"Exchange portfolio error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unable to fetch authentic portfolio from {exchange_name}: {str(e)}'}), 500
 
 @app.route('/api/aggregated-portfolio')
 def api_aggregated_portfolio():
@@ -1076,7 +1076,7 @@ def api_aggregated_portfolio():
         
     except Exception as e:
         logger.error(f"Aggregated portfolio error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unable to fetch authentic aggregated portfolio: {str(e)}'}), 500
 
 @app.route('/api/exchange-comparison', methods=['POST'])
 def api_exchange_comparison():
@@ -1092,7 +1092,7 @@ def api_exchange_comparison():
         
     except Exception as e:
         logger.error(f"Exchange comparison error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Unable to fetch authentic exchange comparison: {str(e)}'}), 500
 
 @app.route('/api/screener/scan', methods=['POST'])
 def api_screener_scan():
