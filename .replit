@@ -24,6 +24,10 @@ args = "install_packages"
 task = "workflow.run"
 args = "Complete Trading Platform"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Live Trading Engine"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -40,6 +44,14 @@ author = "agent"
 task = "shell.exec"
 args = "python complete_trading_platform.py"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Live Trading Engine"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python live_trading_engine.py"
 
 [[ports]]
 localPort = 5000

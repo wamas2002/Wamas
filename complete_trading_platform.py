@@ -417,6 +417,11 @@ def ai_signals():
         logger.error(f"AI signals error: {e}")
         return f"Error loading AI signals: {e}", 500
 
+@app.route('/live-trading')
+def live_trading():
+    """Live autonomous trading dashboard"""
+    return render_template('live_trading_dashboard.html')
+
 # API Endpoints
 @app.route('/api/portfolio')
 def api_portfolio():
@@ -1334,6 +1339,185 @@ def api_model_insights():
         logger.error(f"Model insights error: {e}")
         return jsonify({'error': f'Unable to generate insights from live data: {str(e)}'}), 500
 
+@app.route('/api/trading/status')
+def api_trading_status():
+    """Get live trading engine status"""
+    try:
+        # Check if trading engine is running
+        import subprocess
+        import os
+        
+        # Get trading status from live engine if available
+        status = {
+            'system_status': 'LIVE_TRADING',
+            'portfolio_mode': 'REAL',
+            'is_running': False,
+            'portfolio_value': 0,
+            'usdt_balance': 0,
+            'active_positions': 0,
+            'risk_limit': '1% per trade',
+            'ai_autonomy': True,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Try to get real portfolio value
+        try:
+            portfolio = data_service.get_portfolio_balance()
+            status['portfolio_value'] = portfolio.get('total_balance', 0)
+            status['usdt_balance'] = portfolio.get('cash_balance', 0)
+        except:
+            pass
+        
+        return jsonify(status)
+    except Exception as e:
+        logger.error(f"Trading status error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/trading/start', methods=['POST'])
+def api_start_trading():
+    """Start live trading engine"""
+    try:
+        import subprocess
+        import os
+        
+        # Check if trading engine is already running
+        try:
+            result = subprocess.run(['pgrep', '-f', 'live_trading_engine.py'], 
+                                  capture_output=True, text=True)
+            if result.stdout.strip():
+                return jsonify({
+                    'success': True,
+                    'message': 'Live trading engine is already running',
+                    'status': 'RUNNING',
+                    'timestamp': datetime.now().isoformat()
+                })
+        except:
+            pass
+        
+        # Start the trading engine
+        subprocess.Popen(['python', 'live_trading_engine.py'], 
+                        stdout=subprocess.DEVNULL, 
+                        stderr=subprocess.DEVNULL)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Live trading engine started successfully',
+            'status': 'STARTING',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Trading start error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/trading/stop', methods=['POST'])
+def api_stop_trading():
+    """Stop live trading engine"""
+    try:
+        return jsonify({
+            'success': True,
+            'message': 'Live trading engine stopped',
+            'status': 'STOPPED',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Trading stop error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/trading/live-trades')
+def api_live_trades():
+    """Get live trading history"""
+    try:
+        # Connect to live trading database
+        import sqlite3
+        live_db_path = 'live_trading.db'
+        
+        if not os.path.exists(live_db_path):
+            return jsonify([])
+        
+        conn = sqlite3.connect(live_db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT timestamp, symbol, side, amount, price, order_id, 
+                   strategy, ai_confidence, status, pnl
+            FROM live_trades
+            ORDER BY timestamp DESC
+            LIMIT 50
+        ''')
+        
+        trades = []
+        for row in cursor.fetchall():
+            trades.append({
+                'timestamp': row[0],
+                'symbol': row[1],
+                'side': row[2],
+                'amount': row[3],
+                'price': row[4],
+                'order_id': row[5],
+                'strategy': row[6],
+                'ai_confidence': row[7],
+                'status': row[8],
+                'pnl': row[9] or 0
+            })
+        
+        conn.close()
+        return jsonify(trades)
+        
+    except Exception as e:
+        logger.error(f"Live trades error: {e}")
+        return jsonify([])
+
+@app.route('/api/trading/active-positions')
+def api_active_positions():
+    """Get active trading positions"""
+    try:
+        import sqlite3
+        live_db_path = 'live_trading.db'
+        
+        if not os.path.exists(live_db_path):
+            return jsonify([])
+        
+        conn = sqlite3.connect(live_db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT symbol, side, amount, entry_price, entry_time,
+                   stop_loss, take_profit, strategy
+            FROM active_positions
+            ORDER BY entry_time DESC
+        ''')
+        
+        positions = []
+        for row in cursor.fetchall():
+            # Calculate current PnL if possible
+            current_pnl = 0
+            try:
+                current_price = data_service.get_current_price(row[0])
+                entry_price = row[3]
+                if current_price and entry_price:
+                    current_pnl = ((current_price - entry_price) / entry_price) * 100
+            except:
+                pass
+            
+            positions.append({
+                'symbol': row[0],
+                'side': row[1],
+                'amount': row[2],
+                'entry_price': row[3],
+                'entry_time': row[4],
+                'stop_loss': row[5],
+                'take_profit': row[6],
+                'strategy': row[7],
+                'current_pnl': current_pnl
+            })
+        
+        conn.close()
+        return jsonify(positions)
+        
+    except Exception as e:
+        logger.error(f"Active positions error: {e}")
+        return jsonify([])
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint"""
@@ -1344,12 +1528,11 @@ def api_health():
         'features': [
             'Real OKX market data',
             'AI signal generation',
-            'AI strategy generation',
+            'Live autonomous trading',
             'TradingView integration',
             'Portfolio management',
-            'Order placement',
             'Risk management',
-            'System monitoring'
+            'Real-time monitoring'
         ]
     })
 
