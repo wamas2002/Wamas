@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""
+Signal Execution Bridge - Converts AI signals into live trades
+Bridges the gap between signal generation and trade execution
+"""
+
+import os
+import time
+import sqlite3
+import logging
+import ccxt
+import threading
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import json
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class SignalExecutionBridge:
+    """Bridge that monitors signals and executes trades automatically"""
+    
+    def __init__(self):
+        self.db_path = 'trading_platform.db'
+        self.live_db_path = 'live_trading.db'
+        self.exchange = None
+        self.is_running = False
+        self.last_execution_time = {}
+        self.rate_limit_delay = 0.2  # 200ms between API calls (5 req/sec max)
+        self.execution_threshold = 0.60  # 60% confidence minimum
+        self.max_position_size_pct = 0.01  # 1% per trade
+        self.min_trade_amount = 10  # Minimum $10 USDT
+        
+        self.initialize_exchange()
+        
+    def initialize_exchange(self):
+        """Initialize OKX exchange for live trading"""
+        try:
+            api_key = os.environ.get('OKX_API_KEY')
+            secret_key = os.environ.get('OKX_SECRET_KEY')
+            passphrase = os.environ.get('OKX_PASSPHRASE')
+            
+            if api_key and secret_key and passphrase:
+                self.exchange = ccxt.okx({
+                    'apiKey': api_key,
+                    'secret': secret_key,
+                    'password': passphrase,
+                    'sandbox': False,
+                    'rateLimit': 1200,
+                    'enableRateLimit': True,
+                })
+                logger.info("Signal execution bridge connected to OKX")
+            else:
+                logger.error("OKX credentials not found - bridge disabled")
+                
+        except Exception as e:
+            logger.error(f"Failed to initialize OKX for signal bridge: {e}")
+            
+    def get_fresh_signals(self) -> List[Dict]:
+        """Get unprocessed signals from the last 60 seconds"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Get signals from last 60 seconds that haven't been processed
+            cutoff_time = (datetime.now() - timedelta(seconds=60)).isoformat()
+            
+            cursor.execute('''
+                SELECT symbol, action, confidence, timestamp, type
+                FROM ai_signals 
+                WHERE timestamp > ? 
+                AND confidence >= ?
+                AND (action = 'BUY' OR action = 'SELL')
+                ORDER BY timestamp DESC
+            ''', (cutoff_time, self.execution_threshold))
+            
+            signals = []
+            for row in cursor.fetchall():
+                signal = {
+                    'symbol': row[0],
+                    'action': row[1],
+                    'confidence': row[2],
+                    'timestamp': row[3],
+                    'type': row[4]
+                }
+                
+                # Check if we haven't processed this symbol recently
+                symbol_key = f"{signal['symbol']}_{signal['action']}"
+                if symbol_key not in self.last_execution_time:
+                    signals.append(signal)
+                else:
+                    last_time = datetime.fromisoformat(self.last_execution_time[symbol_key])
+                    if (datetime.now() - last_time).seconds > 300:  # 5 minute cooldown
+                        signals.append(signal)
+            
+            conn.close()
+            return signals
+            
+        except Exception as e:
+            logger.error(f"Error fetching fresh signals: {e}")
+            return []
+    
+    def calculate_position_size(self, symbol: str) -> float:
+        """Calculate position size based on 1% risk"""
+        try:
+            time.sleep(self.rate_limit_delay)  # Rate limiting
+            balance = self.exchange.fetch_balance()
+            usdt_balance = balance['USDT']['free']
+            
+            # Use 1% of available USDT balance
+            position_value = usdt_balance * self.max_position_size_pct
+            
+            return max(position_value, self.min_trade_amount)
+            
+        except Exception as e:
+            logger.error(f"Error calculating position size: {e}")
+            return self.min_trade_amount
+    
+    def execute_signal_trade(self, signal: Dict) -> Optional[Dict]:
+        """Execute trade based on signal"""
+        try:
+            symbol = signal['symbol']
+            action = signal['action'].lower()
+            confidence = signal['confidence']
+            
+            logger.info(f"EXECUTING SIGNAL: {action.upper()} {symbol} (Confidence: {confidence:.1%})")
+            
+            # Get current price with rate limiting
+            time.sleep(self.rate_limit_delay)
+            ticker = self.exchange.fetch_ticker(symbol)
+            current_price = ticker['last']
+            
+            # Calculate position size
+            position_value = self.calculate_position_size(symbol)
+            
+            # Calculate amount
+            if action == 'buy':
+                amount = position_value / current_price
+                amount = self.exchange.amount_to_precision(symbol, amount)
+                
+                if amount * current_price < self.min_trade_amount:
+                    logger.warning(f"Trade amount too small: ${amount * current_price:.2f}")
+                    return None
+                
+                # Execute buy order with rate limiting
+                time.sleep(self.rate_limit_delay)
+                order = self.exchange.create_market_buy_order(symbol, amount)
+                
+            elif action == 'sell':
+                # Check available balance for selling
+                time.sleep(self.rate_limit_delay)
+                balance = self.exchange.fetch_balance()
+                base_currency = symbol.split('/')[0]
+                available = balance[base_currency]['free']
+                
+                if available == 0:
+                    logger.warning(f"No {base_currency} available to sell")
+                    return None
+                
+                # Use available amount or calculated amount (whichever is smaller)
+                amount = min(available, position_value / current_price)
+                amount = self.exchange.amount_to_precision(symbol, amount)
+                
+                # Execute sell order with rate limiting
+                time.sleep(self.rate_limit_delay)
+                order = self.exchange.create_market_sell_order(symbol, amount)
+            
+            else:
+                logger.warning(f"Unknown action: {action}")
+                return None
+            
+            # Record successful execution
+            trade_record = {
+                'timestamp': datetime.now().isoformat(),
+                'symbol': symbol,
+                'side': action.upper(),
+                'amount': amount,
+                'price': current_price,
+                'order_id': order['id'],
+                'strategy': 'AI_Signal_Bridge',
+                'ai_confidence': confidence,
+                'status': 'EXECUTED',
+                'pnl': 0.0
+            }
+            
+            # Log to live trading database
+            self.log_live_trade(trade_record)
+            
+            # Update execution tracking
+            symbol_key = f"{symbol}_{action.upper()}"
+            self.last_execution_time[symbol_key] = datetime.now().isoformat()
+            
+            logger.info(f"✅ TRADE EXECUTED: {action.upper()} {amount} {symbol} at ${current_price:.4f}")
+            logger.info(f"Order ID: {order['id']}, Value: ${amount * current_price:.2f}")
+            
+            return trade_record
+            
+        except Exception as e:
+            logger.error(f"Failed to execute signal trade: {e}")
+            return None
+    
+    def log_live_trade(self, trade: Dict):
+        """Log trade to live trading database"""
+        try:
+            conn = sqlite3.connect(self.live_db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO live_trades 
+                (timestamp, symbol, side, amount, price, order_id, strategy, ai_confidence, status, pnl)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                trade['timestamp'], trade['symbol'], trade['side'],
+                trade['amount'], trade['price'], trade['order_id'],
+                trade['strategy'], trade['ai_confidence'], trade['status'], trade['pnl']
+            ))
+            
+            conn.commit()
+            conn.close()
+            
+        except Exception as e:
+            logger.error(f"Error logging live trade: {e}")
+    
+    def monitor_and_execute(self):
+        """Main monitoring loop for signal execution"""
+        logger.info("🔄 SIGNAL EXECUTION BRIDGE ACTIVATED")
+        logger.info("Monitoring for AI signals with ≥60% confidence...")
+        
+        while self.is_running:
+            try:
+                # Get fresh signals
+                signals = self.get_fresh_signals()
+                
+                if signals:
+                    logger.info(f"Found {len(signals)} executable signals")
+                    
+                    for signal in signals:
+                        # Execute each signal with proper rate limiting
+                        result = self.execute_signal_trade(signal)
+                        
+                        if result:
+                            # Add delay between trades
+                            time.sleep(2)
+                
+                # Sleep before next check
+                time.sleep(30)  # Check every 30 seconds
+                
+            except KeyboardInterrupt:
+                logger.info("Signal bridge interrupted")
+                break
+            except Exception as e:
+                logger.error(f"Signal bridge error: {e}")
+                time.sleep(10)  # Wait before retry
+    
+    def start(self):
+        """Start the signal execution bridge"""
+        if not self.exchange:
+            logger.error("Cannot start bridge - OKX exchange not initialized")
+            return
+        
+        if self.is_running:
+            logger.warning("Signal bridge already running")
+            return
+        
+        self.is_running = True
+        self.monitor_thread = threading.Thread(target=self.monitor_and_execute, daemon=True)
+        self.monitor_thread.start()
+        
+        logger.info("Signal execution bridge started")
+    
+    def stop(self):
+        """Stop the signal execution bridge"""
+        self.is_running = False
+        logger.info("Signal execution bridge stopped")
+
+def main():
+    """Main entry point for signal execution bridge"""
+    bridge = SignalExecutionBridge()
+    
+    try:
+        bridge.start()
+        
+        # Keep running until interrupted
+        while True:
+            time.sleep(1)
+            
+    except KeyboardInterrupt:
+        logger.info("Shutting down signal execution bridge...")
+        bridge.stop()
+    except Exception as e:
+        logger.error(f"Bridge error: {e}")
+
+if __name__ == '__main__':
+    main()

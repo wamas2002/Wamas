@@ -187,23 +187,41 @@ class LiveTradingEngine:
             signals = []
             confidence = 0
             
-            # Trend following signals
-            if current['close'] > current['sma_20'] > current['sma_50']:
-                signals.append(('BUY', 0.3, 'Bullish trend'))
-            elif current['close'] < current['sma_20'] < current['sma_50']:
-                signals.append(('SELL', 0.3, 'Bearish trend'))
+            # Enhanced trend following signals with more sensitivity
+            price_above_sma20 = current['close'] > current['sma_20']
+            sma20_above_sma50 = current['sma_20'] > current['sma_50']
             
-            # RSI signals
-            if current['rsi'] < 30 and prev['rsi'] >= 30:
-                signals.append(('BUY', 0.4, 'RSI oversold reversal'))
-            elif current['rsi'] > 70 and prev['rsi'] <= 70:
-                signals.append(('SELL', 0.4, 'RSI overbought reversal'))
+            if price_above_sma20 and sma20_above_sma50:
+                trend_strength = (current['close'] - current['sma_50']) / current['sma_50']
+                signals.append(('BUY', min(0.5 + trend_strength * 2, 0.8), 'Strong bullish trend'))
+            elif not price_above_sma20 and not sma20_above_sma50:
+                trend_strength = (current['sma_50'] - current['close']) / current['sma_50']
+                signals.append(('SELL', min(0.5 + trend_strength * 2, 0.8), 'Strong bearish trend'))
             
-            # MACD signals
-            if current['macd'] > current['macd_signal'] and prev['macd'] <= prev['macd_signal']:
-                signals.append(('BUY', 0.3, 'MACD bullish crossover'))
-            elif current['macd'] < current['macd_signal'] and prev['macd'] >= prev['macd_signal']:
-                signals.append(('SELL', 0.3, 'MACD bearish crossover'))
+            # Enhanced RSI signals with more aggressive thresholds
+            if current['rsi'] < 35:  # Lowered from 30
+                rsi_strength = (35 - current['rsi']) / 35
+                signals.append(('BUY', min(0.6 + rsi_strength, 0.85), 'RSI oversold opportunity'))
+            elif current['rsi'] > 65:  # Lowered from 70
+                rsi_strength = (current['rsi'] - 65) / 35
+                signals.append(('SELL', min(0.6 + rsi_strength, 0.85), 'RSI overbought opportunity'))
+            
+            # Enhanced MACD signals
+            if current['macd'] > current['macd_signal']:
+                macd_strength = abs(current['macd'] - current['macd_signal']) / abs(current['macd_signal']) if current['macd_signal'] != 0 else 0.3
+                signals.append(('BUY', min(0.4 + macd_strength, 0.8), 'MACD bullish momentum'))
+            elif current['macd'] < current['macd_signal']:
+                macd_strength = abs(current['macd_signal'] - current['macd']) / abs(current['macd_signal']) if current['macd_signal'] != 0 else 0.3
+                signals.append(('SELL', min(0.4 + macd_strength, 0.8), 'MACD bearish momentum'))
+            
+            # Price momentum signals
+            price_change_1h = (current['close'] - prev['close']) / prev['close']
+            if abs(price_change_1h) > 0.01:  # 1% price movement
+                momentum_strength = min(abs(price_change_1h) * 20, 0.4)
+                if price_change_1h > 0:
+                    signals.append(('BUY', 0.3 + momentum_strength, 'Strong upward momentum'))
+                else:
+                    signals.append(('SELL', 0.3 + momentum_strength, 'Strong downward momentum'))
             
             # Volume confirmation
             volume_sma = df['volume'].rolling(20).mean().iloc[-1]
@@ -218,7 +236,7 @@ class LiveTradingEngine:
             if buy_signals:
                 total_confidence = sum(s[1] for s in buy_signals)
                 reasons = [s[2] for s in buy_signals]
-                if total_confidence >= 0.6:  # Minimum 60% confidence
+                if total_confidence >= 0.45:  # Lowered from 60% to 45% for more aggressive trading
                     return {
                         'symbol': symbol,
                         'signal': 'BUY',
@@ -231,7 +249,7 @@ class LiveTradingEngine:
             elif sell_signals:
                 total_confidence = sum(s[1] for s in sell_signals)
                 reasons = [s[2] for s in sell_signals]
-                if total_confidence >= 0.6:  # Minimum 60% confidence
+                if total_confidence >= 0.45:  # Lowered from 60% to 45% for more aggressive trading
                     return {
                         'symbol': symbol,
                         'signal': 'SELL',
@@ -559,7 +577,7 @@ class LiveTradingEngine:
                             self.log_signal(signal)
                             
                             # Execute trade if signal is strong enough
-                            if signal['confidence'] >= 0.7:  # 70% minimum confidence for execution
+                            if signal['confidence'] >= 0.6:  # Lowered to 60% minimum confidence for execution
                                 trade_result = self.execute_trade(signal)
                                 
                                 if trade_result:
