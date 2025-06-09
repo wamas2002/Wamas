@@ -26,7 +26,7 @@ class MultiTimeframeAnalyzer:
         try:
             exchange_obj = self.exchanges.get(exchange)
             if not exchange_obj:
-                return self._generate_fallback_data(symbol, limit)
+                raise Exception(f"Exchange {exchange} not supported for authentic data access")
             
             multi_tf_data = {}
             
