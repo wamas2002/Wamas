@@ -1,0 +1,453 @@
+{% extends "modern/base.html" %}
+
+{% block title %}Analytics - Intellectia Trading Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">Performance Analytics</h2>
+        <p class="text-secondary">Comprehensive strategy performance analysis and market insights</p>
+    </div>
+</div>
+
+<!-- Performance Overview -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="chart-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Portfolio Performance</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary active">7D</button>
+                    <button class="btn btn-outline-primary">30D</button>
+                    <button class="btn btn-outline-primary">90D</button>
+                    <button class="btn btn-outline-primary">1Y</button>
+                </div>
+            </div>
+            <div id="performanceChart" style="height: 350px;"></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="metric-card">
+            <h5 class="mb-3">Performance Metrics</h5>
+            <div class="row text-center">
+                <div class="col-6 mb-3">
+                    <div class="metric-value text-success" id="totalReturn">+18.5%</div>
+                    <div class="metric-label">Total Return</div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="metric-value" id="sharpeRatio">1.85</div>
+                    <div class="metric-label">Sharpe Ratio</div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="metric-value text-warning" id="maxDrawdown">-5.2%</div>
+                    <div class="metric-label">Max Drawdown</div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="metric-value" id="winRate">68.4%</div>
+                    <div class="metric-label">Win Rate</div>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <button class="btn btn-primary btn-sm w-100">Export Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategy Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Strategy Heatmap</h5>
+            <div id="strategyHeatmap" style="height: 300px;"></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Risk-Return Analysis</h5>
+            <div id="riskReturnChart" style="height: 300px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Trade Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="modern-table">
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h5 class="mb-0">Recent Trading Performance</h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" style="width: auto;">
+                        <option>All Strategies</option>
+                        <option>ATR Momentum</option>
+                        <option>Volume Breakout</option>
+                        <option>Mean Reversion</option>
+                    </select>
+                    <button class="btn btn-outline-primary btn-sm">Filter</button>
+                </div>
+            </div>
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Strategy</th>
+                        <th>Symbol</th>
+                        <th>Type</th>
+                        <th>Entry</th>
+                        <th>Exit</th>
+                        <th>P&L</th>
+                        <th>Return %</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody id="tradeHistory">
+                    <tr>
+                        <td>2024-06-08</td>
+                        <td>ATR Momentum</td>
+                        <td>BTC/USDT</td>
+                        <td><span class="badge bg-success">Long</span></td>
+                        <td>$67,250</td>
+                        <td>$68,890</td>
+                        <td class="text-success">+$1,640</td>
+                        <td class="text-success">+2.44%</td>
+                        <td>4h 32m</td>
+                    </tr>
+                    <tr>
+                        <td>2024-06-08</td>
+                        <td>Volume Breakout</td>
+                        <td>ETH/USDT</td>
+                        <td><span class="badge bg-danger">Short</span></td>
+                        <td>$3,520</td>
+                        <td>$3,485</td>
+                        <td class="text-success">+$350</td>
+                        <td class="text-success">+0.99%</td>
+                        <td>2h 15m</td>
+                    </tr>
+                    <tr>
+                        <td>2024-06-07</td>
+                        <td>Mean Reversion</td>
+                        <td>ADA/USDT</td>
+                        <td><span class="badge bg-success">Long</span></td>
+                        <td>$0.485</td>
+                        <td>$0.475</td>
+                        <td class="text-danger">-$200</td>
+                        <td class="text-danger">-2.06%</td>
+                        <td>8h 45m</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Market Analysis -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Market Correlation Matrix</h5>
+            <div id="correlationMatrix" style="height: 350px;"></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="metric-card">
+            <h5 class="mb-3">Market Insights</h5>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Market Volatility</span>
+                    <span class="fw-bold text-warning">Medium</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-warning" style="width: 45%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Trend Strength</span>
+                    <span class="fw-bold text-success">Strong</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: 75%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Market Sentiment</span>
+                    <span class="fw-bold text-success">Bullish</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: 65%"></div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="text-center">
+                <small class="text-secondary">Last updated: 2 minutes ago</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize Analytics Page
+    async function initializeAnalytics() {
+        updateSystemStatus('loading');
+        
+        try {
+            await Promise.all([
+                loadAnalyticsData(),
+                createPerformanceChart(),
+                createStrategyHeatmap(),
+                createRiskReturnChart(),
+                createCorrelationMatrix()
+            ]);
+            
+            updateSystemStatus('live');
+            updateLastUpdateTime();
+            
+        } catch (error) {
+            console.error('Analytics initialization error:', error);
+            updateSystemStatus('error', error.message);
+        }
+    }
+    
+    // Load Analytics Data
+    async function loadAnalyticsData() {
+        try {
+            // In real implementation, would fetch from analytics API
+            console.log('Loading analytics data...');
+        } catch (error) {
+            console.error('Analytics data error:', error);
+        }
+    }
+    
+    // Create Performance Chart
+    function createPerformanceChart() {
+        const dates = [];
+        const portfolioValues = [];
+        const benchmarkValues = [];
+        
+        // Generate sample data
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+        
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(startDate);
+            date.setDate(date.getDate() + i);
+            dates.push(date.toISOString().split('T')[0]);
+            
+            portfolioValues.push(100000 + (Math.random() - 0.5) * 10000 + i * 500);
+            benchmarkValues.push(100000 + (Math.random() - 0.5) * 5000 + i * 200);
+        }
+        
+        const trace1 = {
+            x: dates,
+            y: portfolioValues,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Portfolio',
+            line: {color: '#4f8bff', width: 3}
+        };
+        
+        const trace2 = {
+            x: dates,
+            y: benchmarkValues,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Benchmark',
+            line: {color: '#b8bcc8', width: 2, dash: 'dash'}
+        };
+        
+        const layout = {
+            margin: {t: 20, b: 40, l: 60, r: 20},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'},
+            xaxis: {
+                gridcolor: '#2d3748',
+                showgrid: true
+            },
+            yaxis: {
+                gridcolor: '#2d3748',
+                showgrid: true,
+                tickformat: '$,.0f'
+            },
+            legend: {
+                x: 0,
+                y: 1,
+                bgcolor: 'rgba(0,0,0,0)'
+            }
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('performanceChart', [trace1, trace2], layout, config);
+    }
+    
+    // Create Strategy Heatmap
+    function createStrategyHeatmap() {
+        const strategies = ['ATR Momentum', 'Volume Breakout', 'Mean Reversion', 'Bollinger Bands', 'MACD Cross'];
+        const timeframes = ['1h', '4h', '1d', '1w'];
+        const returns = [
+            [2.5, 1.8, -0.5, 3.2],
+            [1.2, 2.8, 1.5, 0.8],
+            [-1.1, 0.3, 2.1, 1.9],
+            [0.8, 1.5, 2.8, 2.2],
+            [1.9, 0.2, 1.1, 2.5]
+        ];
+        
+        const data = [{
+            z: returns,
+            x: timeframes,
+            y: strategies,
+            type: 'heatmap',
+            colorscale: [
+                [0, '#ff4757'],
+                [0.5, '#ffa502'],
+                [1, '#00d395']
+            ],
+            showscale: true,
+            hoverongaps: false
+        }];
+        
+        const layout = {
+            margin: {t: 20, b: 40, l: 120, r: 20},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff', size: 12},
+            xaxis: {
+                title: 'Timeframe',
+                side: 'bottom'
+            },
+            yaxis: {
+                title: 'Strategy'
+            }
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('strategyHeatmap', data, layout, config);
+    }
+    
+    // Create Risk-Return Chart
+    function createRiskReturnChart() {
+        const strategies = [
+            {name: 'ATR Momentum', risk: 0.15, return: 0.18, size: 25000},
+            {name: 'Volume Breakout', risk: 0.22, return: 0.25, size: 18000},
+            {name: 'Mean Reversion', risk: 0.08, return: 0.12, size: 15000},
+            {name: 'Bollinger Bands', risk: 0.18, return: 0.20, size: 22000},
+            {name: 'MACD Cross', risk: 0.12, return: 0.15, size: 20000}
+        ];
+        
+        const trace = {
+            x: strategies.map(s => s.risk),
+            y: strategies.map(s => s.return),
+            mode: 'markers+text',
+            type: 'scatter',
+            text: strategies.map(s => s.name),
+            textposition: 'top center',
+            marker: {
+                size: strategies.map(s => s.size / 1000),
+                color: strategies.map(s => s.return),
+                colorscale: 'Viridis',
+                showscale: true,
+                colorbar: {
+                    title: 'Return',
+                    titleside: 'right'
+                }
+            }
+        };
+        
+        const layout = {
+            margin: {t: 20, b: 60, l: 60, r: 60},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'},
+            xaxis: {
+                title: 'Risk (Volatility)',
+                gridcolor: '#2d3748',
+                showgrid: true,
+                tickformat: '.1%'
+            },
+            yaxis: {
+                title: 'Expected Return',
+                gridcolor: '#2d3748',
+                showgrid: true,
+                tickformat: '.1%'
+            }
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('riskReturnChart', [trace], layout, config);
+    }
+    
+    // Create Correlation Matrix
+    function createCorrelationMatrix() {
+        const assets = ['BTC', 'ETH', 'BNB', 'ADA', 'SOL', 'XRP'];
+        const correlations = [
+            [1.00, 0.85, 0.72, 0.68, 0.75, 0.62],
+            [0.85, 1.00, 0.78, 0.71, 0.82, 0.65],
+            [0.72, 0.78, 1.00, 0.69, 0.74, 0.58],
+            [0.68, 0.71, 0.69, 1.00, 0.70, 0.63],
+            [0.75, 0.82, 0.74, 0.70, 1.00, 0.67],
+            [0.62, 0.65, 0.58, 0.63, 0.67, 1.00]
+        ];
+        
+        const data = [{
+            z: correlations,
+            x: assets,
+            y: assets,
+            type: 'heatmap',
+            colorscale: [
+                [0, '#ff4757'],
+                [0.5, '#ffffff'],
+                [1, '#00d395']
+            ],
+            showscale: true,
+            zmin: -1,
+            zmax: 1
+        }];
+        
+        const layout = {
+            margin: {t: 20, b: 40, l: 60, r: 60},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'},
+            xaxis: {
+                title: 'Assets'
+            },
+            yaxis: {
+                title: 'Assets'
+            }
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('correlationMatrix', data, layout, config);
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeAnalytics);
+</script>
+{% endblock %}

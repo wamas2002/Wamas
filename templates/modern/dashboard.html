@@ -1,0 +1,545 @@
+{% extends "modern/base.html" %}
+
+{% block title %}Dashboard - Intellectia Trading Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .trading-view-widget {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px;
+        height: 500px;
+    }
+
+    .strategy-block {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .strategy-block:hover {
+        border-color: var(--accent-blue);
+        transform: translateY(-1px);
+    }
+
+    .strategy-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .mini-widget {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .mini-widget:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .mini-widget-value {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .mini-widget-label {
+        color: var(--text-secondary);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .alert-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--accent-red);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .ai-status-card {
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+        color: white;
+        border: none;
+    }
+
+    .symbol-selector {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 15px;
+    }
+
+    .retraining-timer {
+        background: rgba(79, 139, 255, 0.1);
+        border: 1px solid var(--accent-blue);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">Trading Dashboard</h2>
+        <p class="text-secondary">Real-time portfolio monitoring and strategy management</p>
+    </div>
+</div>
+
+<!-- Key Metrics Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value" id="portfolioValue">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">Portfolio Value</div>
+            <div class="metric-change positive" id="portfolioChange">
+                +0.00% (24h)
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card ai-status-card">
+            <div class="metric-value" id="aiAccuracy">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">AI Model Accuracy</div>
+            <div class="retraining-timer" id="retrainingTimer">
+                Next training: 2h 15m
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value" id="winRate">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">Strategy Win Rate</div>
+            <div class="metric-change neutral" id="totalTrades">
+                0 trades today
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value" id="marketVolatility">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">Market Volatility</div>
+            <div class="metric-change" id="volatilityChange">
+                Calculating...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row mb-4">
+    <!-- TradingView Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="trading-view-widget">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Market Analysis</h5>
+                <select class="symbol-selector" id="symbolSelector" onchange="updateChart()">
+                    <option value="BTCUSDT">BTC/USDT</option>
+                    <option value="ETHUSDT">ETH/USDT</option>
+                    <option value="BNBUSDT">BNB/USDT</option>
+                    <option value="ADAUSDT">ADA/USDT</option>
+                    <option value="SOLUSDT">SOL/USDT</option>
+                </select>
+            </div>
+            <div id="tradingViewChart" style="height: 400px;"></div>
+        </div>
+    </div>
+    
+    <!-- Strategy Builder Preview -->
+    <div class="col-lg-4 mb-4">
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Active Strategies</h5>
+                <a href="/strategy-builder" class="btn btn-primary btn-sm">Build Strategy</a>
+            </div>
+            
+            <div class="strategy-block">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="strategy-indicator" style="background: var(--accent-green);"></span>
+                        <strong>ATR Momentum</strong>
+                    </div>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="mt-2 text-secondary small">
+                    Entry: ATR > 0.15 | TP: 2.5% | SL: 1.2%
+                </div>
+                <div class="mt-2">
+                    <span class="text-success">+12.5%</span> (7 days)
+                </div>
+            </div>
+            
+            <div class="strategy-block">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="strategy-indicator" style="background: var(--accent-blue);"></span>
+                        <strong>Volume Breakout</strong>
+                    </div>
+                    <span class="badge bg-primary">Testing</span>
+                </div>
+                <div class="mt-2 text-secondary small">
+                    Volume > 1.5x avg | RSI < 30
+                </div>
+                <div class="mt-2">
+                    <span class="text-warning">+3.2%</span> (simulation)
+                </div>
+            </div>
+            
+            <div class="strategy-block">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="strategy-indicator" style="background: var(--text-secondary);"></span>
+                        <strong>Mean Reversion</strong>
+                    </div>
+                    <span class="badge bg-secondary">Paused</span>
+                </div>
+                <div class="mt-2 text-secondary small">
+                    BB lower + RSI oversold
+                </div>
+                <div class="mt-2">
+                    <span class="text-danger">-1.8%</span> (last week)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mini Widgets Row -->
+<div class="row mb-4">
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="mini-widget">
+            <div class="mini-widget-value text-primary" id="openTrades">0</div>
+            <div class="mini-widget-label">Open Trades</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="mini-widget">
+            <div class="mini-widget-value text-success" id="todayProfit">$0</div>
+            <div class="mini-widget-label">Today's P&L</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="mini-widget">
+            <div class="mini-widget-value text-warning" id="exposure">0%</div>
+            <div class="mini-widget-label">Total Exposure</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="mini-widget">
+            <div class="mini-widget-value text-info" id="avgEntry">$0</div>
+            <div class="mini-widget-label">Avg Entry</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="mini-widget position-relative">
+            <div class="mini-widget-value text-danger" id="alerts">0</div>
+            <div class="mini-widget-label">Active Alerts</div>
+            <div class="alert-badge" id="alertBadge" style="display: none;">!</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="mini-widget">
+            <div class="mini-widget-value" id="riskScore">
+                <span class="text-success">Low</span>
+            </div>
+            <div class="mini-widget-label">Risk Level</div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Holdings -->
+<div class="row">
+    <div class="col-12">
+        <div class="modern-table">
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h5 class="mb-0">Portfolio Holdings</h5>
+                <a href="/portfolio" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Quantity</th>
+                        <th>Current Price</th>
+                        <th>Value</th>
+                        <th>24h Change</th>
+                        <th>Allocation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="portfolioHoldings">
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="loading"></div>
+                            <div class="mt-2">Loading portfolio data...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let dashboardData = {};
+    let chartData = {};
+    
+    // Initialize Dashboard
+    async function initializeDashboard() {
+        updateSystemStatus('loading');
+        
+        try {
+            await Promise.all([
+                loadDashboardData(),
+                initializeTradingViewChart()
+            ]);
+            
+            updateSystemStatus('live');
+            updateLastUpdateTime();
+            
+            // Set up auto-refresh
+            setInterval(loadDashboardData, 30000); // Every 30 seconds
+        } catch (error) {
+            console.error('Dashboard initialization error:', error);
+            updateSystemStatus('error', error.message);
+        }
+    }
+    
+    // Load Dashboard Data
+    async function loadDashboardData() {
+        try {
+            const response = await fetch('/api/dashboard-data');
+            dashboardData = await response.json();
+            
+            if (dashboardData.error) {
+                throw new Error(dashboardData.error);
+            }
+            
+            updateMetrics();
+            updatePortfolioTable();
+            updateMiniWidgets();
+            
+        } catch (error) {
+            console.error('Dashboard data error:', error);
+            updateSystemStatus('error', error.message);
+        }
+    }
+    
+    // Update Key Metrics
+    function updateMetrics() {
+        const portfolio = dashboardData.portfolio || {};
+        const ai = dashboardData.ai_performance || {};
+        const risk = dashboardData.risk_metrics || {};
+        
+        // Portfolio Value
+        const portfolioValue = portfolio.total_value || 0;
+        const dailyPnl = portfolio.daily_pnl || 0;
+        document.getElementById('portfolioValue').textContent = `$${portfolioValue.toLocaleString()}`;
+        
+        const changeEl = document.getElementById('portfolioChange');
+        changeEl.textContent = `${dailyPnl > 0 ? '+' : ''}${dailyPnl.toFixed(2)}% (24h)`;
+        changeEl.className = `metric-change ${dailyPnl >= 0 ? 'positive' : 'negative'}`;
+        
+        // AI Accuracy
+        const accuracy = ai.overall_accuracy || 0;
+        document.getElementById('aiAccuracy').textContent = `${accuracy.toFixed(1)}%`;
+        
+        // Win Rate
+        const winRate = ai.win_rate || 0;
+        document.getElementById('winRate').textContent = `${winRate.toFixed(1)}%`;
+        document.getElementById('totalTrades').textContent = `${ai.total_predictions || 0} predictions today`;
+        
+        // Market Volatility
+        const volatility = risk.volatility || 0;
+        document.getElementById('marketVolatility').textContent = `${(volatility * 100).toFixed(1)}%`;
+        
+        const volChangeEl = document.getElementById('volatilityChange');
+        volChangeEl.textContent = volatility > 0.25 ? 'High' : volatility > 0.15 ? 'Medium' : 'Low';
+        volChangeEl.className = `metric-change ${volatility > 0.25 ? 'negative' : volatility > 0.15 ? 'neutral' : 'positive'}`;
+    }
+    
+    // Update Portfolio Table
+    function updatePortfolioTable() {
+        const tbody = document.getElementById('portfolioHoldings');
+        const positions = dashboardData.portfolio?.positions || [];
+        
+        if (positions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <i class="fas fa-wallet fa-2x text-secondary mb-2"></i>
+                        <div>No positions found</div>
+                        <small class="text-secondary">Portfolio data will appear here when available</small>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = positions.slice(0, 5).map(position => {
+            const changeClass = position.unrealized_pnl >= 0 ? 'text-success' : 'text-danger';
+            const changeSign = position.unrealized_pnl >= 0 ? '+' : '';
+            
+            return `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                <div class="fw-bold">${position.symbol}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${position.quantity.toFixed(6)}</td>
+                    <td>$${position.avg_price.toFixed(2)}</td>
+                    <td>$${position.current_value.toLocaleString()}</td>
+                    <td class="${changeClass}">
+                        ${changeSign}${(position.unrealized_pnl).toFixed(2)}%
+                    </td>
+                    <td>${position.allocation_pct.toFixed(1)}%</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1">Trade</button>
+                        <button class="btn btn-sm btn-outline-secondary">Info</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    // Update Mini Widgets
+    function updateMiniWidgets() {
+        const portfolio = dashboardData.portfolio || {};
+        const positions = portfolio.positions || [];
+        
+        // Open Trades
+        document.getElementById('openTrades').textContent = positions.length;
+        
+        // Today's P&L
+        const dailyPnlAmount = portfolio.daily_pnl_amount || 0;
+        const profitEl = document.getElementById('todayProfit');
+        profitEl.textContent = `$${dailyPnlAmount.toFixed(2)}`;
+        profitEl.className = `mini-widget-value ${dailyPnlAmount >= 0 ? 'text-success' : 'text-danger'}`;
+        
+        // Total Exposure
+        const totalExposure = positions.reduce((sum, pos) => sum + pos.allocation_pct, 0);
+        document.getElementById('exposure').textContent = `${totalExposure.toFixed(1)}%`;
+        
+        // Average Entry
+        const totalValue = positions.reduce((sum, pos) => sum + pos.current_value, 0);
+        const avgEntry = totalValue / positions.length || 0;
+        document.getElementById('avgEntry').textContent = `$${avgEntry.toFixed(2)}`;
+        
+        // Alerts
+        const alertCount = 0; // Would come from alerts API
+        document.getElementById('alerts').textContent = alertCount;
+        document.getElementById('alertBadge').style.display = alertCount > 0 ? 'flex' : 'none';
+        
+        // Risk Score
+        const riskLevel = dashboardData.risk_metrics?.risk_level || 'Low';
+        const riskEl = document.getElementById('riskScore');
+        riskEl.innerHTML = `<span class="text-${riskLevel === 'High' ? 'danger' : riskLevel === 'Medium' ? 'warning' : 'success'}">${riskLevel}</span>`;
+    }
+    
+    // Initialize TradingView Chart
+    function initializeTradingViewChart() {
+        const chartData = [
+            {x: 1, open: 65000, high: 66000, low: 64500, close: 65800},
+            {x: 2, open: 65800, high: 66500, low: 65200, close: 66200},
+            {x: 3, open: 66200, high: 67000, low: 65800, close: 66800},
+            {x: 4, open: 66800, high: 67200, low: 66300, close: 66900},
+            {x: 5, open: 66900, high: 67500, low: 66700, close: 67200}
+        ];
+        
+        const trace = {
+            x: chartData.map(d => d.x),
+            open: chartData.map(d => d.open),
+            high: chartData.map(d => d.high),
+            low: chartData.map(d => d.low),
+            close: chartData.map(d => d.close),
+            type: 'candlestick',
+            xaxis: 'x',
+            yaxis: 'y'
+        };
+        
+        const layout = {
+            dragmode: 'zoom',
+            margin: {r: 10, t: 25, b: 40, l: 60},
+            showlegend: false,
+            xaxis: {
+                autorange: true,
+                domain: [0, 1],
+                type: 'linear'
+            },
+            yaxis: {
+                autorange: true,
+                domain: [0, 1],
+                type: 'linear'
+            },
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'}
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('tradingViewChart', [trace], layout, config);
+    }
+    
+    // Update Chart Symbol
+    async function updateChart() {
+        const symbol = document.getElementById('symbolSelector').value;
+        console.log('Updating chart for symbol:', symbol);
+        // Would fetch new data for selected symbol
+        // For now, just log the symbol change
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeDashboard);
+</script>
+{% endblock %}

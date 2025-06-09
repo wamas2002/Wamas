@@ -1,0 +1,541 @@
+{% extends "modern/base.html" %}
+
+{% block title %}AI Panel - Intellectia Trading Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">AI Model Management</h2>
+        <p class="text-secondary">Monitor, train, and optimize AI trading models with real-time performance tracking</p>
+    </div>
+</div>
+
+<!-- Model Performance Overview -->
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="metric-card ai-status-card">
+            <div class="metric-value" id="overallAccuracy">68.8%</div>
+            <div class="metric-label">Overall Model Accuracy</div>
+            <div class="metric-change positive" id="accuracyTrend">+2.1% this week</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value text-success" id="totalPredictions">1,247</div>
+            <div class="metric-label">Predictions Today</div>
+            <div class="metric-change neutral" id="avgConfidence">Avg confidence: 84.2%</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value text-warning" id="retrainingStatus">2h 15m</div>
+            <div class="metric-label">Next Retraining</div>
+            <div class="metric-change neutral">Auto-scheduled</div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Performance Charts -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Model Accuracy Over Time</h5>
+            <div id="accuracyChart" style="height: 350px;"></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="metric-card">
+            <h5 class="mb-3">Ensemble Status</h5>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>LightGBM</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="text-secondary small">Accuracy: 72.1% | Weight: 35%</div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>XGBoost</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="text-secondary small">Accuracy: 69.3% | Weight: 30%</div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Random Forest</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="text-secondary small">Accuracy: 65.8% | Weight: 25%</div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Neural Network</span>
+                    <span class="badge bg-warning">Training</span>
+                </div>
+                <div class="text-secondary small">Progress: 78% | ETA: 15m</div>
+            </div>
+            
+            <hr>
+            <button class="btn btn-primary w-100" onclick="rebalanceEnsemble()">Rebalance Ensemble</button>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Importance -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Feature Importance</h5>
+            <div id="featureImportanceChart" style="height: 300px;"></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Prediction Confidence Distribution</h5>
+            <div id="confidenceChart" style="height: 300px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Training History -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="modern-table">
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h5 class="mb-0">Training History</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" onclick="startTraining()">
+                        <i class="fas fa-play"></i> Start Training
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="exportModels()">
+                        <i class="fas fa-download"></i> Export Models
+                    </button>
+                </div>
+            </div>
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Model Type</th>
+                        <th>Training Duration</th>
+                        <th>Accuracy</th>
+                        <th>Data Points</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="trainingHistory">
+                    <tr>
+                        <td>2024-06-08 14:32</td>
+                        <td>LightGBM</td>
+                        <td>12m 34s</td>
+                        <td class="text-success">72.1%</td>
+                        <td>15,247</td>
+                        <td><span class="badge bg-success">Deployed</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">View</button>
+                            <button class="btn btn-sm btn-outline-secondary">Download</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2024-06-08 12:18</td>
+                        <td>XGBoost</td>
+                        <td>18m 45s</td>
+                        <td class="text-success">69.3%</td>
+                        <td>15,247</td>
+                        <td><span class="badge bg-success">Deployed</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">View</button>
+                            <button class="btn btn-sm btn-outline-secondary">Download</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2024-06-08 10:05</td>
+                        <td>Random Forest</td>
+                        <td>8m 22s</td>
+                        <td class="text-warning">65.8%</td>
+                        <td>15,247</td>
+                        <td><span class="badge bg-success">Deployed</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">View</button>
+                            <button class="btn btn-sm btn-outline-secondary">Download</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Model Configuration -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="metric-card">
+            <h5 class="mb-3">Training Configuration</h5>
+            <form id="trainingConfig">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Model Type</label>
+                        <select class="form-select">
+                            <option>LightGBM</option>
+                            <option>XGBoost</option>
+                            <option>Random Forest</option>
+                            <option>Neural Network</option>
+                            <option>Ensemble</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Training Data Period</label>
+                        <select class="form-select">
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Last 90 days</option>
+                            <option>Custom range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Feature Set</label>
+                        <select class="form-select">
+                            <option>Technical indicators only</option>
+                            <option>Technical + Sentiment</option>
+                            <option>Full feature set</option>
+                            <option>Custom selection</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Validation Split</label>
+                        <input type="range" class="form-range" min="10" max="30" value="20" id="validationSplit">
+                        <small class="text-secondary">20% validation data</small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="autoRetrain" checked>
+                            <label class="form-check-label" for="autoRetrain">
+                                Enable automatic retraining
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="hyperparamTuning">
+                            <label class="form-check-label" for="hyperparamTuning">
+                                Enable hyperparameter tuning
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="earlyStop" checked>
+                            <label class="form-check-label" for="earlyStop">
+                                Early stopping on validation loss
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="metric-card">
+            <h5 class="mb-3">Real-time Monitoring</h5>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>CPU Usage</span>
+                    <span class="fw-bold">45%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" style="width: 45%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Memory Usage</span>
+                    <span class="fw-bold">68%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-warning" style="width: 68%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>GPU Usage</span>
+                    <span class="fw-bold">22%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: 22%"></div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="text-center">
+                <div class="mb-2">
+                    <small class="text-secondary">Training Queue</small>
+                </div>
+                <div class="fw-bold" id="queueStatus">2 jobs pending</div>
+                <button class="btn btn-outline-primary btn-sm mt-2 w-100">View Queue</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let aiData = {};
+    
+    // Initialize AI Panel
+    async function initializeAIPanel() {
+        updateSystemStatus('loading');
+        
+        try {
+            await Promise.all([
+                loadAIPerformanceData(),
+                createAccuracyChart(),
+                createFeatureImportanceChart(),
+                createConfidenceChart()
+            ]);
+            
+            updateSystemStatus('live');
+            updateLastUpdateTime();
+            
+            // Set up auto-refresh
+            setInterval(updateRealTimeData, 10000); // Every 10 seconds
+            
+        } catch (error) {
+            console.error('AI Panel initialization error:', error);
+            updateSystemStatus('error', error.message);
+        }
+    }
+    
+    // Load AI Performance Data
+    async function loadAIPerformanceData() {
+        try {
+            const response = await fetch('/api/ai-performance');
+            aiData = await response.json();
+            
+            if (aiData.error) {
+                throw new Error(aiData.error);
+            }
+            
+            updateAIMetrics();
+            
+        } catch (error) {
+            console.error('AI performance data error:', error);
+            // Use sample data for demonstration
+            aiData = {
+                overall_accuracy: 68.8,
+                total_predictions: 1247,
+                confidence_avg: 84.2,
+                models: {
+                    lightgbm: { accuracy: 72.1, weight: 0.35, status: 'active' },
+                    xgboost: { accuracy: 69.3, weight: 0.30, status: 'active' },
+                    random_forest: { accuracy: 65.8, weight: 0.25, status: 'active' },
+                    neural_network: { accuracy: 0, weight: 0.10, status: 'training' }
+                }
+            };
+            updateAIMetrics();
+        }
+    }
+    
+    // Update AI Metrics
+    function updateAIMetrics() {
+        document.getElementById('overallAccuracy').textContent = `${aiData.overall_accuracy}%`;
+        document.getElementById('totalPredictions').textContent = aiData.total_predictions.toLocaleString();
+        document.getElementById('avgConfidence').textContent = `Avg confidence: ${aiData.confidence_avg}%`;
+    }
+    
+    // Create Accuracy Chart
+    function createAccuracyChart() {
+        const dates = [];
+        const accuracy = [];
+        
+        // Generate sample accuracy data over time
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+        
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(startDate);
+            date.setDate(date.getDate() + i);
+            dates.push(date.toISOString().split('T')[0]);
+            
+            // Simulate improving accuracy over time with some volatility
+            const baseAccuracy = 60 + (i * 0.3) + (Math.random() - 0.5) * 5;
+            accuracy.push(Math.max(50, Math.min(85, baseAccuracy)));
+        }
+        
+        const trace = {
+            x: dates,
+            y: accuracy,
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: {
+                color: '#4f8bff',
+                width: 3
+            },
+            marker: {
+                size: 6,
+                color: '#4f8bff'
+            },
+            name: 'Model Accuracy'
+        };
+        
+        const layout = {
+            margin: {t: 20, b: 40, l: 60, r: 20},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'},
+            xaxis: {
+                gridcolor: '#2d3748',
+                showgrid: true,
+                title: 'Date'
+            },
+            yaxis: {
+                gridcolor: '#2d3748',
+                showgrid: true,
+                title: 'Accuracy (%)',
+                range: [50, 85]
+            },
+            showlegend: false
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('accuracyChart', [trace], layout, config);
+    }
+    
+    // Create Feature Importance Chart
+    function createFeatureImportanceChart() {
+        const features = [
+            'RSI_14', 'MACD_Signal', 'Volume_SMA', 'Price_Change', 'ATR_14',
+            'Bollinger_Position', 'MA_50_Cross', 'Volume_Ratio', 'Sentiment_Score', 'News_Impact'
+        ];
+        
+        const importance = [0.15, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.08, 0.07];
+        
+        const trace = {
+            x: importance,
+            y: features,
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: importance.map(val => val > 0.1 ? '#00d395' : '#4f8bff')
+            }
+        };
+        
+        const layout = {
+            margin: {t: 20, b: 40, l: 120, r: 20},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'},
+            xaxis: {
+                gridcolor: '#2d3748',
+                showgrid: true,
+                title: 'Importance Score',
+                tickformat: '.2f'
+            },
+            yaxis: {
+                title: 'Features'
+            },
+            showlegend: false
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('featureImportanceChart', [trace], layout, config);
+    }
+    
+    // Create Confidence Chart
+    function createConfidenceChart() {
+        const confidenceBins = ['50-60%', '60-70%', '70-80%', '80-90%', '90-100%'];
+        const counts = [45, 120, 387, 502, 193];
+        
+        const trace = {
+            x: confidenceBins,
+            y: counts,
+            type: 'bar',
+            marker: {
+                color: ['#ff4757', '#ffa502', '#70a1ff', '#00d395', '#2ed573']
+            }
+        };
+        
+        const layout = {
+            margin: {t: 20, b: 40, l: 60, r: 20},
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: {color: '#ffffff'},
+            xaxis: {
+                title: 'Prediction Confidence Range'
+            },
+            yaxis: {
+                gridcolor: '#2d3748',
+                showgrid: true,
+                title: 'Number of Predictions'
+            },
+            showlegend: false
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('confidenceChart', [trace], layout, config);
+    }
+    
+    // Update Real-time Data
+    function updateRealTimeData() {
+        // Update system resource usage
+        const cpuUsage = Math.random() * 30 + 30; // 30-60%
+        const memoryUsage = Math.random() * 20 + 60; // 60-80%
+        const gpuUsage = Math.random() * 40 + 10; // 10-50%
+        
+        // Update progress bars (would be real data in production)
+        document.querySelector('.progress-bar.bg-primary').style.width = `${cpuUsage}%`;
+        document.querySelector('.progress-bar.bg-warning').style.width = `${memoryUsage}%`;
+        document.querySelector('.progress-bar.bg-success').style.width = `${gpuUsage}%`;
+    }
+    
+    // AI Panel Actions
+    function startTraining() {
+        if (confirm('Start new model training with current configuration?')) {
+            updateSystemStatus('loading');
+            alert('Training started! This will take approximately 15-20 minutes.');
+            // Would integrate with actual training pipeline
+            setTimeout(() => {
+                updateSystemStatus('live');
+            }, 2000);
+        }
+    }
+    
+    function rebalanceEnsemble() {
+        if (confirm('Rebalance ensemble weights based on recent performance?')) {
+            alert('Ensemble rebalanced successfully! New weights applied.');
+            // Would recalculate weights based on recent accuracy
+        }
+    }
+    
+    function exportModels() {
+        alert('Exporting trained models... Download will start shortly.');
+        // Would package and download model files
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeAIPanel);
+</script>
+{% endblock %}

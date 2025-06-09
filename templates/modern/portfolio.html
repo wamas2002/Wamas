@@ -1,0 +1,374 @@
+{% extends "modern/base.html" %}
+
+{% block title %}Portfolio - Intellectia Trading Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">Portfolio Management</h2>
+        <p class="text-secondary">Comprehensive view of your cryptocurrency holdings and performance</p>
+    </div>
+</div>
+
+<!-- Portfolio Summary Cards -->
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value" id="totalBalance">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">Total Portfolio Value</div>
+            <div class="metric-change" id="portfolioChange">
+                Loading...
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value text-success" id="unrealizedPnl">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">Unrealized P&L</div>
+            <div class="metric-change neutral" id="realizedPnl">
+                Realized: $0.00
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value text-warning" id="totalPositions">
+                <div class="loading"></div>
+            </div>
+            <div class="metric-label">Active Positions</div>
+            <div class="metric-change neutral" id="avgHolding">
+                Avg holding: Loading...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Allocation Chart -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="chart-container">
+            <h5 class="mb-3">Portfolio Allocation</h5>
+            <div id="allocationChart" style="height: 350px;"></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="metric-card">
+            <h5 class="mb-3">Risk Metrics</h5>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-secondary">Concentration Risk</span>
+                    <span class="fw-bold" id="concentrationRisk">Low</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" id="concentrationBar" style="width: 25%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-secondary">Volatility</span>
+                    <span class="fw-bold" id="portfolioVolatility">Medium</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-warning" id="volatilityBar" style="width: 45%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-secondary">Diversification</span>
+                    <span class="fw-bold" id="diversificationScore">Good</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" id="diversificationBar" style="width: 70%"></div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button class="btn btn-primary w-100">Rebalance Portfolio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Holdings Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="modern-table">
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h5 class="mb-0">Current Holdings</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm">Export</button>
+                    <button class="btn btn-primary btn-sm">Add Position</button>
+                </div>
+            </div>
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Quantity</th>
+                        <th>Avg Price</th>
+                        <th>Current Price</th>
+                        <th>Market Value</th>
+                        <th>Unrealized P&L</th>
+                        <th>Allocation %</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="holdingsTable">
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="loading"></div>
+                            <div class="mt-2">Loading portfolio holdings...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let portfolioData = {};
+    
+    // Initialize Portfolio Page
+    async function initializePortfolio() {
+        updateSystemStatus('loading');
+        
+        try {
+            await loadPortfolioData();
+            updateSystemStatus('live');
+            updateLastUpdateTime();
+            
+            // Set up auto-refresh
+            setInterval(loadPortfolioData, 60000); // Every minute
+        } catch (error) {
+            console.error('Portfolio initialization error:', error);
+            updateSystemStatus('error', error.message);
+        }
+    }
+    
+    // Load Portfolio Data
+    async function loadPortfolioData() {
+        try {
+            const response = await fetch('/api/portfolio-data');
+            portfolioData = await response.json();
+            
+            if (portfolioData.error) {
+                throw new Error(portfolioData.error);
+            }
+            
+            updatePortfolioSummary();
+            updateHoldingsTable();
+            updateAllocationChart();
+            updateRiskMetrics();
+            
+        } catch (error) {
+            console.error('Portfolio data error:', error);
+            updateSystemStatus('error', error.message);
+        }
+    }
+    
+    // Update Portfolio Summary
+    function updatePortfolioSummary() {
+        const totalValue = portfolioData.total_value || 0;
+        const dailyPnl = portfolioData.daily_pnl || 0;
+        const positions = portfolioData.positions || [];
+        
+        // Total Balance
+        document.getElementById('totalBalance').textContent = `$${totalValue.toLocaleString()}`;
+        
+        // Daily Change
+        const changeEl = document.getElementById('portfolioChange');
+        changeEl.textContent = `${dailyPnl > 0 ? '+' : ''}${dailyPnl.toFixed(2)}% (24h)`;
+        changeEl.className = `metric-change ${dailyPnl >= 0 ? 'positive' : 'negative'}`;
+        
+        // Unrealized P&L
+        const unrealizedTotal = positions.reduce((sum, pos) => sum + (pos.unrealized_pnl || 0), 0);
+        document.getElementById('unrealizedPnl').textContent = `$${unrealizedTotal.toFixed(2)}`;
+        
+        // Total Positions
+        document.getElementById('totalPositions').textContent = positions.length;
+        
+        // Average Holding
+        const avgValue = positions.length > 0 ? totalValue / positions.length : 0;
+        document.getElementById('avgHolding').textContent = `Avg holding: $${avgValue.toFixed(2)}`;
+    }
+    
+    // Update Holdings Table
+    function updateHoldingsTable() {
+        const tbody = document.getElementById('holdingsTable');
+        const positions = portfolioData.positions || [];
+        
+        if (positions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-2x text-secondary mb-2"></i>
+                        <div>No holdings found</div>
+                        <small class="text-secondary">Your portfolio positions will appear here</small>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = positions.map(position => {
+            const pnlAmount = position.unrealized_pnl || 0;
+            const pnlPercent = position.current_value > 0 ? (pnlAmount / position.current_value) * 100 : 0;
+            const pnlClass = pnlAmount >= 0 ? 'text-success' : 'text-danger';
+            const pnlSign = pnlAmount >= 0 ? '+' : '';
+            
+            return `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <div class="fw-bold">${position.symbol}</div>
+                                <small class="text-secondary">${position.symbol.replace('USDT', '')}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${position.quantity.toFixed(6)}</td>
+                    <td>$${position.avg_price.toFixed(2)}</td>
+                    <td>$${position.avg_price.toFixed(2)}</td>
+                    <td>$${position.current_value.toLocaleString()}</td>
+                    <td class="${pnlClass}">
+                        ${pnlSign}$${Math.abs(pnlAmount).toFixed(2)}
+                        <br>
+                        <small>(${pnlSign}${pnlPercent.toFixed(2)}%)</small>
+                    </td>
+                    <td>${position.allocation_pct.toFixed(1)}%</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary">Buy</button>
+                            <button class="btn btn-outline-danger">Sell</button>
+                            <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"></button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Set Alert</a></li>
+                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#">Close Position</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    // Update Allocation Chart
+    function updateAllocationChart() {
+        const positions = portfolioData.positions || [];
+        
+        if (positions.length === 0) {
+            document.getElementById('allocationChart').innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-chart-pie fa-3x text-secondary mb-3"></i>
+                        <div>No data to display</div>
+                        <small class="text-secondary">Portfolio allocation will appear when you have positions</small>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        const data = [{
+            values: positions.map(p => p.allocation_pct),
+            labels: positions.map(p => p.symbol.replace('USDT', '')),
+            type: 'pie',
+            hole: 0.4,
+            marker: {
+                colors: ['#4f8bff', '#00d395', '#ff4757', '#ffa502', '#2ed573', '#5352ed', '#ff6348', '#70a1ff']
+            },
+            textinfo: 'label+percent',
+            textposition: 'outside',
+            automargin: true
+        }];
+        
+        const layout = {
+            height: 350,
+            margin: {t: 20, b: 20, l: 20, r: 20},
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            font: {color: '#ffffff', size: 12},
+            showlegend: true,
+            legend: {
+                orientation: 'v',
+                x: 1.05,
+                y: 0.5
+            }
+        };
+        
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+        
+        Plotly.newPlot('allocationChart', data, layout, config);
+    }
+    
+    // Update Risk Metrics
+    function updateRiskMetrics() {
+        const positions = portfolioData.positions || [];
+        
+        if (positions.length === 0) return;
+        
+        // Concentration Risk (based on largest position)
+        const maxAllocation = Math.max(...positions.map(p => p.allocation_pct));
+        let concentrationLevel = 'Low';
+        let concentrationWidth = 25;
+        let concentrationColor = 'bg-success';
+        
+        if (maxAllocation > 50) {
+            concentrationLevel = 'High';
+            concentrationWidth = 80;
+            concentrationColor = 'bg-danger';
+        } else if (maxAllocation > 30) {
+            concentrationLevel = 'Medium';
+            concentrationWidth = 55;
+            concentrationColor = 'bg-warning';
+        }
+        
+        document.getElementById('concentrationRisk').textContent = concentrationLevel;
+        const concentrationBar = document.getElementById('concentrationBar');
+        concentrationBar.style.width = `${concentrationWidth}%`;
+        concentrationBar.className = `progress-bar ${concentrationColor}`;
+        
+        // Portfolio Volatility (simplified calculation)
+        const volatilityLevel = 'Medium'; // Would calculate from actual price data
+        document.getElementById('portfolioVolatility').textContent = volatilityLevel;
+        
+        // Diversification Score (based on number of positions)
+        let diversificationLevel = 'Poor';
+        let diversificationWidth = 30;
+        
+        if (positions.length >= 8) {
+            diversificationLevel = 'Excellent';
+            diversificationWidth = 90;
+        } else if (positions.length >= 5) {
+            diversificationLevel = 'Good';
+            diversificationWidth = 70;
+        } else if (positions.length >= 3) {
+            diversificationLevel = 'Fair';
+            diversificationWidth = 50;
+        }
+        
+        document.getElementById('diversificationScore').textContent = diversificationLevel;
+        document.getElementById('diversificationBar').style.width = `${diversificationWidth}%`;
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializePortfolio);
+</script>
+{% endblock %}

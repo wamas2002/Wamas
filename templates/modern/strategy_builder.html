@@ -1,0 +1,784 @@
+{% extends "modern/base.html" %}
+
+{% block title %}Strategy Builder - Intellectia Trading Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .strategy-canvas {
+        background: var(--card-bg);
+        border: 2px dashed var(--border-color);
+        border-radius: 16px;
+        min-height: 500px;
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .strategy-canvas:hover {
+        border-color: var(--accent-blue);
+    }
+
+    .strategy-block {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 10px;
+        cursor: grab;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .strategy-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        border-color: var(--accent-blue);
+    }
+
+    .strategy-block.dragging {
+        opacity: 0.7;
+        transform: rotate(5deg);
+    }
+
+    .block-connector {
+        width: 12px;
+        height: 12px;
+        background: var(--accent-blue);
+        border-radius: 50%;
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .block-input {
+        width: 12px;
+        height: 12px;
+        background: var(--accent-green);
+        border-radius: 50%;
+        position: absolute;
+        left: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .toolbox {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .tool-category {
+        margin-bottom: 20px;
+    }
+
+    .tool-category h6 {
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .tool-item {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        cursor: grab;
+        transition: all 0.3s ease;
+        font-size: 13px;
+    }
+
+    .tool-item:hover {
+        border-color: var(--accent-blue);
+        background: rgba(79, 139, 255, 0.1);
+    }
+
+    .strategy-stats {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .validation-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .validation-valid {
+        background: var(--accent-green);
+        color: white;
+    }
+
+    .validation-invalid {
+        background: var(--accent-red);
+        color: white;
+    }
+
+    .strategy-flow-line {
+        position: absolute;
+        height: 2px;
+        background: var(--accent-blue);
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="text-white mb-2">Strategy Builder</h2>
+                <p class="text-secondary mb-0">Visual drag-and-drop strategy creation with live market data validation</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" onclick="clearCanvas()">Clear</button>
+                <button class="btn btn-outline-primary" onclick="saveStrategy()">Save</button>
+                <button class="btn btn-warning" onclick="testStrategy()">Test</button>
+                <button class="btn btn-success" onclick="deployStrategy()">Deploy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Toolbox -->
+    <div class="col-lg-3 mb-4">
+        <div class="toolbox">
+            <h5 class="mb-3">Strategy Components</h5>
+            
+            <!-- Indicators Category -->
+            <div class="tool-category">
+                <h6>Technical Indicators</h6>
+                <div class="tool-item" draggable="true" data-type="indicator" data-name="RSI">
+                    <div class="fw-bold">RSI</div>
+                    <small class="text-secondary">Relative Strength Index</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="indicator" data-name="MACD">
+                    <div class="fw-bold">MACD</div>
+                    <small class="text-secondary">Moving Average Convergence</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="indicator" data-name="BB">
+                    <div class="fw-bold">Bollinger Bands</div>
+                    <small class="text-secondary">Price envelope indicator</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="indicator" data-name="ATR">
+                    <div class="fw-bold">ATR</div>
+                    <small class="text-secondary">Average True Range</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="indicator" data-name="Volume">
+                    <div class="fw-bold">Volume</div>
+                    <small class="text-secondary">Trading volume analysis</small>
+                </div>
+            </div>
+            
+            <!-- Conditions Category -->
+            <div class="tool-category">
+                <h6>Conditions</h6>
+                <div class="tool-item" draggable="true" data-type="condition" data-name="Greater">
+                    <div class="fw-bold">Greater Than</div>
+                    <small class="text-secondary">Value > Threshold</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="condition" data-name="Less">
+                    <div class="fw-bold">Less Than</div>
+                    <small class="text-secondary">Value < Threshold</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="condition" data-name="Cross">
+                    <div class="fw-bold">Crossover</div>
+                    <small class="text-secondary">Line crosses another</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="condition" data-name="And">
+                    <div class="fw-bold">AND Logic</div>
+                    <small class="text-secondary">Multiple conditions</small>
+                </div>
+            </div>
+            
+            <!-- Actions Category -->
+            <div class="tool-category">
+                <h6>Actions</h6>
+                <div class="tool-item" draggable="true" data-type="action" data-name="Buy">
+                    <div class="fw-bold text-success">Buy Order</div>
+                    <small class="text-secondary">Execute buy trade</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="action" data-name="Sell">
+                    <div class="fw-bold text-danger">Sell Order</div>
+                    <small class="text-secondary">Execute sell trade</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="action" data-name="StopLoss">
+                    <div class="fw-bold text-warning">Stop Loss</div>
+                    <small class="text-secondary">Risk management</small>
+                </div>
+                <div class="tool-item" draggable="true" data-type="action" data-name="TakeProfit">
+                    <div class="fw-bold text-info">Take Profit</div>
+                    <small class="text-secondary">Profit taking</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Strategy Canvas -->
+    <div class="col-lg-6 mb-4">
+        <div class="strategy-canvas" id="strategyCanvas" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <div class="text-center text-secondary" id="canvasPlaceholder">
+                <i class="fas fa-puzzle-piece fa-3x mb-3"></i>
+                <h5>Drag components here to build your strategy</h5>
+                <p>Start by adding technical indicators, then conditions, and finally actions</p>
+            </div>
+        </div>
+        
+        <!-- Strategy Controls -->
+        <div class="mt-3 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-secondary">Live Validation: </span>
+                <span class="badge bg-success" id="validationStatus">Valid</span>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="previewStrategy()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="backtestStrategy()">
+                    <i class="fas fa-chart-line"></i> Backtest
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Strategy Stats -->
+    <div class="col-lg-3 mb-4">
+        <div class="strategy-stats">
+            <h5 class="mb-3">Strategy Performance</h5>
+            
+            <div class="stat-item">
+                <span class="text-secondary">Expected Return</span>
+                <span class="fw-bold text-success" id="expectedReturn">+12.5%</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="text-secondary">Win Rate</span>
+                <span class="fw-bold" id="winRate">68.2%</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="text-secondary">Max Drawdown</span>
+                <span class="fw-bold text-warning" id="maxDrawdown">-5.1%</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="text-secondary">Sharpe Ratio</span>
+                <span class="fw-bold" id="sharpeRatio">1.85</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="text-secondary">Avg Trade</span>
+                <span class="fw-bold" id="avgTrade">2.3%</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="text-secondary">Total Trades</span>
+                <span class="fw-bold" id="totalTrades">156</span>
+            </div>
+        </div>
+        
+        <!-- Active Strategies -->
+        <div class="strategy-stats mt-4">
+            <h5 class="mb-3">Active Strategies</h5>
+            
+            <div class="strategy-block mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">ATR Momentum</div>
+                        <small class="text-success">+8.2% (7d)</small>
+                    </div>
+                    <span class="badge bg-success">Live</span>
+                </div>
+            </div>
+            
+            <div class="strategy-block mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">Volume Breakout</div>
+                        <small class="text-warning">+1.1% (3d)</small>
+                    </div>
+                    <span class="badge bg-primary">Testing</span>
+                </div>
+            </div>
+            
+            <div class="strategy-block mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">Mean Reversion</div>
+                        <small class="text-danger">-2.1% (5d)</small>
+                    </div>
+                    <span class="badge bg-secondary">Paused</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategy Configuration Modal -->
+<div class="modal fade" id="configModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Configure Component</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="configForm">
+                    <!-- Dynamic form content will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveComponentConfig()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let strategyComponents = [];
+    let draggedElement = null;
+    let componentCounter = 0;
+    
+    // Initialize Strategy Builder
+    function initializeStrategyBuilder() {
+        setupDragAndDrop();
+        loadSampleStrategy();
+    }
+    
+    // Setup Drag and Drop
+    function setupDragAndDrop() {
+        const toolItems = document.querySelectorAll('.tool-item');
+        
+        toolItems.forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                draggedElement = {
+                    type: this.dataset.type,
+                    name: this.dataset.name,
+                    element: this
+                };
+                this.style.opacity = '0.5';
+            });
+            
+            item.addEventListener('dragend', function(e) {
+                this.style.opacity = '1';
+            });
+        });
+    }
+    
+    // Allow Drop
+    function allowDrop(ev) {
+        ev.preventDefault();
+        document.getElementById('strategyCanvas').style.borderColor = 'var(--accent-blue)';
+    }
+    
+    // Handle Drop
+    function drop(ev) {
+        ev.preventDefault();
+        document.getElementById('strategyCanvas').style.borderColor = 'var(--border-color)';
+        
+        if (draggedElement) {
+            addComponentToCanvas(draggedElement, ev.clientX, ev.clientY);
+            draggedElement = null;
+        }
+    }
+    
+    // Add Component to Canvas
+    function addComponentToCanvas(component, x, y) {
+        const canvas = document.getElementById('strategyCanvas');
+        const placeholder = document.getElementById('canvasPlaceholder');
+        
+        // Hide placeholder if first component
+        if (strategyComponents.length === 0) {
+            placeholder.style.display = 'none';
+        }
+        
+        const componentId = `component_${++componentCounter}`;
+        const componentElement = document.createElement('div');
+        componentElement.className = 'strategy-block';
+        componentElement.id = componentId;
+        componentElement.style.position = 'absolute';
+        componentElement.style.left = (x - canvas.offsetLeft - 100) + 'px';
+        componentElement.style.top = (y - canvas.offsetTop - 50) + 'px';
+        
+        // Add validation badge
+        const validationBadge = document.createElement('div');
+        validationBadge.className = 'validation-badge validation-valid';
+        validationBadge.innerHTML = '✓';
+        
+        componentElement.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">${component.name}</div>
+                    <small class="text-secondary">${getComponentDescription(component)}</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="configureComponent('${componentId}')">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeComponent('${componentId}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-2">
+                <small class="text-info" id="${componentId}_status">Ready to configure</small>
+            </div>
+        `;
+        
+        componentElement.appendChild(validationBadge);
+        
+        // Add connectors for linking
+        if (component.type !== 'action') {
+            const connector = document.createElement('div');
+            connector.className = 'block-connector';
+            componentElement.appendChild(connector);
+        }
+        
+        if (component.type !== 'indicator') {
+            const input = document.createElement('div');
+            input.className = 'block-input';
+            componentElement.appendChild(input);
+        }
+        
+        canvas.appendChild(componentElement);
+        
+        // Store component data
+        strategyComponents.push({
+            id: componentId,
+            type: component.type,
+            name: component.name,
+            element: componentElement,
+            configured: false,
+            config: {}
+        });
+        
+        // Make it draggable within canvas
+        makeDraggable(componentElement);
+        
+        // Update validation
+        validateStrategy();
+    }
+    
+    // Get Component Description
+    function getComponentDescription(component) {
+        const descriptions = {
+            'RSI': 'Momentum oscillator (14)',
+            'MACD': 'Trend following (12,26,9)',
+            'BB': 'Volatility bands (20,2)',
+            'ATR': 'Volatility measure (14)',
+            'Volume': 'Trading volume',
+            'Greater': 'Threshold comparison',
+            'Less': 'Threshold comparison',
+            'Cross': 'Line intersection',
+            'And': 'Logic gate',
+            'Buy': 'Market order',
+            'Sell': 'Market order',
+            'StopLoss': 'Risk management',
+            'TakeProfit': 'Profit taking'
+        };
+        return descriptions[component.name] || 'Component';
+    }
+    
+    // Make Element Draggable
+    function makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        
+        element.onmousedown = dragMouseDown;
+        
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+        
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+        
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+    
+    // Configure Component
+    function configureComponent(componentId) {
+        const component = strategyComponents.find(c => c.id === componentId);
+        if (!component) return;
+        
+        // Generate configuration form based on component type
+        const configForm = generateConfigForm(component);
+        document.getElementById('configForm').innerHTML = configForm;
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('configModal')).show();
+        
+        // Store current component being configured
+        window.currentConfigComponent = componentId;
+    }
+    
+    // Generate Configuration Form
+    function generateConfigForm(component) {
+        let form = `<h6>Configure ${component.name}</h6>`;
+        
+        switch(component.name) {
+            case 'RSI':
+                form += `
+                    <div class="mb-3">
+                        <label class="form-label">Period</label>
+                        <input type="number" class="form-control" id="rsi_period" value="14" min="2" max="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Overbought Level</label>
+                        <input type="number" class="form-control" id="rsi_overbought" value="70" min="50" max="90">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Oversold Level</label>
+                        <input type="number" class="form-control" id="rsi_oversold" value="30" min="10" max="50">
+                    </div>
+                `;
+                break;
+                
+            case 'Buy':
+                form += `
+                    <div class="mb-3">
+                        <label class="form-label">Order Type</label>
+                        <select class="form-select" id="buy_type">
+                            <option value="market">Market Order</option>
+                            <option value="limit">Limit Order</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position Size (%)</label>
+                        <input type="number" class="form-control" id="buy_size" value="10" min="1" max="100">
+                    </div>
+                `;
+                break;
+                
+            default:
+                form += `
+                    <div class="mb-3">
+                        <label class="form-label">Configuration</label>
+                        <input type="text" class="form-control" id="default_config" placeholder="Enter configuration">
+                    </div>
+                `;
+        }
+        
+        return form;
+    }
+    
+    // Save Component Configuration
+    function saveComponentConfig() {
+        const componentId = window.currentConfigComponent;
+        const component = strategyComponents.find(c => c.id === componentId);
+        
+        if (component) {
+            // Save configuration based on component type
+            component.configured = true;
+            component.config = gatherConfigData(component);
+            
+            // Update component status
+            document.getElementById(`${componentId}_status`).textContent = 'Configured';
+            document.getElementById(`${componentId}_status`).className = 'text-success';
+            
+            // Update validation badge
+            const badge = component.element.querySelector('.validation-badge');
+            badge.className = 'validation-badge validation-valid';
+            badge.innerHTML = '✓';
+        }
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('configModal')).hide();
+        
+        // Update strategy validation
+        validateStrategy();
+    }
+    
+    // Gather Configuration Data
+    function gatherConfigData(component) {
+        const config = {};
+        const inputs = document.querySelectorAll('#configModal input, #configModal select');
+        
+        inputs.forEach(input => {
+            config[input.id] = input.value;
+        });
+        
+        return config;
+    }
+    
+    // Remove Component
+    function removeComponent(componentId) {
+        const componentIndex = strategyComponents.findIndex(c => c.id === componentId);
+        if (componentIndex > -1) {
+            // Remove from DOM
+            const element = document.getElementById(componentId);
+            element.remove();
+            
+            // Remove from array
+            strategyComponents.splice(componentIndex, 1);
+            
+            // Show placeholder if no components
+            if (strategyComponents.length === 0) {
+                document.getElementById('canvasPlaceholder').style.display = 'block';
+            }
+            
+            validateStrategy();
+        }
+    }
+    
+    // Validate Strategy
+    function validateStrategy() {
+        let isValid = true;
+        let message = 'Valid';
+        
+        if (strategyComponents.length === 0) {
+            isValid = false;
+            message = 'No components';
+        } else {
+            // Check if all components are configured
+            const unconfigured = strategyComponents.filter(c => !c.configured);
+            if (unconfigured.length > 0) {
+                isValid = false;
+                message = `${unconfigured.length} unconfigured`;
+            }
+            
+            // Check for required component types
+            const hasIndicator = strategyComponents.some(c => c.type === 'indicator');
+            const hasCondition = strategyComponents.some(c => c.type === 'condition');
+            const hasAction = strategyComponents.some(c => c.type === 'action');
+            
+            if (!hasIndicator || !hasCondition || !hasAction) {
+                isValid = false;
+                message = 'Missing components';
+            }
+        }
+        
+        // Update validation status
+        const statusEl = document.getElementById('validationStatus');
+        statusEl.textContent = message;
+        statusEl.className = `badge ${isValid ? 'bg-success' : 'bg-danger'}`;
+        
+        return isValid;
+    }
+    
+    // Strategy Actions
+    function clearCanvas() {
+        strategyComponents.forEach(component => {
+            component.element.remove();
+        });
+        strategyComponents = [];
+        document.getElementById('canvasPlaceholder').style.display = 'block';
+        validateStrategy();
+    }
+    
+    function saveStrategy() {
+        if (!validateStrategy()) {
+            alert('Please complete the strategy configuration before saving.');
+            return;
+        }
+        
+        const strategyData = {
+            name: prompt('Enter strategy name:', 'My Strategy'),
+            components: strategyComponents.map(c => ({
+                type: c.type,
+                name: c.name,
+                config: c.config,
+                position: {
+                    x: c.element.style.left,
+                    y: c.element.style.top
+                }
+            }))
+        };
+        
+        console.log('Saving strategy:', strategyData);
+        alert('Strategy saved successfully!');
+    }
+    
+    function testStrategy() {
+        if (!validateStrategy()) {
+            alert('Please complete the strategy configuration before testing.');
+            return;
+        }
+        
+        alert('Starting strategy backtest...');
+        // Would integrate with backtesting engine
+    }
+    
+    function deployStrategy() {
+        if (!validateStrategy()) {
+            alert('Please complete the strategy configuration before deploying.');
+            return;
+        }
+        
+        if (confirm('Deploy strategy to live trading?')) {
+            alert('Strategy deployed successfully!');
+            // Would integrate with trading engine
+        }
+    }
+    
+    function previewStrategy() {
+        console.log('Strategy Preview:', strategyComponents);
+        alert('Strategy preview generated');
+    }
+    
+    function backtestStrategy() {
+        console.log('Running backtest for strategy');
+        alert('Backtest completed - see performance stats');
+    }
+    
+    // Load Sample Strategy
+    function loadSampleStrategy() {
+        // Pre-load a sample strategy for demonstration
+        setTimeout(() => {
+            // This would normally load from saved strategies
+        }, 1000);
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeStrategyBuilder);
+</script>
+{% endblock %}

@@ -39,6 +39,7 @@ class RealDataService:
     
     def get_real_portfolio_data(self) -> Dict:
         """Get authentic portfolio data from OKX account integration"""
+        conn = None
         try:
             conn = sqlite3.connect(self.portfolio_db)
             
@@ -57,8 +58,6 @@ class RealDataService:
                 ORDER BY timestamp DESC 
                 LIMIT 1
             ''').fetchone()
-            
-            conn.close()
             
             if not summary or summary[2] in ['demo', 'fallback', 'mock']:
                 raise Exception("No authentic portfolio data available")
@@ -105,6 +104,9 @@ class RealDataService:
         except Exception as e:
             self.logger.error(f"Error retrieving authentic portfolio data: {e}")
             raise Exception("Authentic portfolio data required - please ensure OKX account integration is configured")
+        finally:
+            if conn:
+                conn.close()
     
     def get_real_market_prices(self, symbols: List[str]) -> Dict[str, float]:
         """Get real-time market prices from OKX"""

@@ -1,0 +1,97 @@
+Professional Frontend Redesign Using HTML/CSS/JS (No Backend Changes)
+
+⚠️ Important: This is a strict frontend redesign task. Do not modify or break the existing backend (API routes, AI models, trade engine, risk manager, or data structure). All system functionality, logic, and real-time integrations must stay 100% intact.
+
+⸻
+
+🧭 Objective
+
+Redesign the current UI using HTML, CSS, JavaScript, or optionally React/Bootstrap/Tailwind, to create a professional, user-friendly interface inspired by:
+	•	🎯 3Commas
+	•	📈 TradingView
+
+Use modern design patterns, responsive layout, and intuitive controls. The entire system must feel polished and enterprise-ready.
+
+⸻
+
+💻 Output Requirements
+	•	Serve all UI at http://localhost:5001 only
+	•	All features must work using authentic live data from OKX
+	•	Use only the current working system for backend calls, models, and database
+	•	Replace current UI components with HTML-based equivalents — do not alter business logic
+
+⸻
+
+✅ UI Requirements
+
+🌐 General Layout
+	•	Sidebar navigation on the left (icons + labels)
+	•	Dashboard
+	•	Portfolio
+	•	Strategy Builder
+	•	Analytics
+	•	AI Panel
+	•	Settings
+	•	Top bar (theme toggle, notifications, account status)
+	•	Dark mode enabled by default, with light mode option
+
+📊 Dashboard
+	•	System Status (Live / Error)
+	•	Portfolio balance card
+	•	Strategy win rate and market volatility
+	•	TradingView widget embedded with:
+	•	Symbol selector (BTC/USDT, ETH/USDT, etc.)
+	•	Trade overlay (BUY/SELL markers)
+	•	Strategy Builder preview with cards (ATR, TP, Volume)
+	•	AI model status (health, retraining timer)
+	•	Mini-widgets for trades, exposure, P&L
+
+📈 Strategy Builder Page
+	•	Visual Drag-and-Drop Editor
+	•	Strategy blocks with live validation
+	•	Link to live market data per block (e.g., ATR, Volume)
+	•	Save, test, deploy buttons
+
+📁 Portfolio Page
+	•	Live OKX portfolio
+	•	Holdings with real-time prices
+	•	P&L charts
+	•	Exposure metrics
+	•	Risk analytics
+
+📉 Analytics Page
+	•	Strategy performance charts (Sharpe, P&L, drawdown)
+	•	Trade logs
+	•	Heatmaps and win/loss per symbol
+	•	Export/report buttons
+
+🤖 AI Panel
+	•	Model performance (accuracy, predictions)
+	•	Retraining status
+	•	Feature importances
+	•	Ensemble performance overview
+
+⚙️ Settings
+	•	API Key management
+	•	Risk controls
+	•	System limits (e.g. daily loss threshold)
+	•	Toggle for training, strategy switching
+
+⸻
+
+🛠️ Technical Notes
+	•	Use TradingView Web Widget for charting
+	•	Do not introduce fake/mock data
+	•	All data displayed must come from the current live OKX connection
+	•	Ensure charts, tables, and cards update in real-time
+	•	All frontend changes must be tested for compatibility with the current Flask/Streamlit backend (whichever is still used for routing)
+
+⸻
+
+✅ Final Output Confirmation
+
+Once implemented, confirm:
+	•	UI is live at http://localhost:5001
+	•	All pages display authentic data from the live system
+	•	System modules are still working together
+	•	No functionality has been broken
