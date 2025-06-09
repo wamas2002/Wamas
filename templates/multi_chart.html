@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Timeframe Chart Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0e1a;
+            --card-bg: #1a1f35;
+            --border-color: #2d3748;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --accent-blue: #3182ce;
+            --accent-green: #38a169;
+            --accent-red: #e53e3e;
+            --accent-yellow: #d69e2e;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-color) 0%, #1a202c 100%);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .timeframe-badge {
+            background: var(--accent-blue);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .trend-indicator {
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .trend-bullish { background: var(--accent-green); color: white; }
+        .trend-bearish { background: var(--accent-red); color: white; }
+        .trend-neutral { background: var(--border-color); color: var(--text-secondary); }
+
+        .signal-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 2px;
+        }
+
+        .signal-buy { background: rgba(56, 161, 105, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .signal-sell { background: rgba(229, 62, 62, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+        }
+
+        .confluence-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .exchange-selector {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 8px 15px;
+        }
+
+        .exchange-selector:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.25);
+        }
+
+        .price-comparison {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .price-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .price-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .arbitrage-opportunity {
+            background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(56, 161, 105, 0.05));
+            border: 1px solid var(--accent-green);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .sync-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .sync-button {
+            background: var(--accent-blue);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sync-button:hover {
+            background: #2c5282;
+        }
+
+        .sync-button.active {
+            background: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-chart-area me-3"></i>Multi-Timeframe Analysis</h2>
+                <p class="text-muted mb-0">Comprehensive analysis across multiple timeframes and exchanges</p>
+            </div>
+            <div class="d-flex gap-3">
+                <select id="symbolSelector" class="exchange-selector">
+                    <option value="BTC/USDT">BTC/USDT</option>
+                    <option value="ETH/USDT">ETH/USDT</option>
+                    <option value="BNB/USDT">BNB/USDT</option>
+                    <option value="ADA/USDT">ADA/USDT</option>
+                    <option value="DOT/USDT">DOT/USDT</option>
+                </select>
+                <select id="exchangeSelector" class="exchange-selector">
+                    <option value="okx">OKX</option>
+                    <option value="binance">Binance Spot</option>
+                    <option value="binance_futures">Binance Futures</option>
+                </select>
+                <button class="btn btn-primary" onclick="refreshAnalysis()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Multi-Exchange Price Comparison -->
+        <div class="confluence-panel">
+            <h5><i class="fas fa-exchange-alt me-2"></i>Multi-Exchange Price Comparison</h5>
+            <div id="priceComparison" class="price-comparison">
+                <div class="price-card">
+                    <div class="text-muted small">OKX</div>
+                    <div class="price-value">$67,234.50</div>
+                    <div class="text-success small">+2.34%</div>
+                </div>
+                <div class="price-card">
+                    <div class="text-muted small">Binance</div>
+                    <div class="price-value">$67,189.25</div>
+                    <div class="text-success small">+2.28%</div>
+                </div>
+                <div class="price-card">
+                    <div class="text-muted small">Binance Futures</div>
+                    <div class="price-value">$67,198.75</div>
+                    <div class="text-success small">+2.31%</div>
+                </div>
+            </div>
+            <div id="arbitrageAlert" class="arbitrage-opportunity d-none">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Arbitrage Opportunity:</strong> 0.067% price difference between exchanges
+            </div>
+        </div>
+
+        <!-- Confluence Analysis -->
+        <div class="confluence-panel">
+            <h5><i class="fas fa-brain me-2"></i>Multi-Timeframe Confluence Analysis</h5>
+            <div id="confluenceAnalysis">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-success">Bullish</div>
+                            <div class="text-muted">Overall Trend</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-info">Strong</div>
+                            <div class="text-muted">Signal Strength</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-warning">7</div>
+                            <div class="text-muted">Buy Signals</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-danger">3</div>
+                            <div class="text-muted">Sell Signals</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Controls -->
+        <div class="sync-controls">
+            <div class="mb-2"><strong>Chart Sync</strong></div>
+            <button id="syncBtn" class="sync-button" onclick="toggleSync()">
+                <i class="fas fa-link me-1"></i>Linked
+            </button>
+            <button class="sync-button" onclick="resetZoom()">
+                <i class="fas fa-search-minus me-1"></i>Reset Zoom
+            </button>
+        </div>
+
+        <!-- Multi-Chart Grid -->
+        <div id="chartGrid" class="chart-grid">
+            <!-- Charts will be dynamically populated -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        let currentSymbol = 'BTC/USDT';
+        let currentExchange = 'okx';
+        let chartsLinked = true;
+        let widgets = {};
+        
+        const timeframes = [
+            { id: '1m', name: '1 Minute', interval: '1' },
+            { id: '5m', name: '5 Minutes', interval: '5' },
+            { id: '15m', name: '15 Minutes', interval: '15' },
+            { id: '30m', name: '30 Minutes', interval: '30' },
+            { id: '1h', name: '1 Hour', interval: '60' },
+            { id: '4h', name: '4 Hours', interval: '240' },
+            { id: '1d', name: '1 Day', interval: '1D' },
+            { id: '1w', name: '1 Week', interval: '1W' }
+        ];
+
+        function initializeCharts() {
+            const chartGrid = document.getElementById('chartGrid');
+            chartGrid.innerHTML = '';
+
+            timeframes.forEach(tf => {
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'chart-container';
+                chartContainer.innerHTML = `
+                    <div class="chart-header">
+                        <div>
+                            <span class="timeframe-badge">${tf.name}</span>
+                            <span id="trend-${tf.id}" class="trend-indicator trend-neutral ms-2">Neutral</span>
+                        </div>
+                        <div id="signals-${tf.id}" class="signals-container"></div>
+                    </div>
+                    <div id="chart-${tf.id}" style="height: 400px; width: 100%;"></div>
+                `;
+                chartGrid.appendChild(chartContainer);
+
+                // Initialize TradingView widget
+                createTradingViewWidget(tf.id, tf.interval);
+            });
+        }
+
+        function createTradingViewWidget(timeframe, interval) {
+            try {
+                const symbol = currentSymbol.replace('/', '');
+                const exchangePrefix = currentExchange.toUpperCase();
+                const fullSymbol = `${exchangePrefix}:${symbol}`;
+
+                widgets[timeframe] = new TradingView.widget({
+                    container_id: `chart-${timeframe}`,
+                    width: '100%',
+                    height: 400,
+                    symbol: fullSymbol,
+                    interval: interval,
+                    timezone: "Etc/UTC",
+                    theme: "dark",
+                    style: "1",
+                    locale: "en",
+                    toolbar_bg: "#1a1f35",
+                    enable_publishing: false,
+                    hide_top_toolbar: false,
+                    hide_legend: false,
+                    save_image: false,
+                    studies: [
+                        "RSI@tv-basicstudies",
+                        "MACD@tv-basicstudies",
+                        "BB@tv-basicstudies"
+                    ],
+                    overrides: {
+                        "mainSeriesProperties.candleStyle.upColor": "#38a169",
+                        "mainSeriesProperties.candleStyle.downColor": "#e53e3e",
+                        "mainSeriesProperties.candleStyle.borderUpColor": "#38a169",
+                        "mainSeriesProperties.candleStyle.borderDownColor": "#e53e3e"
+                    }
+                });
+            } catch (error) {
+                console.log('TradingView widget creation:', timeframe);
+            }
+        }
+
+        function loadMultiTimeframeAnalysis() {
+            fetch('/api/multi-timeframe-analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbol: currentSymbol,
+                    exchange: currentExchange
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateAnalysisDisplay(data);
+                }
+            })
+            .catch(error => console.error('Analysis error:', error));
+        }
+
+        function loadPriceComparison() {
+            fetch('/api/exchange-prices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol: currentSymbol })
+            })
+            .then(response => response.json())
+            .then(data => {
+                updatePriceComparison(data);
+            })
+            .catch(error => console.error('Price comparison error:', error));
+        }
+
+        function updateAnalysisDisplay(data) {
+            // Update confluence analysis
+            const confluence = data.analysis;
+            const confluenceDiv = document.getElementById('confluenceAnalysis');
+            
+            confluenceDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-${confluence.overall_trend === 'bullish' ? 'success' : confluence.overall_trend === 'bearish' ? 'danger' : 'warning'}">${confluence.overall_trend.charAt(0).toUpperCase() + confluence.overall_trend.slice(1)}</div>
+                            <div class="text-muted">Overall Trend</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-info">${confluence.strength.charAt(0).toUpperCase() + confluence.strength.slice(1)}</div>
+                            <div class="text-muted">Signal Strength</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-warning">${confluence.buy_signals}</div>
+                            <div class="text-muted">Buy Signals</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-danger">${confluence.sell_signals}</div>
+                            <div class="text-muted">Sell Signals</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Update individual timeframe data
+            Object.keys(data.timeframes).forEach(tf => {
+                const timeframeData = data.timeframes[tf];
+                
+                // Update trend indicator
+                const trendElement = document.getElementById(`trend-${tf}`);
+                if (trendElement) {
+                    trendElement.textContent = timeframeData.trend.charAt(0).toUpperCase() + timeframeData.trend.slice(1);
+                    trendElement.className = `trend-indicator trend-${timeframeData.trend} ms-2`;
+                }
+
+                // Update signals
+                const signalsElement = document.getElementById(`signals-${tf}`);
+                if (signalsElement) {
+                    signalsElement.innerHTML = timeframeData.signals.map(signal => 
+                        `<span class="signal-badge signal-${signal.type}">${signal.indicator}</span>`
+                    ).join('');
+                }
+            });
+        }
+
+        function updatePriceComparison(data) {
+            const comparisonDiv = document.getElementById('priceComparison');
+            const arbitrageDiv = document.getElementById('arbitrageAlert');
+            
+            if (data.prices) {
+                let priceCards = '';
+                Object.keys(data.prices).forEach(exchange => {
+                    if (exchange !== 'arbitrage') {
+                        const priceData = data.prices[exchange];
+                        const changeClass = priceData.change_24h >= 0 ? 'text-success' : 'text-danger';
+                        const changeSign = priceData.change_24h >= 0 ? '+' : '';
+                        
+                        priceCards += `
+                            <div class="price-card">
+                                <div class="text-muted small">${exchange.toUpperCase()}</div>
+                                <div class="price-value">$${priceData.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                <div class="${changeClass} small">${changeSign}${priceData.change_24h.toFixed(2)}%</div>
+                            </div>
+                        `;
+                    }
+                });
+                comparisonDiv.innerHTML = priceCards;
+
+                // Show arbitrage opportunities
+                if (data.prices.arbitrage && data.prices.arbitrage.opportunity) {
+                    const arb = data.prices.arbitrage;
+                    arbitrageDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Arbitrage Opportunity:</strong> ${arb.percentage.toFixed(3)}% price difference 
+                        (Buy on ${arb.buy_exchange.toUpperCase()}, Sell on ${arb.sell_exchange.toUpperCase()})
+                    `;
+                    arbitrageDiv.classList.remove('d-none');
+                } else {
+                    arbitrageDiv.classList.add('d-none');
+                }
+            }
+        }
+
+        function refreshAnalysis() {
+            currentSymbol = document.getElementById('symbolSelector').value;
+            currentExchange = document.getElementById('exchangeSelector').value;
+            
+            // Recreate charts with new symbol/exchange
+            initializeCharts();
+            
+            // Load analysis data
+            setTimeout(() => {
+                loadMultiTimeframeAnalysis();
+                loadPriceComparison();
+            }, 1000);
+        }
+
+        function toggleSync() {
+            chartsLinked = !chartsLinked;
+            const syncBtn = document.getElementById('syncBtn');
+            
+            if (chartsLinked) {
+                syncBtn.innerHTML = '<i class="fas fa-link me-1"></i>Linked';
+                syncBtn.classList.add('active');
+            } else {
+                syncBtn.innerHTML = '<i class="fas fa-unlink me-1"></i>Unlinked';
+                syncBtn.classList.remove('active');
+            }
+        }
+
+        function resetZoom() {
+            Object.values(widgets).forEach(widget => {
+                try {
+                    if (widget && widget.chart) {
+                        widget.chart().resetData();
+                    }
+                } catch (error) {
+                    console.log('Reset zoom:', error.message);
+                }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('symbolSelector').addEventListener('change', refreshAnalysis);
+        document.getElementById('exchangeSelector').addEventListener('change', refreshAnalysis);
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            
+            // Load initial data after charts are created
+            setTimeout(() => {
+                loadMultiTimeframeAnalysis();
+                loadPriceComparison();
+            }, 2000);
+            
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadMultiTimeframeAnalysis();
+                loadPriceComparison();
+            }, 30000);
+        });
+
+        console.log('Multi-Timeframe Chart Analysis loaded successfully');
+    </script>
+</body>
+</html>
