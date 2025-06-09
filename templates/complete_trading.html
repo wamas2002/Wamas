@@ -1025,6 +1025,9 @@
                                         <!-- Strategy Actions -->
                                         <div class="strategy-actions mt-3">
                                             <div class="d-flex gap-2">
+                                                <button class="btn btn-info" onclick="saveGeneratedStrategy()">
+                                                    <i class="fas fa-save me-2"></i>Save Strategy
+                                                </button>
                                                 <button class="btn btn-success" onclick="runBacktest()">
                                                     <i class="fas fa-chart-bar me-2"></i>Run Backtest
                                                 </button>
@@ -1777,6 +1780,133 @@
             const visualBuilderTab = document.querySelector('[href="#visualBuilder"]');
             if (visualBuilderTab) {
                 visualBuilderTab.click();
+            }
+        }
+
+        function saveGeneratedStrategy() {
+            if (!currentGeneratedStrategy) {
+                showStatus('No strategy available to save.', 'warning');
+                return;
+            }
+
+            // Prompt for strategy name and optional tags
+            const strategyName = prompt('Enter a name for this strategy:', 
+                `Auto-Generated - ${new Date().toLocaleDateString()}`);
+            
+            if (!strategyName) return;
+
+            showStatus('Saving strategy to library...', 'info');
+            
+            const strategyData = {
+                name: strategyName,
+                description: currentGeneratedStrategy.description || 'Generated using AI Strategy Assistant',
+                code: currentGeneratedStrategy.python_code,
+                parameters: currentGeneratedStrategy.parameters || {},
+                visual_blocks: currentGeneratedStrategy.visual_blocks || [],
+                strategy_type: 'ai_generated',
+                created_by: 'AI Assistant',
+                tags: ['ai-generated', 'auto-strategy']
+            };
+
+            fetch('/api/strategies/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(strategyData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('✅ Strategy saved successfully to your library!', 'success');
+                    
+                    // Refresh saved strategies dropdown/list
+                    loadSavedStrategies();
+                    
+                    // Show confirmation toast
+                    showSaveConfirmation(strategyName);
+                } else {
+                    showStatus('Failed to save strategy: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Save strategy error:', error);
+                showStatus('Failed to save strategy. Please try again.', 'danger');
+            });
+        }
+
+        function showSaveConfirmation(strategyName) {
+            // Create and show a temporary success notification
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <div>
+                        <strong>Strategy Saved!</strong><br>
+                        <small>"${strategyName}" is now in your strategy library</small>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        function loadSavedStrategies() {
+            fetch('/api/saved-strategies')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.strategies) {
+                        updateSavedStrategiesTab(data.strategies);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading saved strategies:', error);
+                });
+        }
+
+        function updateSavedStrategiesTab(strategies) {
+            // Update the Saved Strategies tab with the new strategy list
+            const savedStrategiesContent = document.querySelector('#savedStrategies .card-body');
+            if (savedStrategiesContent) {
+                let strategiesHtml = '<div class="row">';
+                
+                strategies.forEach(strategy => {
+                    strategiesHtml += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title">${strategy.name}</h6>
+                                    <p class="card-text small">${strategy.description}</p>
+                                    <div class="mb-2">
+                                        ${strategy.tags ? strategy.tags.map(tag => 
+                                            `<span class="badge bg-secondary me-1">${tag}</span>`
+                                        ).join('') : ''}
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-primary" onclick="loadStrategy(${strategy.id})">
+                                            Load
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="backtestStrategy(${strategy.id})">
+                                            Backtest
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                strategiesHtml += '</div>';
+                savedStrategiesContent.innerHTML = strategiesHtml;
             }
         }
 

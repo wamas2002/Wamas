@@ -801,10 +801,117 @@ def api_refine_strategy():
 def api_saved_strategies():
     """Get all saved AI-generated strategies"""
     try:
-        strategies = get_all_strategies()
-        return jsonify({'strategies': strategies})
+        # Get strategies from both AI strategy generator and saved_strategies table
+        ai_strategies = get_all_strategies()
+        
+        # Get strategies from saved_strategies table
+        conn = sqlite3.connect(db_manager.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, description, code, parameters, visual_blocks, 
+                   strategy_type, created_by, tags, created_at
+            FROM saved_strategies
+            ORDER BY created_at DESC
+        ''')
+        
+        saved_strategies = []
+        for row in cursor.fetchall():
+            try:
+                strategy = {
+                    'id': row[0],
+                    'name': row[1],
+                    'description': row[2],
+                    'code': row[3],
+                    'parameters': json.loads(row[4]) if row[4] else {},
+                    'visual_blocks': json.loads(row[5]) if row[5] else [],
+                    'strategy_type': row[6],
+                    'created_by': row[7],
+                    'tags': json.loads(row[8]) if row[8] else [],
+                    'created_at': row[9]
+                }
+                saved_strategies.append(strategy)
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse JSON for strategy {row[0]}")
+                continue
+        
+        conn.close()
+        
+        # Combine both lists (AI strategies and saved strategies)
+        all_strategies = ai_strategies + saved_strategies
+        
+        return jsonify({'strategies': all_strategies})
     except Exception as e:
         logger.error(f"Error loading saved strategies: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/strategies/save', methods=['POST'])
+def api_save_strategy():
+    """Save AI-generated strategy to the existing system storage"""
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('name') or not data.get('code'):
+            return jsonify({'error': 'Strategy name and code are required'}), 400
+        
+        # Check for duplicate names
+        existing_strategies = get_all_strategies()
+        if any(s['name'] == data['name'] for s in existing_strategies):
+            return jsonify({'error': 'Strategy name already exists. Please choose a different name.'}), 400
+        
+        # Save strategy to database using existing strategy storage logic
+        conn = sqlite3.connect(db_manager.db_path)
+        cursor = conn.cursor()
+        
+        # Create strategies table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS saved_strategies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                description TEXT,
+                code TEXT NOT NULL,
+                parameters TEXT,
+                visual_blocks TEXT,
+                strategy_type TEXT DEFAULT 'ai_generated',
+                created_by TEXT DEFAULT 'AI Assistant',
+                tags TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Insert the new strategy
+        cursor.execute('''
+            INSERT INTO saved_strategies 
+            (name, description, code, parameters, visual_blocks, strategy_type, created_by, tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data['name'],
+            data.get('description', ''),
+            data['code'],
+            json.dumps(data.get('parameters', {})),
+            json.dumps(data.get('visual_blocks', [])),
+            data.get('strategy_type', 'ai_generated'),
+            data.get('created_by', 'AI Assistant'),
+            json.dumps(data.get('tags', []))
+        ))
+        
+        strategy_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"Strategy '{data['name']}' saved successfully with ID {strategy_id}")
+        
+        return jsonify({
+            'success': True,
+            'strategy_id': strategy_id,
+            'message': f"Strategy '{data['name']}' saved successfully to your library"
+        })
+        
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Strategy name already exists. Please choose a different name.'}), 400
+    except Exception as e:
+        logger.error(f"Error saving strategy: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/screener/scan', methods=['POST'])
