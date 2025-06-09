@@ -198,12 +198,11 @@ def create_app():
 
 if __name__ == '__main__':
     import os
-    import time
     import socket
     
-    # Find available port starting from 5000
-    def find_port():
-        for port in [5000, 8080, 8081, 8082, 3000, 3001]:
+    # Find available port
+    def find_available_port():
+        for port in [5000, 8080, 8081, 8082, 3000]:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 result = sock.connect_ex(('127.0.0.1', port))
@@ -211,22 +210,18 @@ if __name__ == '__main__':
                     return port
             finally:
                 sock.close()
-        return 5000  # fallback
+        return 8080
     
-    port = find_port()
+    port = find_available_port()
     logger.info(f"Starting Modern Trading Platform on port {port}")
     logger.info("Professional UI with 3Commas/TradingView design")
     
-    # Ensure proper server startup
     try:
         logger.info("Starting Flask server for production deployment")
         app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
-        # Try alternative port if primary fails
-        if port == 5000:
-            port = 8080
-            logger.info(f"Retrying on port {port}")
-            app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
-        else:
-            raise
+        # Try one more port if first attempt fails
+        port = 8080 if port != 8080 else 8081
+        logger.info(f"Retrying on port {port}")
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
