@@ -1,0 +1,51 @@
+Do NOT modify any backend trading logic, models, routes, or existing database schemas.
+⚠️ All enhancements must be modular plugins or UI extensions and use the current data structure.
+
+🧠 OBJECTIVE:
+Enhance the current system to support TrendSpider-style smart tools and AI-assisted strategy evaluation features.
+
+✅ ADD THESE MODULES:
+
+1. 📈 Anchored VWAP Visual Tool
+   - Allow manual or automatic anchoring (e.g., swing high/low, breakout candle)
+   - Overlay anchored VWAP on TradingView widget
+
+2. 🔢 Auto-Fibonacci Detector
+   - Automatically draw Fib levels from last major pivot high/low on chart
+   - Use TA-Lib or pandas_ta to identify pivots
+
+3. 🎯 Real-Time Signal Screener
+   - Add a screener panel for multi-condition filters:
+     - RSI, MACD, EMA cross, volume > avg, etc.
+     - Timeframe filters (1h, 4h, 1d)
+   - Show filtered results in live-updating dashboard
+
+4. 🧮 Strategy Parameter Heatmap
+   - Run backtests on combinations of strategy parameters
+   - Visualize results in a 2D heatmap grid (e.g., EMA Fast vs EMA Slow)
+
+5. 🕹️ Signal Replay Module
+   - On chart, replay past signals with entry/exit markers
+   - Annotate outcomes and performance per signal
+
+6. 📤 Export Backtest Logs
+   - Enable export of backtest runs to CSV/Excel
+   - Include timestamps, parameters, PnL, win/loss
+
+7. 🧩 Modular Plugin Framework
+   - Create a base plugins/ directory
+   - Each plugin should register to the core system via dependency injection or dynamic import
+   - Use current system data flow and models
+
+8. 📅 Optional: Seasonality Analyzer
+   - Add module to detect and visualize historical performance by month/week
+   - Include filters per coin
+
+✅ UI REQUIREMENTS:
+- Integrate enhancements visually into the new UI at port :3000
+- Place chart tools as overlays inside TradingView widgets
+- Screener and heatmaps go into a new "Smart Scanner" tab
+
+✅ FINAL GOAL:
+Replicate key TrendSpider functionalities as non-invasive modular tools.
+Do not touch the current AI models, OKX integration, or strategy engine — just expand features intelligently.

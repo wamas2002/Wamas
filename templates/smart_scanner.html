@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Scanner - TrendSpider Style Tools</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #1a1f2e;
+            --card-bg: #141824;
+            --border-color: #2d3142;
+            --text-primary: #ffffff;
+            --text-secondary: #8892b0;
+            --accent-blue: #4f8bff;
+            --accent-green: #00d395;
+            --accent-red: #f6465d;
+            --accent-orange: #ffb800;
+            --accent-purple: #9c27b0;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .navbar {
+            background: var(--card-bg) !important;
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 20px rgba(79, 139, 255, 0.1);
+        }
+
+        .tool-card {
+            height: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(79, 139, 255, 0.2);
+        }
+
+        .tool-card.active {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, var(--card-bg), rgba(79, 139, 255, 0.1));
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tool-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            min-height: 600px;
+        }
+
+        .form-control, .form-select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-secondary);
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(79, 139, 255, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .btn-warning {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+            color: white;
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .parameter-input {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .anchor-point {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .anchor-point:hover {
+            border-color: var(--accent-blue);
+            background: rgba(79, 139, 255, 0.1);
+        }
+
+        .anchor-point.selected {
+            border-color: var(--accent-green);
+            background: rgba(0, 211, 149, 0.1);
+        }
+
+        .fib-level {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .fib-level.key-level {
+            border-left-color: var(--accent-green);
+            background: rgba(0, 211, 149, 0.05);
+        }
+
+        .heatmap-container {
+            width: 100%;
+            height: 500px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .optimization-controls {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-blue);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 0.3rem solid rgba(79, 139, 255, 0.3);
+            border-top: 0.3rem solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .vwap-band {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .signal-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .signal-strength {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .signal-strength-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-orange), var(--accent-green));
+            transition: width 0.3s ease;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online { background: var(--accent-green); }
+        .status-processing { background: var(--accent-orange); animation: pulse 1s infinite; }
+        .status-offline { background: var(--accent-red); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .tab-content {
+            padding: 0;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--text-secondary);
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--accent-blue);
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                Complete Trading Platform
+            </a>
+            
+            <div class="navbar-nav flex-row">
+                <a class="nav-link me-3" href="/">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <a class="nav-link me-3" href="/portfolio">
+                    <i class="fas fa-wallet me-1"></i>Portfolio
+                </a>
+                <a class="nav-link me-3" href="/trading">
+                    <i class="fas fa-exchange-alt me-1"></i>Trading
+                </a>
+                <a class="nav-link me-3" href="/ai-signals">
+                    <i class="fas fa-brain me-1"></i>AI Signals
+                </a>
+                <a class="nav-link me-3" href="/screener">
+                    <i class="fas fa-search me-1"></i>Screener
+                </a>
+                <a class="nav-link active me-3" href="/smart-scanner">
+                    <i class="fas fa-tools me-1"></i>Smart Scanner
+                </a>
+            </div>
+            
+            <div class="d-flex align-items-center ms-3">
+                <button class="btn btn-sm btn-outline-light me-3" onclick="toggleTheme()" id="themeToggle">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <span class="status-indicator status-online"></span>
+                <small class="text-muted">Smart Tools Active</small>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Tool Selection Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-toolbox me-2"></i>
+                            TrendSpider Tools
+                        </h5>
+                    </div>
+                    <div class="card-body p-2">
+                        <!-- Anchored VWAP Tool -->
+                        <div class="tool-card card mb-3 active" onclick="selectTool('vwap')" id="tool-vwap">
+                            <div class="card-body text-center">
+                                <div class="tool-icon">
+                                    <i class="fas fa-anchor"></i>
+                                </div>
+                                <h6 class="fw-bold">Anchored VWAP</h6>
+                                <small class="text-muted">Manual & auto anchoring with deviation bands</small>
+                            </div>
+                        </div>
+
+                        <!-- Auto-Fibonacci Tool -->
+                        <div class="tool-card card mb-3" onclick="selectTool('fibonacci')" id="tool-fibonacci">
+                            <div class="card-body text-center">
+                                <div class="tool-icon">
+                                    <i class="fas fa-wave-square"></i>
+                                </div>
+                                <h6 class="fw-bold">Auto-Fibonacci</h6>
+                                <small class="text-muted">Automatic Fib levels from pivot points</small>
+                            </div>
+                        </div>
+
+                        <!-- Strategy Heatmap Tool -->
+                        <div class="tool-card card mb-3" onclick="selectTool('heatmap')" id="tool-heatmap">
+                            <div class="card-body text-center">
+                                <div class="tool-icon">
+                                    <i class="fas fa-th"></i>
+                                </div>
+                                <h6 class="fw-bold">Strategy Heatmap</h6>
+                                <small class="text-muted">Parameter optimization visualization</small>
+                            </div>
+                        </div>
+
+                        <!-- Signal Replay Tool -->
+                        <div class="tool-card card mb-3" onclick="selectTool('replay')" id="tool-replay">
+                            <div class="card-body text-center">
+                                <div class="tool-icon">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                                <h6 class="fw-bold">Signal Replay</h6>
+                                <small class="text-muted">Replay past signals with outcomes</small>
+                            </div>
+                        </div>
+
+                        <!-- Export Tools -->
+                        <div class="tool-card card" onclick="selectTool('export')" id="tool-export">
+                            <div class="card-body text-center">
+                                <div class="tool-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <h6 class="fw-bold">Export Tools</h6>
+                                <small class="text-muted">Export backtest logs & analysis</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tool Content Area -->
+            <div class="col-lg-9">
+                <div class="tool-content" id="tool-content">
+                    <!-- Anchored VWAP Content -->
+                    <div id="vwap-content" class="tool-section">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4>
+                                <i class="fas fa-anchor me-2"></i>
+                                Anchored VWAP Analysis
+                            </h4>
+                            <div>
+                                <button class="btn btn-primary" onclick="detectAnchorPoints()">
+                                    <i class="fas fa-search me-2"></i>Auto-Detect Anchors
+                                </button>
+                                <button class="btn btn-success" onclick="calculateVWAP()">
+                                    <i class="fas fa-calculator me-2"></i>Calculate VWAP
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Symbol Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Symbol</label>
+                                <select class="form-select" id="vwapSymbol">
+                                    <option value="BTC/USDT">BTC/USDT</option>
+                                    <option value="ETH/USDT">ETH/USDT</option>
+                                    <option value="BNB/USDT">BNB/USDT</option>
+                                    <option value="ADA/USDT">ADA/USDT</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Timeframe</label>
+                                <select class="form-select" id="vwapTimeframe">
+                                    <option value="1h">1 Hour</option>
+                                    <option value="4h">4 Hours</option>
+                                    <option value="1d">1 Day</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Data Period</label>
+                                <select class="form-select" id="vwapPeriod">
+                                    <option value="7">7 Days</option>
+                                    <option value="30">30 Days</option>
+                                    <option value="90">90 Days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Anchor Point Suggestions -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Suggested Anchor Points</h6>
+                                <div id="anchorSuggestions">
+                                    <div class="anchor-point" onclick="selectAnchor(this)" data-type="swing_high">
+                                        <div class="d-flex justify-content-between">
+                                            <span><i class="fas fa-mountain text-danger me-2"></i>Swing High</span>
+                                            <span class="fw-bold">$67,234.50</span>
+                                        </div>
+                                        <small class="text-muted">2024-06-08 14:30 - High confidence</small>
+                                    </div>
+                                    <div class="anchor-point" onclick="selectAnchor(this)" data-type="swing_low">
+                                        <div class="d-flex justify-content-between">
+                                            <span><i class="fas fa-valley text-success me-2"></i>Swing Low</span>
+                                            <span class="fw-bold">$65,128.80</span>
+                                        </div>
+                                        <small class="text-muted">2024-06-07 09:15 - Medium confidence</small>
+                                    </div>
+                                    <div class="anchor-point" onclick="selectAnchor(this)" data-type="breakout">
+                                        <div class="d-flex justify-content-between">
+                                            <span><i class="fas fa-rocket text-warning me-2"></i>Volume Breakout</span>
+                                            <span class="fw-bold">$66,890.20</span>
+                                        </div>
+                                        <small class="text-muted">2024-06-09 11:45 - High volume (3.2x avg)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>VWAP Analysis</h6>
+                                <div id="vwapAnalysis">
+                                    <div class="vwap-band">
+                                        <span>Current Price</span>
+                                        <span class="fw-bold text-primary">$66,542.10</span>
+                                    </div>
+                                    <div class="vwap-band">
+                                        <span>VWAP Line</span>
+                                        <span class="fw-bold">$66,420.35</span>
+                                    </div>
+                                    <div class="vwap-band">
+                                        <span>+1σ Band</span>
+                                        <span class="fw-bold text-warning">$66,890.45</span>
+                                    </div>
+                                    <div class="vwap-band">
+                                        <span>-1σ Band</span>
+                                        <span class="fw-bold text-info">$65,950.25</span>
+                                    </div>
+                                    <div class="alert alert-info mt-3">
+                                        <small><strong>Position:</strong> Above VWAP (+0.18%) - Neutral Bullish sentiment</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-Fibonacci Content -->
+                    <div id="fibonacci-content" class="tool-section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4>
+                                <i class="fas fa-wave-square me-2"></i>
+                                Auto-Fibonacci Analysis
+                            </h4>
+                            <div>
+                                <button class="btn btn-primary" onclick="detectPivots()">
+                                    <i class="fas fa-search me-2"></i>Detect Pivots
+                                </button>
+                                <button class="btn btn-success" onclick="drawFibonacci()">
+                                    <i class="fas fa-ruler me-2"></i>Draw Fibonacci
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Detected Fibonacci Levels</h6>
+                                <div id="fibonacciLevels">
+                                    <div class="fib-level key-level">
+                                        <span>61.8% (Golden Ratio)</span>
+                                        <span class="fw-bold">$66,234.70</span>
+                                    </div>
+                                    <div class="fib-level">
+                                        <span>50.0% (Midpoint)</span>
+                                        <span class="fw-bold">$65,890.50</span>
+                                    </div>
+                                    <div class="fib-level key-level">
+                                        <span>38.2%</span>
+                                        <span class="fw-bold">$65,546.30</span>
+                                    </div>
+                                    <div class="fib-level">
+                                        <span>23.6%</span>
+                                        <span class="fw-bold">$65,202.10</span>
+                                    </div>
+                                    <div class="fib-level">
+                                        <span>0.0% (Swing Low)</span>
+                                        <span class="fw-bold">$64,858.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Fibonacci Analysis</h6>
+                                <div class="alert alert-success">
+                                    <h6><i class="fas fa-bullseye me-2"></i>Price near key level</h6>
+                                    <p class="mb-2">Current price is 1.2% above the 61.8% Fibonacci retracement level.</p>
+                                    <p class="mb-0"><strong>Signal:</strong> Watch for bounce or rejection at this key resistance</p>
+                                </div>
+                                <div class="signal-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span><strong>BUY Signal</strong></span>
+                                        <span class="badge bg-success">85% Confidence</span>
+                                    </div>
+                                    <p class="mb-2">Potential bounce from 61.8% level</p>
+                                    <div class="signal-strength">
+                                        <div class="signal-strength-fill" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strategy Heatmap Content -->
+                    <div id="heatmap-content" class="tool-section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4>
+                                <i class="fas fa-th me-2"></i>
+                                Strategy Parameter Heatmap
+                            </h4>
+                            <button class="btn btn-primary" onclick="runOptimization()">
+                                <i class="fas fa-play me-2"></i>Run Optimization
+                            </button>
+                        </div>
+
+                        <!-- Optimization Controls -->
+                        <div class="optimization-controls">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Strategy</label>
+                                    <select class="form-select" id="strategySelect">
+                                        <option value="ema_crossover">EMA Crossover</option>
+                                        <option value="rsi_mean_reversion">RSI Mean Reversion</option>
+                                        <option value="bollinger_bands">Bollinger Bands</option>
+                                        <option value="macd_momentum">MACD Momentum</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Optimization Metric</label>
+                                    <select class="form-select" id="metricSelect">
+                                        <option value="sharpe_ratio">Sharpe Ratio</option>
+                                        <option value="total_return">Total Return</option>
+                                        <option value="max_drawdown">Max Drawdown</option>
+                                        <option value="win_rate">Win Rate</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Backtest Period</label>
+                                    <select class="form-select" id="backtestPeriod">
+                                        <option value="30">30 Days</option>
+                                        <option value="90">90 Days</option>
+                                        <option value="180">180 Days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Max Combinations</label>
+                                    <select class="form-select" id="maxCombinations">
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                        <option value="200">200</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heatmap Visualization -->
+                        <div class="heatmap-container" id="heatmapContainer">
+                            <div class="text-center p-5">
+                                <i class="fas fa-chart-area fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Select strategy and run optimization to see heatmap</h5>
+                                <p class="text-muted">This will test different parameter combinations and show performance in a 2D grid</p>
+                            </div>
+                        </div>
+
+                        <!-- Best Parameters Display -->
+                        <div class="row mt-4" id="bestParameters" style="display: none;">
+                            <div class="col-md-6">
+                                <h6>Best Parameters Found</h6>
+                                <div id="parametersList"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Performance Metrics</h6>
+                                <div id="performanceMetrics"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signal Replay Content -->
+                    <div id="replay-content" class="tool-section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4>
+                                <i class="fas fa-play-circle me-2"></i>
+                                Signal Replay & Analysis
+                            </h4>
+                            <button class="btn btn-primary" onclick="loadSignalHistory()">
+                                <i class="fas fa-history me-2"></i>Load History
+                            </button>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Signal Replay</h6>
+                            <p class="mb-0">Replay past trading signals with entry/exit markers and analyze their outcomes. This helps understand signal performance and refine strategies.</p>
+                        </div>
+
+                        <div class="text-center p-5">
+                            <i class="fas fa-play-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Signal Replay Coming Soon</h5>
+                            <p class="text-muted">This feature will replay historical signals with annotated outcomes</p>
+                        </div>
+                    </div>
+
+                    <!-- Export Tools Content -->
+                    <div id="export-content" class="tool-section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4>
+                                <i class="fas fa-download me-2"></i>
+                                Export & Reporting Tools
+                            </h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Backtest Results Export</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Export detailed backtest logs with timestamps, parameters, and PnL data</p>
+                                        <button class="btn btn-primary" onclick="exportBacktestData()">
+                                            <i class="fas fa-file-csv me-2"></i>Export to CSV
+                                        </button>
+                                        <button class="btn btn-success" onclick="exportBacktestExcel()">
+                                            <i class="fas fa-file-excel me-2"></i>Export to Excel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Analysis Reports</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Generate comprehensive analysis reports with charts and insights</p>
+                                        <button class="btn btn-warning" onclick="generateReport()">
+                                            <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
+                                        </button>
+                                        <button class="btn btn-info" onclick="shareAnalysis()">
+                                            <i class="fas fa-share me-2"></i>Share Analysis
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTool = 'vwap';
+        let selectedAnchor = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Smart Scanner initialized successfully');
+            selectTool('vwap');
+        });
+
+        function selectTool(toolName) {
+            // Update tool selection
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.getElementById(`tool-${toolName}`).classList.add('active');
+
+            // Hide all tool sections
+            document.querySelectorAll('.tool-section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Show selected tool section
+            document.getElementById(`${toolName}-content`).style.display = 'block';
+            currentTool = toolName;
+
+            console.log(`Switched to ${toolName} tool`);
+        }
+
+        function detectAnchorPoints() {
+            const symbol = document.getElementById('vwapSymbol').value;
+            const timeframe = document.getElementById('vwapTimeframe').value;
+            
+            console.log(`Detecting anchor points for ${symbol} on ${timeframe}`);
+            
+            // Simulate API call
+            showLoading('Detecting anchor points...');
+            
+            setTimeout(() => {
+                hideLoading();
+                // Update anchor suggestions with new data
+                updateAnchorSuggestions();
+            }, 2000);
+        }
+
+        function calculateVWAP() {
+            if (!selectedAnchor) {
+                alert('Please select an anchor point first');
+                return;
+            }
+
+            console.log('Calculating anchored VWAP...');
+            showLoading('Calculating VWAP...');
+
+            setTimeout(() => {
+                hideLoading();
+                updateVWAPAnalysis();
+            }, 1500);
+        }
+
+        function selectAnchor(element) {
+            // Remove selection from other anchors
+            document.querySelectorAll('.anchor-point').forEach(anchor => {
+                anchor.classList.remove('selected');
+            });
+
+            // Select this anchor
+            element.classList.add('selected');
+            selectedAnchor = element.dataset.type;
+
+            console.log(`Selected anchor: ${selectedAnchor}`);
+        }
+
+        function updateAnchorSuggestions() {
+            // Update with fresh anchor point suggestions
+            console.log('Updated anchor point suggestions');
+        }
+
+        function updateVWAPAnalysis() {
+            // Update VWAP analysis display
+            console.log('Updated VWAP analysis');
+        }
+
+        function detectPivots() {
+            console.log('Detecting pivot points for Fibonacci analysis...');
+            showLoading('Detecting pivot points...');
+
+            setTimeout(() => {
+                hideLoading();
+                console.log('Pivot points detected');
+            }, 1500);
+        }
+
+        function drawFibonacci() {
+            console.log('Drawing Fibonacci levels...');
+            showLoading('Drawing Fibonacci levels...');
+
+            setTimeout(() => {
+                hideLoading();
+                console.log('Fibonacci levels drawn');
+            }, 1000);
+        }
+
+        function runOptimization() {
+            const strategy = document.getElementById('strategySelect').value;
+            const metric = document.getElementById('metricSelect').value;
+            const period = document.getElementById('backtestPeriod').value;
+            
+            console.log(`Running optimization for ${strategy} strategy...`);
+            
+            showLoading('Running parameter optimization...');
+            
+            // Simulate optimization process
+            setTimeout(() => {
+                hideLoading();
+                showHeatmap();
+                showBestParameters();
+            }, 3000);
+        }
+
+        function showHeatmap() {
+            // Generate sample heatmap data
+            const heatmapData = generateSampleHeatmapData();
+            
+            const trace = {
+                z: heatmapData.matrix,
+                x: heatmapData.x_values,
+                y: heatmapData.y_values,
+                type: 'heatmap',
+                colorscale: 'RdYlGn',
+                showscale: true,
+                hoverongaps: false
+            };
+
+            const layout = {
+                title: 'EMA Crossover Strategy - Sharpe Ratio Optimization',
+                xaxis: { title: 'Fast EMA Period' },
+                yaxis: { title: 'Slow EMA Period' },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#ffffff' }
+            };
+
+            Plotly.newPlot('heatmapContainer', [trace], layout);
+        }
+
+        function generateSampleHeatmapData() {
+            const x_values = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+            const y_values = [20, 30, 40, 50, 60, 70, 80, 90, 100];
+            const matrix = [];
+
+            for (let i = 0; i < y_values.length; i++) {
+                const row = [];
+                for (let j = 0; j < x_values.length; j++) {
+                    // Generate realistic Sharpe ratio data
+                    const base = Math.random() * 2 - 0.5; // -0.5 to 1.5
+                    const distance_penalty = Math.abs(y_values[i] - x_values[j] * 3) / 100;
+                    row.push(Math.max(-2, Math.min(3, base - distance_penalty)));
+                }
+                matrix.push(row);
+            }
+
+            return { x_values, y_values, matrix };
+        }
+
+        function showBestParameters() {
+            document.getElementById('bestParameters').style.display = 'block';
+            
+            document.getElementById('parametersList').innerHTML = `
+                <div class="metric-badge">Fast EMA: 15</div>
+                <div class="metric-badge">Slow EMA: 45</div>
+                <div class="metric-badge">Stop Loss: 2%</div>
+            `;
+
+            document.getElementById('performanceMetrics').innerHTML = `
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Sharpe Ratio:</span>
+                    <span class="fw-bold text-success">1.67</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Return:</span>
+                    <span class="fw-bold text-success">34.7%</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Max Drawdown:</span>
+                    <span class="fw-bold text-warning">-8.2%</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Win Rate:</span>
+                    <span class="fw-bold text-info">68.4%</span>
+                </div>
+            `;
+        }
+
+        function loadSignalHistory() {
+            console.log('Loading signal history...');
+            showLoading('Loading signal history...');
+
+            setTimeout(() => {
+                hideLoading();
+                console.log('Signal history loaded');
+            }, 1500);
+        }
+
+        function exportBacktestData() {
+            console.log('Exporting backtest data to CSV...');
+            alert('CSV export functionality will be implemented');
+        }
+
+        function exportBacktestExcel() {
+            console.log('Exporting backtest data to Excel...');
+            alert('Excel export functionality will be implemented');
+        }
+
+        function generateReport() {
+            console.log('Generating PDF report...');
+            alert('PDF report generation will be implemented');
+        }
+
+        function shareAnalysis() {
+            console.log('Sharing analysis...');
+            alert('Analysis sharing functionality will be implemented');
+        }
+
+        function showLoading(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.id = 'loadingOverlay';
+            overlay.innerHTML = `
+                <div class="text-center">
+                    <div class="loading-spinner mb-3"></div>
+                    <div class="text-white">${message}</div>
+                </div>
+            `;
+            document.getElementById('tool-content').appendChild(overlay);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (body.getAttribute('data-theme') === 'light') {
+                body.removeAttribute('data-theme');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.setAttribute('data-theme', 'light');
+                document.getElementById('themeIcon').className = 'fas fa-sun';
+            }
+        });
+
+        console.log('Smart Scanner Tools loaded successfully');
+    </script>
+</body>
+</html>

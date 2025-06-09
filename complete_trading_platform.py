@@ -344,6 +344,11 @@ def screener():
     """Real-time market screener page"""
     return render_template('complete_screener.html')
 
+@app.route('/smart-scanner')
+def smart_scanner():
+    """TrendSpider-style smart tools and analysis"""
+    return render_template('smart_scanner.html')
+
 @app.route('/portfolio')
 def portfolio():
     """Portfolio management page"""
