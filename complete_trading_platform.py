@@ -1017,6 +1017,11 @@ def multi_chart():
     """Multi-timeframe chart analysis page"""
     return render_template('multi_chart.html')
 
+@app.route('/portfolio')
+def portfolio_multi_exchange():
+    """Multi-exchange portfolio management page"""
+    return render_template('portfolio_multi_exchange.html')
+
 @app.route('/api/multi-timeframe-analysis', methods=['POST'])
 def api_multi_timeframe_analysis():
     """Get multi-timeframe analysis for symbol"""
