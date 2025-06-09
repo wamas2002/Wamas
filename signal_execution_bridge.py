@@ -79,7 +79,7 @@ class SignalExecutionBridge:
                 signal = {
                     'symbol': row[0],
                     'action': row[1],  # signal from database
-                    'confidence': row[2]/100 if row[2] > 1 else row[2],  # Convert percentage to decimal
+                    'confidence': float(row[2])/100 if float(row[2]) > 1 else float(row[2]),  # Convert percentage to decimal
                     'timestamp': row[3],
                     'reasoning': row[4]
                 }
@@ -100,15 +100,20 @@ class SignalExecutionBridge:
             logger.error(f"Error fetching fresh signals: {e}")
             return []
     
-    def calculate_position_size(self, symbol: str) -> float:
-        """Calculate position size based on 1% risk"""
+    def calculate_position_size(self, symbol: str, confidence: float = 0.6) -> float:
+        """Calculate position size based on 1% risk and confidence"""
         try:
             time.sleep(self.rate_limit_delay)  # Rate limiting
             balance = self.exchange.fetch_balance()
-            usdt_balance = balance['USDT']['free']
+            usdt_balance = float(balance['USDT']['free'])
             
-            # Use 1% of available USDT balance
-            position_value = usdt_balance * self.max_position_size_pct
+            # Convert confidence from percentage to decimal if needed
+            if confidence > 1:
+                confidence = confidence / 100
+            
+            # Use 1% of available USDT balance, adjusted by confidence
+            base_position_value = usdt_balance * self.max_position_size_pct
+            position_value = base_position_value * confidence
             
             return max(position_value, self.min_trade_amount)
             
@@ -131,7 +136,7 @@ class SignalExecutionBridge:
             current_price = ticker['last']
             
             # Calculate position size
-            position_value = self.calculate_position_size(symbol)
+            position_value = self.calculate_position_size(symbol, confidence)
             
             # Calculate amount
             if action == 'buy':

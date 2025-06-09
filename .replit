@@ -28,10 +28,6 @@ args = "Complete Trading Platform"
 task = "workflow.run"
 args = "Live Trading Engine"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Signal Execution Bridge"
-
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -56,14 +52,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python live_trading_engine.py"
-
-[[workflows.workflow]]
-name = "Signal Execution Bridge"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python signal_execution_bridge.py"
 
 [[ports]]
 localPort = 5000

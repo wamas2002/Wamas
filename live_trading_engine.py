@@ -294,7 +294,11 @@ class LiveTradingEngine:
             portfolio = self.get_portfolio_balance()
             max_amount = portfolio['total_value'] * self.max_position_size_pct
             
-            # Adjust by confidence (50% confidence = 50% of max position)
+            # Convert confidence from percentage to decimal if needed
+            if confidence > 1:
+                confidence = confidence / 100
+            
+            # Adjust by confidence (70% confidence = 70% of max position)
             confidence_adjusted = max_amount * confidence
             
             # Ensure minimum trade amount
