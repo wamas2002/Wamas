@@ -1,0 +1,255 @@
+{% extends "tradingview/base.html" %}
+
+{% block title %}Portfolio - TradingView Platform{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <!-- Portfolio Summary -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-wallet me-2"></i>
+                    Portfolio Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-primary mb-1" id="totalValue">$0.00</div>
+                            <small class="text-muted">Total Value</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 mb-1" id="dailyPnL">+0.00%</div>
+                            <small class="text-muted">24h P&L</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-info mb-1" id="cashBalance">$0.00</div>
+                            <small class="text-muted">Cash Balance</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-warning mb-1" id="totalPositions">0</div>
+                            <small class="text-muted">Positions</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Allocation Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Portfolio Allocation
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="allocationChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Holdings with Charts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Holdings with Live Charts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="portfolioHoldings">
+                    <!-- Holdings will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let portfolioData = {};
+    let allocationChart = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPortfolioData();
+        setInterval(loadPortfolioData, 30000); // Update every 30 seconds
+    });
+
+    async function loadPortfolioData() {
+        try {
+            const response = await fetch('/api/dashboard-data');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const data = await response.json();
+            portfolioData = data.portfolio || {};
+            
+            updatePortfolioSummary();
+            updateAllocationChart();
+            updatePortfolioHoldings();
+            
+        } catch (error) {
+            console.error('Portfolio data loading error:', error);
+        }
+    }
+
+    function updatePortfolioSummary() {
+        const totalValue = portfolioData.total_value || 0;
+        const dailyPnl = portfolioData.daily_pnl || 0;
+        const cashBalance = portfolioData.cash_balance || 0;
+        const positions = portfolioData.positions || [];
+
+        document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+        
+        const pnlElement = document.getElementById('dailyPnL');
+        pnlElement.textContent = (dailyPnl >= 0 ? '+' : '') + dailyPnl.toFixed(2) + '%';
+        pnlElement.className = dailyPnl >= 0 ? 'h4 text-success mb-1' : 'h4 text-danger mb-1';
+        
+        document.getElementById('cashBalance').textContent = formatCurrency(cashBalance);
+        document.getElementById('totalPositions').textContent = positions.length;
+    }
+
+    function updateAllocationChart() {
+        const positions = portfolioData.positions || [];
+        
+        if (positions.length === 0) {
+            if (allocationChart) {
+                allocationChart.destroy();
+                allocationChart = null;
+            }
+            return;
+        }
+
+        const labels = positions.map(pos => pos.symbol || 'Unknown');
+        const data = positions.map(pos => pos.allocation_pct || 0);
+        const colors = [
+            '#4F8BFF', '#00D395', '#FF4757', '#FFA726', 
+            '#9C27B0', '#00BCD4', '#8BC34A', '#FF9800'
+        ];
+
+        const ctx = document.getElementById('allocationChart').getContext('2d');
+        
+        if (allocationChart) {
+            allocationChart.destroy();
+        }
+
+        allocationChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderColor: '#252D3D',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#FFFFFF',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updatePortfolioHoldings() {
+        const positions = portfolioData.positions || [];
+        const container = document.getElementById('portfolioHoldings');
+
+        if (positions.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-5">No holdings found</div>';
+            return;
+        }
+
+        container.innerHTML = positions.map((pos, index) => {
+            const symbol = pos.symbol || 'Unknown';
+            const tvSymbol = `OKX:${symbol}USDT`;
+            const chartId = `chart_${symbol.toLowerCase()}`;
+            
+            return `
+                <div class="row mb-4 p-3 border rounded">
+                    <div class="col-lg-4">
+                        <div class="h5 text-primary mb-3">${symbol}/USDT</div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-muted small">Quantity</div>
+                                <div class="fw-semibold">${formatNumber(pos.quantity || 0, 6)}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Avg Price</div>
+                                <div class="fw-semibold">$${formatNumber(pos.avg_price || 0, 4)}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Current Value</div>
+                                <div class="fw-semibold">${formatCurrency(pos.current_value || 0)}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">P&L</div>
+                                <div class="fw-semibold ${(pos.unrealized_pnl || 0) >= 0 ? 'text-success' : 'text-danger'}">
+                                    ${(pos.unrealized_pnl || 0).toFixed(2)}%
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="text-muted small">Allocation</div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" style="width: ${pos.allocation_pct || 0}%"></div>
+                                </div>
+                                <small class="text-muted">${(pos.allocation_pct || 0).toFixed(1)}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div id="${chartId}" style="height: 300px;"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Create TradingView widgets for each holding
+        setTimeout(() => {
+            positions.forEach((pos, index) => {
+                const symbol = pos.symbol || 'Unknown';
+                const tvSymbol = `OKX:${symbol}USDT`;
+                const chartId = `chart_${symbol.toLowerCase()}`;
+                
+                window.tvManager.createWidget(chartId, tvSymbol, {
+                    width: '100%',
+                    height: 300,
+                    interval: '1H',
+                    theme: 'dark',
+                    style: '1',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    hide_side_toolbar: false,
+                    allow_symbol_change: false,
+                    studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies']
+                });
+            });
+        }, 100);
+    }
+</script>
+{% endblock %}

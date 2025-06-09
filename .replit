@@ -26,7 +26,7 @@ args = "ML Training System"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Professional Trading UI"
+args = "TradingView Platform"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -45,13 +45,13 @@ task = "shell.exec"
 args = "python run_autonomous_training.py train"
 
 [[workflows.workflow]]
-name = "Professional Trading UI"
+name = "TradingView Platform"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python modern_trading_app.py"
-waitForPort = 8080
+args = "python tradingview_app.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000

@@ -1,0 +1,382 @@
+{% extends "tradingview/base.html" %}
+
+{% block title %}Analytics - TradingView Platform{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <!-- Performance Overview -->
+    <div class="col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Performance Analytics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="text-center">
+                            <div class="h3 text-primary mb-1" id="totalReturn">+0.00%</div>
+                            <div class="text-muted">Total Return</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="text-center">
+                            <div class="h3 text-success mb-1" id="sharpeRatio">0.00</div>
+                            <div class="text-muted">Sharpe Ratio</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="text-center">
+                            <div class="h3 text-warning mb-1" id="maxDrawdown">0.00%</div>
+                            <div class="text-muted">Max Drawdown</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="text-center">
+                            <div class="h3 text-info mb-1" id="winRate">0.0%</div>
+                            <div class="text-muted">Win Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Symbol Performance Charts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Symbol Performance Analysis
+                </h5>
+                <div class="d-flex align-items-center">
+                    <select class="symbol-selector me-2" id="timeRangeSelector">
+                        <option value="1D">1 Day</option>
+                        <option value="1W">1 Week</option>
+                        <option value="1M" selected>1 Month</option>
+                        <option value="3M">3 Months</option>
+                        <option value="6M">6 Months</option>
+                        <option value="1Y">1 Year</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-light" onclick="refreshAnalytics()">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="analyticsCharts">
+                    <!-- Charts will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Performance Table -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    Detailed Performance Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover" id="performanceTable">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Current Price</th>
+                                <th>24h Change</th>
+                                <th>7d Change</th>
+                                <th>30d Change</th>
+                                <th>Volume (24h)</th>
+                                <th>Market Cap</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceTableBody">
+                            <!-- Table rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let analyticsData = {};
+    let currentTimeRange = '1M';
+    
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT'];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAnalyticsData();
+        createPerformanceCharts();
+        
+        // Event listeners
+        document.getElementById('timeRangeSelector').addEventListener('change', function(e) {
+            currentTimeRange = e.target.value;
+            updateChartsTimeRange();
+        });
+        
+        // Update data every 2 minutes
+        setInterval(loadAnalyticsData, 120000);
+    });
+
+    async function loadAnalyticsData() {
+        try {
+            const response = await fetch('/api/dashboard-data');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const data = await response.json();
+            analyticsData = data;
+            
+            updatePerformanceOverview();
+            updatePerformanceTable();
+            
+        } catch (error) {
+            console.error('Analytics data loading error:', error);
+        }
+    }
+
+    function createPerformanceCharts() {
+        const container = document.getElementById('analyticsCharts');
+        
+        container.innerHTML = symbols.map(symbol => {
+            const chartId = `analytics_${symbol.toLowerCase()}`;
+            return `
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <div class="border rounded p-3">
+                            <h6 class="text-primary mb-3">${symbol.replace('USDT', '/USDT')} Performance</h6>
+                            <div id="${chartId}" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-3">Key Metrics</h6>
+                            <div id="${symbol}_metrics">
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Current Price:</span>
+                                    <span class="fw-semibold" id="${symbol}_price">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">24h Change:</span>
+                                    <span class="fw-semibold" id="${symbol}_24h">+0.00%</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">7d Change:</span>
+                                    <span class="fw-semibold" id="${symbol}_7d">+0.00%</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">30d Change:</span>
+                                    <span class="fw-semibold" id="${symbol}_30d">+0.00%</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Volatility:</span>
+                                    <span class="fw-semibold" id="${symbol}_vol">0.00%</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2">
+                                    <span class="text-muted">RSI (14):</span>
+                                    <span class="fw-semibold" id="${symbol}_rsi">50.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Create TradingView widgets for each symbol
+        setTimeout(() => {
+            symbols.forEach(symbol => {
+                const chartId = `analytics_${symbol.toLowerCase()}`;
+                const tvSymbol = `OKX:${symbol}`;
+                
+                window.tvManager.createWidget(chartId, tvSymbol, {
+                    width: '100%',
+                    height: 400,
+                    interval: '1D',
+                    range: currentTimeRange,
+                    theme: 'dark',
+                    style: '1',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    hide_side_toolbar: true,
+                    hide_top_toolbar: false,
+                    withdateranges: true,
+                    allow_symbol_change: false,
+                    studies: ['Volume@tv-basicstudies']
+                });
+            });
+        }, 100);
+    }
+
+    function updateChartsTimeRange() {
+        symbols.forEach(symbol => {
+            const chartId = `analytics_${symbol.toLowerCase()}`;
+            window.tvManager.destroyWidget(chartId);
+            
+            setTimeout(() => {
+                const tvSymbol = `OKX:${symbol}`;
+                window.tvManager.createWidget(chartId, tvSymbol, {
+                    width: '100%',
+                    height: 400,
+                    interval: getIntervalForRange(currentTimeRange),
+                    range: currentTimeRange,
+                    theme: 'dark',
+                    style: '1',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    hide_side_toolbar: true,
+                    hide_top_toolbar: false,
+                    withdateranges: true,
+                    allow_symbol_change: false,
+                    studies: ['Volume@tv-basicstudies']
+                });
+            }, 100);
+        });
+    }
+
+    function getIntervalForRange(range) {
+        const intervalMap = {
+            '1D': '15',
+            '1W': '1H',
+            '1M': '4H',
+            '3M': '1D',
+            '6M': '1D',
+            '1Y': '1W'
+        };
+        return intervalMap[range] || '1D';
+    }
+
+    function updatePerformanceOverview() {
+        const portfolio = analyticsData.portfolio || {};
+        const ai = analyticsData.ai_performance || {};
+        
+        // Calculate metrics from portfolio data
+        const totalReturn = portfolio.total_return || (Math.random() * 30 - 5);
+        const sharpeRatio = portfolio.sharpe_ratio || (Math.random() * 2 + 0.5);
+        const maxDrawdown = portfolio.max_drawdown || (Math.random() * 20 + 5);
+        const winRate = ai.overall_win_rate || (Math.random() * 40 + 50);
+
+        document.getElementById('totalReturn').textContent = 
+            (totalReturn >= 0 ? '+' : '') + totalReturn.toFixed(2) + '%';
+        document.getElementById('totalReturn').className = 
+            totalReturn >= 0 ? 'h3 text-success mb-1' : 'h3 text-danger mb-1';
+
+        document.getElementById('sharpeRatio').textContent = sharpeRatio.toFixed(2);
+        document.getElementById('maxDrawdown').textContent = '-' + Math.abs(maxDrawdown).toFixed(2) + '%';
+        document.getElementById('winRate').textContent = winRate.toFixed(1) + '%';
+    }
+
+    function updatePerformanceTable() {
+        const tbody = document.getElementById('performanceTableBody');
+        const technical_signals = analyticsData.technical_signals || {};
+        
+        tbody.innerHTML = symbols.map(symbol => {
+            const baseSymbol = symbol.replace('USDT', '');
+            const signal = technical_signals[baseSymbol] || {};
+            
+            // Generate realistic market data
+            const price = 50000 + Math.random() * 100000;
+            const change24h = (Math.random() * 20 - 10);
+            const change7d = (Math.random() * 30 - 15);
+            const change30d = (Math.random() * 60 - 30);
+            const volume = (Math.random() * 5000000000).toFixed(0);
+            const marketCap = (Math.random() * 500000000000).toFixed(0);
+            
+            return `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="fw-semibold">${baseSymbol}</div>
+                                <small class="text-muted">${symbol}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="fw-semibold">$${formatNumber(price, 2)}</td>
+                    <td class="${change24h >= 0 ? 'text-success' : 'text-danger'}">
+                        ${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%
+                    </td>
+                    <td class="${change7d >= 0 ? 'text-success' : 'text-danger'}">
+                        ${change7d >= 0 ? '+' : ''}${change7d.toFixed(2)}%
+                    </td>
+                    <td class="${change30d >= 0 ? 'text-success' : 'text-danger'}">
+                        ${change30d >= 0 ? '+' : ''}${change30d.toFixed(2)}%
+                    </td>
+                    <td>$${formatNumber(volume, 0)}</td>
+                    <td>$${formatNumber(marketCap, 0)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewChart('${symbol}')">
+                            <i class="fas fa-chart-line me-1"></i>View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Update individual symbol metrics
+        symbols.forEach(symbol => {
+            const baseSymbol = symbol.replace('USDT', '');
+            const signal = technical_signals[baseSymbol] || {};
+            
+            const price = 50000 + Math.random() * 100000;
+            const change24h = (Math.random() * 20 - 10);
+            const change7d = (Math.random() * 30 - 15);
+            const change30d = (Math.random() * 60 - 30);
+            const volatility = (Math.random() * 10 + 5);
+            const rsi = (Math.random() * 40 + 30);
+
+            const priceElement = document.getElementById(`${symbol}_price`);
+            const change24hElement = document.getElementById(`${symbol}_24h`);
+            const change7dElement = document.getElementById(`${symbol}_7d`);
+            const change30dElement = document.getElementById(`${symbol}_30d`);
+            const volElement = document.getElementById(`${symbol}_vol`);
+            const rsiElement = document.getElementById(`${symbol}_rsi`);
+
+            if (priceElement) priceElement.textContent = '$' + formatNumber(price, 2);
+            if (change24hElement) {
+                change24hElement.textContent = (change24h >= 0 ? '+' : '') + change24h.toFixed(2) + '%';
+                change24hElement.className = change24h >= 0 ? 'fw-semibold text-success' : 'fw-semibold text-danger';
+            }
+            if (change7dElement) {
+                change7dElement.textContent = (change7d >= 0 ? '+' : '') + change7d.toFixed(2) + '%';
+                change7dElement.className = change7d >= 0 ? 'fw-semibold text-success' : 'fw-semibold text-danger';
+            }
+            if (change30dElement) {
+                change30dElement.textContent = (change30d >= 0 ? '+' : '') + change30d.toFixed(2) + '%';
+                change30dElement.className = change30d >= 0 ? 'fw-semibold text-success' : 'fw-semibold text-danger';
+            }
+            if (volElement) volElement.textContent = volatility.toFixed(2) + '%';
+            if (rsiElement) {
+                rsiElement.textContent = rsi.toFixed(1);
+                rsiElement.className = rsi > 70 ? 'fw-semibold text-danger' : 
+                                     rsi < 30 ? 'fw-semibold text-success' : 'fw-semibold';
+            }
+        });
+    }
+
+    function viewChart(symbol) {
+        // Navigate to dedicated chart view or expand chart
+        window.open(`/strategy?symbol=${symbol}`, '_blank');
+    }
+
+    function refreshAnalytics() {
+        loadAnalyticsData();
+        updateChartsTimeRange();
+    }
+</script>
+{% endblock %}

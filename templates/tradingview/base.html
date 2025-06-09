@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Professional Trading Platform{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- TradingView Charting Library -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0B1426;
+            --bg-secondary: #1A2332;
+            --card-bg: #252D3D;
+            --accent-blue: #4F8BFF;
+            --accent-green: #00D395;
+            --accent-red: #FF4757;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8B9AAF;
+            --border-color: #2A3441;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            margin: 0 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(79, 139, 255, 0.1) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            height: 100%;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .tradingview-widget-container {
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+        .neutral { color: var(--text-secondary); }
+
+        .symbol-selector {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+        }
+
+        .symbol-selector:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(79, 139, 255, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: #3a6fd9;
+        }
+
+        .table-dark {
+            background: var(--card-bg);
+        }
+
+        .table-dark td, .table-dark th {
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                TradingView Platform
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/portfolio"><i class="fas fa-wallet me-1"></i>Portfolio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/strategy"><i class="fas fa-cogs me-1"></i>Strategy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analytics"><i class="fas fa-chart-bar me-1"></i>Analytics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ai-panel"><i class="fas fa-robot me-1"></i>AI Panel</a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-success me-3">
+                        <i class="fas fa-circle me-1"></i>Live
+                    </span>
+                    <small class="text-muted">Last update: <span id="lastUpdate">--:--</span></small>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- TradingView Widget Utilities -->
+    <script>
+        // Global TradingView widget manager
+        class TradingViewManager {
+            constructor() {
+                this.widgets = new Map();
+                this.defaultConfig = {
+                    theme: 'dark',
+                    style: '1',
+                    locale: 'en',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    withdateranges: true,
+                    hide_side_toolbar: false,
+                    allow_symbol_change: true,
+                    save_image: false,
+                    details: true,
+                    hotlist: true,
+                    calendar: true
+                };
+            }
+
+            createWidget(containerId, symbol, config = {}) {
+                const finalConfig = {
+                    ...this.defaultConfig,
+                    ...config,
+                    symbol: symbol,
+                    container_id: containerId
+                };
+
+                // Remove existing widget if any
+                if (this.widgets.has(containerId)) {
+                    this.destroyWidget(containerId);
+                }
+
+                // Create new widget
+                const widget = new TradingView.widget(finalConfig);
+                this.widgets.set(containerId, widget);
+                
+                return widget;
+            }
+
+            updateSymbol(containerId, newSymbol) {
+                const widget = this.widgets.get(containerId);
+                if (widget && widget.chart) {
+                    widget.chart().setSymbol(newSymbol);
+                }
+            }
+
+            destroyWidget(containerId) {
+                const widget = this.widgets.get(containerId);
+                if (widget && widget.remove) {
+                    widget.remove();
+                }
+                this.widgets.delete(containerId);
+            }
+        }
+
+        // Global instance
+        window.tvManager = new TradingViewManager();
+
+        // Utility functions
+        function formatNumber(num, decimals = 2) {
+            if (num === null || num === undefined) return '0';
+            return Number(num).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatCurrency(num, currency = '$') {
+            return currency + formatNumber(num, 2);
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            const element = document.getElementById('lastUpdate');
+            if (element) {
+                element.textContent = timeString;
+            }
+        }
+
+        // Update time every minute
+        setInterval(updateLastUpdateTime, 60000);
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLastUpdateTime();
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

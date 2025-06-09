@@ -1,0 +1,356 @@
+{% extends "tradingview/base.html" %}
+
+{% block title %}Dashboard - TradingView Platform{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <!-- Key Metrics -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="portfolioValue">$0</div>
+            <div class="metric-label">Portfolio Value</div>
+            <div class="text-success mt-2" id="portfolioChange">+0.00%</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="aiAccuracy">0%</div>
+            <div class="metric-label">AI Accuracy</div>
+            <div class="text-info mt-2" id="totalModels">0 models</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="winRate">0%</div>
+            <div class="metric-label">Win Rate</div>
+            <div class="text-secondary mt-2" id="totalTrades">0 trades</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card">
+            <div class="metric-value" id="riskScore">Low</div>
+            <div class="metric-label">Risk Level</div>
+            <div class="text-warning mt-2" id="riskDetails">Monitored</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Trading Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-candlestick me-2"></i>
+                    Live Chart
+                </h5>
+                <div class="d-flex align-items-center">
+                    <select class="symbol-selector me-2" id="symbolSelector">
+                        <option value="OKX:BTCUSDT">BTC/USDT</option>
+                        <option value="OKX:ETHUSDT">ETH/USDT</option>
+                        <option value="OKX:BNBUSDT">BNB/USDT</option>
+                        <option value="OKX:ADAUSDT">ADA/USDT</option>
+                        <option value="OKX:SOLUSDT">SOL/USDT</option>
+                        <option value="OKX:XRPUSDT">XRP/USDT</option>
+                        <option value="OKX:DOTUSDT">DOT/USDT</option>
+                        <option value="OKX:AVAXUSDT">AVAX/USDT</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-light" onclick="toggleInterval()">
+                        <i class="fas fa-clock me-1"></i>
+                        <span id="currentInterval">15m</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- TradingView Widget Container -->
+                <div id="dashboard_chart" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio & Signals -->
+    <div class="col-lg-4 mb-4">
+        <!-- Portfolio Positions -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-wallet me-2"></i>
+                    Top Holdings
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="portfolioPositions">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <div class="mt-2 text-muted">Loading positions...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Trading Signals -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-robot me-2"></i>
+                    AI Signals
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="tradingSignals">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <div class="mt-2 text-muted">Loading signals...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Market Overview -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Market Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="marketOverview">
+                    <!-- Mini charts for top cryptocurrencies -->
+                    <div class="col-lg-4 mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-primary mb-3">BTC/USDT</h6>
+                            <div id="btc_mini_chart" style="height: 200px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-primary mb-3">ETH/USDT</h6>
+                            <div id="eth_mini_chart" style="height: 200px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="border rounded p-3">
+                            <h6 class="text-primary mb-3">BNB/USDT</h6>
+                            <div id="bnb_mini_chart" style="height: 200px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let dashboardData = {};
+    let currentSymbol = 'OKX:BTCUSDT';
+    let currentInterval = '15';
+    
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTradingViewWidgets();
+        loadDashboardData();
+        
+        // Set up real-time updates
+        setInterval(loadDashboardData, 30000); // Every 30 seconds
+        setInterval(updateMetrics, 10000);     // Every 10 seconds
+        
+        // Symbol selector change handler
+        document.getElementById('symbolSelector').addEventListener('change', function(e) {
+            currentSymbol = e.target.value;
+            updateMainChart();
+        });
+    });
+    
+    function initializeTradingViewWidgets() {
+        // Main dashboard chart
+        const mainConfig = {{ widget_config|safe }};
+        window.tvManager.createWidget('dashboard_chart', currentSymbol, {
+            ...mainConfig,
+            interval: currentInterval,
+            width: '100%',
+            height: 500,
+            studies: ['RSI', 'MACD', 'EMA@tv-basicstudies']
+        });
+        
+        // Mini charts for market overview
+        const miniChartConfig = {
+            width: '100%',
+            height: 200,
+            interval: '1D',
+            hide_side_toolbar: true,
+            hide_top_toolbar: true,
+            toolbar_bg: 'transparent',
+            enable_publishing: false,
+            withdateranges: false,
+            save_image: false,
+            details: false,
+            hotlist: false,
+            calendar: false
+        };
+        
+        // Create mini charts
+        setTimeout(() => {
+            window.tvManager.createWidget('btc_mini_chart', 'OKX:BTCUSDT', miniChartConfig);
+            window.tvManager.createWidget('eth_mini_chart', 'OKX:ETHUSDT', miniChartConfig);
+            window.tvManager.createWidget('bnb_mini_chart', 'OKX:BNBUSDT', miniChartConfig);
+        }, 1000);
+    }
+    
+    function updateMainChart() {
+        window.tvManager.updateSymbol('dashboard_chart', currentSymbol);
+    }
+    
+    function toggleInterval() {
+        const intervals = ['15', '1H', '4H', '1D'];
+        const currentIndex = intervals.indexOf(currentInterval);
+        const nextIndex = (currentIndex + 1) % intervals.length;
+        currentInterval = intervals[nextIndex];
+        
+        document.getElementById('currentInterval').textContent = currentInterval;
+        
+        // Update main chart with new interval
+        window.tvManager.destroyWidget('dashboard_chart');
+        setTimeout(() => {
+            const mainConfig = {{ widget_config|safe }};
+            window.tvManager.createWidget('dashboard_chart', currentSymbol, {
+                ...mainConfig,
+                interval: currentInterval,
+                width: '100%',
+                height: 500,
+                studies: ['RSI', 'MACD', 'EMA@tv-basicstudies']
+            });
+        }, 100);
+    }
+    
+    async function loadDashboardData() {
+        try {
+            const response = await fetch('/api/dashboard-data');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            dashboardData = await response.json();
+            updateMetrics();
+            updatePortfolioPositions();
+            updateTradingSignals();
+            
+        } catch (error) {
+            console.error('Dashboard data loading error:', error);
+            showErrorState();
+        }
+    }
+    
+    function updateMetrics() {
+        if (!dashboardData.portfolio || !dashboardData.ai_performance) return;
+        
+        const portfolio = dashboardData.portfolio;
+        const ai = dashboardData.ai_performance;
+        const risk = dashboardData.risk_metrics || {};
+        
+        // Portfolio Value
+        document.getElementById('portfolioValue').textContent = 
+            formatCurrency(portfolio.total_value || 0);
+        
+        const dailyPnl = portfolio.daily_pnl || 0;
+        const changeElement = document.getElementById('portfolioChange');
+        changeElement.textContent = (dailyPnl >= 0 ? '+' : '') + dailyPnl.toFixed(2) + '%';
+        changeElement.className = dailyPnl >= 0 ? 'text-success mt-2' : 'text-danger mt-2';
+        
+        // AI Performance
+        document.getElementById('aiAccuracy').textContent = 
+            (ai.overall_accuracy || 0).toFixed(1) + '%';
+        document.getElementById('totalModels').textContent = 
+            (ai.active_models || 0) + ' models';
+        
+        // Win Rate
+        const winRate = ai.model_performance ? 
+            Object.values(ai.model_performance).reduce((sum, model) => 
+                sum + (model.avg_win_rate || 0), 0) / Object.keys(ai.model_performance).length : 0;
+        
+        document.getElementById('winRate').textContent = winRate.toFixed(1) + '%';
+        
+        const totalTrades = ai.model_performance ? 
+            Object.values(ai.model_performance).reduce((sum, model) => 
+                sum + (model.total_trades || 0), 0) : 0;
+        
+        document.getElementById('totalTrades').textContent = totalTrades + ' trades';
+        
+        // Risk Score
+        const riskLevel = risk.risk_level || 'Low';
+        document.getElementById('riskScore').textContent = riskLevel;
+        document.getElementById('riskDetails').textContent = 
+            risk.largest_position ? `${risk.largest_position}: ${(risk.largest_position_pct || 0).toFixed(1)}%` : 'Monitored';
+    }
+    
+    function updatePortfolioPositions() {
+        const positions = dashboardData.portfolio?.positions || [];
+        const container = document.getElementById('portfolioPositions');
+        
+        if (positions.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3">No positions found</div>';
+            return;
+        }
+        
+        const topPositions = positions.slice(0, 5); // Show top 5
+        
+        container.innerHTML = topPositions.map(pos => `
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <div>
+                    <div class="fw-semibold">${pos.symbol || 'N/A'}</div>
+                    <small class="text-muted">${formatNumber(pos.quantity || 0, 4)} tokens</small>
+                </div>
+                <div class="text-end">
+                    <div class="fw-semibold">${formatCurrency(pos.current_value || 0)}</div>
+                    <small class="${(pos.unrealized_pnl || 0) >= 0 ? 'text-success' : 'text-danger'}">
+                        ${(pos.unrealized_pnl || 0).toFixed(2)}%
+                    </small>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function updateTradingSignals() {
+        const signals = dashboardData.technical_signals || {};
+        const container = document.getElementById('tradingSignals');
+        
+        const signalEntries = Object.entries(signals).slice(0, 4); // Show top 4
+        
+        if (signalEntries.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3">No signals available</div>';
+            return;
+        }
+        
+        container.innerHTML = signalEntries.map(([symbol, signal]) => {
+            const direction = signal.direction || 'HOLD';
+            const confidence = signal.confidence || 0;
+            const directionClass = direction === 'BUY' ? 'text-success' : 
+                                  direction === 'SELL' ? 'text-danger' : 'text-warning';
+            
+            return `
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <div class="fw-semibold">${symbol}</div>
+                        <small class="text-muted">${signal.signal || 'No signal'}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-semibold ${directionClass}">${direction}</div>
+                        <small class="text-muted">${confidence}% conf.</small>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function showErrorState() {
+        document.getElementById('portfolioPositions').innerHTML = 
+            '<div class="text-center text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>Error loading data</div>';
+        document.getElementById('tradingSignals').innerHTML = 
+            '<div class="text-center text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>Error loading signals</div>';
+    }
+</script>
+{% endblock %}

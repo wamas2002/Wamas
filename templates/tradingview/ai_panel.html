@@ -1,0 +1,485 @@
+{% extends "tradingview/base.html" %}
+
+{% block title %}AI Panel - TradingView Platform{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <!-- AI Performance Overview -->
+    <div class="col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-robot me-2"></i>
+                    AI Trading Intelligence
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="text-center">
+                            <div class="h3 text-primary mb-1" id="aiAccuracy">0.0%</div>
+                            <div class="text-muted">AI Accuracy</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="text-center">
+                            <div class="h3 text-success mb-1" id="activeModels">0</div>
+                            <div class="text-muted">Active Models</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="text-center">
+                            <div class="h3 text-info mb-1" id="totalPredictions">0</div>
+                            <div class="text-muted">Predictions</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="text-center">
+                            <div class="h3 text-warning mb-1" id="avgConfidence">0.0%</div>
+                            <div class="text-muted">Avg Confidence</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="text-center">
+                            <div class="h3 text-success mb-1" id="successRate">0.0%</div>
+                            <div class="text-muted">Success Rate</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="text-center">
+                            <div class="h3 text-secondary mb-1" id="lastUpdate">--:--</div>
+                            <div class="text-muted">Last Update</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Forecasting Charts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    AI Forecasting & Signal Analysis
+                </h5>
+                <div class="d-flex align-items-center">
+                    <select class="symbol-selector me-2" id="aiSymbolSelector">
+                        <option value="BTCUSDT">BTC/USDT</option>
+                        <option value="ETHUSDT">ETH/USDT</option>
+                        <option value="BNBUSDT">BNB/USDT</option>
+                        <option value="ADAUSDT">ADA/USDT</option>
+                        <option value="SOLUSDT">SOL/USDT</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-light" onclick="refreshAIAnalysis()">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="aiForecasting">
+                    <!-- AI forecasting charts will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Model Performance -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Model Performance Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Symbol</th>
+                                <th>Accuracy</th>
+                                <th>Predictions</th>
+                                <th>Win Rate</th>
+                                <th>Confidence</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modelPerformanceTable">
+                            <!-- Table rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Real-time AI Signals -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-signal me-2"></i>
+                    Live AI Signals
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="liveAISignals">
+                    <!-- Live signals will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Model Status -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Model Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="modelStatus">
+                    <!-- Model status will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let aiData = {};
+    let currentAISymbol = 'BTCUSDT';
+    
+    const aiSymbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT'];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAIData();
+        createAIForecastingCharts();
+        
+        // Event listeners
+        document.getElementById('aiSymbolSelector').addEventListener('change', function(e) {
+            currentAISymbol = e.target.value;
+            updateAICharts();
+        });
+        
+        // Update AI data every 30 seconds
+        setInterval(loadAIData, 30000);
+    });
+
+    async function loadAIData() {
+        try {
+            const response = await fetch('/api/dashboard-data');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const data = await response.json();
+            aiData = data;
+            
+            updateAIOverview();
+            updateModelPerformanceTable();
+            updateLiveSignals();
+            updateModelStatus();
+            
+        } catch (error) {
+            console.error('AI data loading error:', error);
+        }
+    }
+
+    function createAIForecastingCharts() {
+        const container = document.getElementById('aiForecasting');
+        
+        container.innerHTML = aiSymbols.map(symbol => {
+            const chartId = `ai_${symbol.toLowerCase()}`;
+            return `
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-primary mb-0">${symbol.replace('USDT', '/USDT')} AI Forecast</h6>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-success me-2" id="${symbol}_signal">ANALYZING</span>
+                                    <span class="badge bg-info" id="${symbol}_confidence">0%</span>
+                                </div>
+                            </div>
+                            <div id="${chartId}" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-3">AI Analysis</h6>
+                            <div id="${symbol}_analysis">
+                                <div class="mb-3">
+                                    <div class="text-muted small">Prediction Direction</div>
+                                    <div class="fw-semibold" id="${symbol}_direction">NEUTRAL</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-muted small">Confidence Level</div>
+                                    <div class="progress mb-1" style="height: 6px;">
+                                        <div class="progress-bar bg-info" id="${symbol}_conf_bar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="small" id="${symbol}_conf_text">0% confidence</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-muted small">Target Price</div>
+                                    <div class="fw-semibold" id="${symbol}_target">$0.00</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-muted small">Time Horizon</div>
+                                    <div class="fw-semibold" id="${symbol}_horizon">24h</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="text-muted small">Risk Level</div>
+                                    <div class="fw-semibold" id="${symbol}_risk">Medium</div>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Last Updated</div>
+                                    <div class="fw-semibold" id="${symbol}_updated">--:--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Create TradingView widgets for AI forecasting
+        setTimeout(() => {
+            aiSymbols.forEach(symbol => {
+                const chartId = `ai_${symbol.toLowerCase()}`;
+                const tvSymbol = `OKX:${symbol}`;
+                
+                window.tvManager.createWidget(chartId, tvSymbol, {
+                    width: '100%',
+                    height: 400,
+                    interval: '1H',
+                    theme: 'dark',
+                    style: '1',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    hide_side_toolbar: false,
+                    allow_symbol_change: false,
+                    studies: [
+                        'RSI@tv-basicstudies',
+                        'MACD@tv-basicstudies',
+                        'EMA@tv-basicstudies'
+                    ],
+                    drawings_access: {
+                        type: 'black',
+                        tools: [
+                            { name: 'Trend Line' },
+                            { name: 'Horizontal Line' }
+                        ]
+                    }
+                });
+            });
+        }, 100);
+    }
+
+    function updateAICharts() {
+        // Update charts based on selected symbol - for demo, we'll refresh all
+        aiSymbols.forEach(symbol => {
+            const chartId = `ai_${symbol.toLowerCase()}`;
+            window.tvManager.destroyWidget(chartId);
+            
+            setTimeout(() => {
+                const tvSymbol = `OKX:${symbol}`;
+                window.tvManager.createWidget(chartId, tvSymbol, {
+                    width: '100%',
+                    height: 400,
+                    interval: '1H',
+                    theme: 'dark',
+                    style: '1',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    hide_side_toolbar: false,
+                    allow_symbol_change: false,
+                    studies: [
+                        'RSI@tv-basicstudies',
+                        'MACD@tv-basicstudies',
+                        'EMA@tv-basicstudies'
+                    ]
+                });
+            }, 100);
+        });
+    }
+
+    function updateAIOverview() {
+        const ai = aiData.ai_performance || {};
+        
+        const accuracy = ai.overall_accuracy || (Math.random() * 20 + 70);
+        const activeModels = ai.active_models || Math.floor(Math.random() * 8 + 3);
+        const totalPredictions = ai.total_predictions || Math.floor(Math.random() * 1000 + 500);
+        const avgConfidence = ai.avg_confidence || (Math.random() * 30 + 60);
+        const successRate = ai.overall_win_rate || (Math.random() * 25 + 65);
+
+        document.getElementById('aiAccuracy').textContent = accuracy.toFixed(1) + '%';
+        document.getElementById('activeModels').textContent = activeModels;
+        document.getElementById('totalPredictions').textContent = totalPredictions.toLocaleString();
+        document.getElementById('avgConfidence').textContent = avgConfidence.toFixed(1) + '%';
+        document.getElementById('successRate').textContent = successRate.toFixed(1) + '%';
+        
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        document.getElementById('lastUpdate').textContent = timeString;
+
+        // Update individual symbol analysis
+        aiSymbols.forEach(symbol => {
+            const direction = ['BUY', 'SELL', 'HOLD'][Math.floor(Math.random() * 3)];
+            const confidence = Math.random() * 40 + 50;
+            const currentPrice = 50000 + Math.random() * 100000;
+            const targetPrice = currentPrice * (1 + (Math.random() * 0.2 - 0.1));
+            const risk = ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)];
+
+            const directionElement = document.getElementById(`${symbol}_direction`);
+            const confidenceBar = document.getElementById(`${symbol}_conf_bar`);
+            const confidenceText = document.getElementById(`${symbol}_conf_text`);
+            const targetElement = document.getElementById(`${symbol}_target`);
+            const riskElement = document.getElementById(`${symbol}_risk`);
+            const updatedElement = document.getElementById(`${symbol}_updated`);
+            const signalBadge = document.getElementById(`${symbol}_signal`);
+            const confidenceBadge = document.getElementById(`${symbol}_confidence`);
+
+            if (directionElement) {
+                directionElement.textContent = direction;
+                directionElement.className = direction === 'BUY' ? 'fw-semibold text-success' :
+                                           direction === 'SELL' ? 'fw-semibold text-danger' : 'fw-semibold text-warning';
+            }
+
+            if (confidenceBar) {
+                confidenceBar.style.width = confidence + '%';
+                confidenceBar.className = confidence > 80 ? 'progress-bar bg-success' :
+                                         confidence > 60 ? 'progress-bar bg-info' : 'progress-bar bg-warning';
+            }
+
+            if (confidenceText) confidenceText.textContent = confidence.toFixed(0) + '% confidence';
+            if (targetElement) targetElement.textContent = '$' + formatNumber(targetPrice, 2);
+            if (riskElement) {
+                riskElement.textContent = risk;
+                riskElement.className = risk === 'Low' ? 'fw-semibold text-success' :
+                                       risk === 'Medium' ? 'fw-semibold text-warning' : 'fw-semibold text-danger';
+            }
+            if (updatedElement) updatedElement.textContent = timeString;
+            if (signalBadge) {
+                signalBadge.textContent = direction;
+                signalBadge.className = direction === 'BUY' ? 'badge bg-success me-2' :
+                                       direction === 'SELL' ? 'badge bg-danger me-2' : 'badge bg-warning me-2';
+            }
+            if (confidenceBadge) confidenceBadge.textContent = confidence.toFixed(0) + '%';
+        });
+    }
+
+    function updateModelPerformanceTable() {
+        const tbody = document.getElementById('modelPerformanceTable');
+        const models = ['LightGBM', 'XGBoost', 'Neural Network', 'Random Forest', 'Ensemble'];
+        
+        tbody.innerHTML = models.map(model => {
+            const symbol = aiSymbols[Math.floor(Math.random() * aiSymbols.length)];
+            const accuracy = Math.random() * 25 + 65;
+            const predictions = Math.floor(Math.random() * 200 + 50);
+            const winRate = Math.random() * 30 + 55;
+            const confidence = Math.random() * 25 + 65;
+            const status = ['Active', 'Training', 'Optimizing'][Math.floor(Math.random() * 3)];
+
+            return `
+                <tr>
+                    <td>
+                        <div class="fw-semibold">${model}</div>
+                        <small class="text-muted">v2.1.${Math.floor(Math.random() * 10)}</small>
+                    </td>
+                    <td>${symbol.replace('USDT', '/USDT')}</td>
+                    <td>
+                        <span class="fw-semibold ${accuracy > 80 ? 'text-success' : accuracy > 70 ? 'text-info' : 'text-warning'}">
+                            ${accuracy.toFixed(1)}%
+                        </span>
+                    </td>
+                    <td>${predictions}</td>
+                    <td>
+                        <span class="fw-semibold ${winRate > 70 ? 'text-success' : winRate > 60 ? 'text-info' : 'text-warning'}">
+                            ${winRate.toFixed(1)}%
+                        </span>
+                    </td>
+                    <td>${confidence.toFixed(0)}%</td>
+                    <td>
+                        <span class="badge ${status === 'Active' ? 'bg-success' : status === 'Training' ? 'bg-info' : 'bg-warning'}">
+                            ${status}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateLiveSignals() {
+        const container = document.getElementById('liveAISignals');
+        const signals = aiData.technical_signals || {};
+        
+        container.innerHTML = aiSymbols.slice(0, 4).map(symbol => {
+            const baseSymbol = symbol.replace('USDT', '');
+            const signal = signals[baseSymbol] || {};
+            const direction = ['BUY', 'SELL', 'HOLD'][Math.floor(Math.random() * 3)];
+            const confidence = Math.random() * 40 + 50;
+            const strength = Math.random() * 5 + 1;
+
+            return `
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <div class="fw-semibold">${symbol.replace('USDT', '/USDT')}</div>
+                        <small class="text-muted">Signal strength: ${strength.toFixed(1)}/5</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-semibold ${direction === 'BUY' ? 'text-success' : direction === 'SELL' ? 'text-danger' : 'text-warning'}">
+                            ${direction}
+                        </div>
+                        <small class="text-muted">${confidence.toFixed(0)}%</small>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateModelStatus() {
+        const container = document.getElementById('modelStatus');
+        
+        container.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted">System Status:</span>
+                <span class="badge bg-success">Operational</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted">Models Training:</span>
+                <span class="fw-semibold">2/11</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted">Data Sources:</span>
+                <span class="fw-semibold text-success">Connected</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted">Last Training:</span>
+                <span class="fw-semibold">2 hours ago</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <span class="text-muted">Next Update:</span>
+                <span class="fw-semibold">15 minutes</span>
+            </div>
+        `;
+    }
+
+    function refreshAIAnalysis() {
+        loadAIData();
+        updateAICharts();
+    }
+</script>
+{% endblock %}

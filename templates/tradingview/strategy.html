@@ -1,0 +1,391 @@
+{% extends "tradingview/base.html" %}
+
+{% block title %}Strategy Builder - TradingView Platform{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <!-- Strategy Builder Controls -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Strategy Builder
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="strategyForm">
+                    <div class="mb-3">
+                        <label class="form-label">Strategy Name</label>
+                        <input type="text" class="form-control" id="strategyName" placeholder="My Trading Strategy">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Trading Pair</label>
+                        <select class="form-select" id="tradingPair">
+                            <option value="BTCUSDT">BTC/USDT</option>
+                            <option value="ETHUSDT">ETH/USDT</option>
+                            <option value="BNBUSDT">BNB/USDT</option>
+                            <option value="ADAUSDT">ADA/USDT</option>
+                            <option value="SOLUSDT">SOL/USDT</option>
+                            <option value="XRPUSDT">XRP/USDT</option>
+                            <option value="DOTUSDT">DOT/USDT</option>
+                            <option value="AVAXUSDT">AVAX/USDT</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Timeframe</label>
+                        <select class="form-select" id="timeframe">
+                            <option value="15">15 minutes</option>
+                            <option value="1H">1 hour</option>
+                            <option value="4H">4 hours</option>
+                            <option value="1D">1 day</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Technical Indicators</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rsi" checked>
+                            <label class="form-check-label" for="rsi">RSI (14)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="macd" checked>
+                            <label class="form-check-label" for="macd">MACD</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ema">
+                            <label class="form-check-label" for="ema">EMA (21)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bb">
+                            <label class="form-check-label" for="bb">Bollinger Bands</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Entry Conditions</label>
+                        <textarea class="form-control" id="entryConditions" rows="3" placeholder="RSI < 30 AND MACD crosses above signal line"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Exit Conditions</label>
+                        <textarea class="form-control" id="exitConditions" rows="3" placeholder="RSI > 70 OR stop loss at -5%"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Risk per Trade (%)</label>
+                            <input type="number" class="form-control" id="riskPerTrade" value="2" min="0.1" max="10" step="0.1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Max Positions</label>
+                            <input type="number" class="form-control" id="maxPositions" value="3" min="1" max="10">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary w-100" onclick="updateStrategyChart()">
+                            <i class="fas fa-sync me-2"></i>Update Chart
+                        </button>
+                        <button type="button" class="btn btn-success w-100 mt-2" onclick="saveStrategy()">
+                            <i class="fas fa-save me-2"></i>Save Strategy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Strategy Performance -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Backtest Results
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="backtestResults">
+                    <div class="text-center text-muted py-3">
+                        Configure strategy above to see backtest results
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy Chart with Indicators -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-candlestick me-2"></i>
+                    Strategy Chart
+                </h5>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-info me-2" id="currentPair">BTC/USDT</span>
+                    <span class="badge bg-secondary" id="currentTimeframe">15m</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- TradingView Widget Container -->
+                <div id="strategy_chart" style="height: 600px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategy Templates -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i>
+                    Strategy Templates
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="strategyTemplates">
+                    <div class="col-lg-4 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary">RSI Reversal</h6>
+                                <p class="card-text small">Buy when RSI < 30, sell when RSI > 70</p>
+                                <button class="btn btn-outline-primary btn-sm" onclick="loadTemplate('rsi_reversal')">Load Template</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title text-success">MACD Crossover</h6>
+                                <p class="card-text small">Buy on MACD bullish crossover, sell on bearish</p>
+                                <button class="btn btn-outline-success btn-sm" onclick="loadTemplate('macd_crossover')">Load Template</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h6 class="card-title text-warning">Trend Following</h6>
+                                <p class="card-text small">Follow trend using EMA crossovers</p>
+                                <button class="btn btn-outline-warning btn-sm" onclick="loadTemplate('trend_following')">Load Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentSymbol = 'OKX:BTCUSDT';
+    let currentInterval = '15';
+    let strategyChart = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeStrategyChart();
+        
+        // Event listeners
+        document.getElementById('tradingPair').addEventListener('change', updateSymbolAndChart);
+        document.getElementById('timeframe').addEventListener('change', updateTimeframeAndChart);
+    });
+
+    function initializeStrategyChart() {
+        const studies = getSelectedStudies();
+        
+        window.tvManager.createWidget('strategy_chart', currentSymbol, {
+            width: '100%',
+            height: 600,
+            interval: currentInterval,
+            theme: 'dark',
+            style: '1',
+            toolbar_bg: '#252D3D',
+            enable_publishing: false,
+            withdateranges: true,
+            hide_side_toolbar: false,
+            allow_symbol_change: true,
+            studies: studies,
+            drawings_access: {
+                type: 'black',
+                tools: [
+                    { name: 'Regression Trend' },
+                    { name: 'Trend Line' },
+                    { name: 'Horizontal Line' },
+                    { name: 'Rectangle' }
+                ]
+            }
+        });
+    }
+
+    function getSelectedStudies() {
+        const studies = [];
+        if (document.getElementById('rsi')?.checked) studies.push('RSI@tv-basicstudies');
+        if (document.getElementById('macd')?.checked) studies.push('MACD@tv-basicstudies');
+        if (document.getElementById('ema')?.checked) studies.push('EMA@tv-basicstudies');
+        if (document.getElementById('bb')?.checked) studies.push('BB@tv-basicstudies');
+        return studies;
+    }
+
+    function updateSymbolAndChart() {
+        const pair = document.getElementById('tradingPair').value;
+        currentSymbol = `OKX:${pair}`;
+        document.getElementById('currentPair').textContent = pair.replace('USDT', '/USDT');
+        updateStrategyChart();
+    }
+
+    function updateTimeframeAndChart() {
+        currentInterval = document.getElementById('timeframe').value;
+        const timeframeText = {
+            '15': '15m',
+            '1H': '1h', 
+            '4H': '4h',
+            '1D': '1d'
+        };
+        document.getElementById('currentTimeframe').textContent = timeframeText[currentInterval];
+        updateStrategyChart();
+    }
+
+    function updateStrategyChart() {
+        window.tvManager.destroyWidget('strategy_chart');
+        
+        setTimeout(() => {
+            const studies = getSelectedStudies();
+            window.tvManager.createWidget('strategy_chart', currentSymbol, {
+                width: '100%',
+                height: 600,
+                interval: currentInterval,
+                theme: 'dark',
+                style: '1',
+                toolbar_bg: '#252D3D',
+                enable_publishing: false,
+                withdateranges: true,
+                hide_side_toolbar: false,
+                allow_symbol_change: true,
+                studies: studies,
+                drawings_access: {
+                    type: 'black',
+                    tools: [
+                        { name: 'Regression Trend' },
+                        { name: 'Trend Line' },
+                        { name: 'Horizontal Line' },
+                        { name: 'Rectangle' }
+                    ]
+                }
+            });
+        }, 100);
+
+        // Update backtest results
+        updateBacktestResults();
+    }
+
+    function updateBacktestResults() {
+        const container = document.getElementById('backtestResults');
+        const pair = document.getElementById('tradingPair').value;
+        
+        // Simulate backtest results
+        const results = {
+            totalReturn: (Math.random() * 40 - 10).toFixed(2),
+            winRate: (50 + Math.random() * 30).toFixed(1),
+            maxDrawdown: (Math.random() * 15 + 5).toFixed(2),
+            sharpeRatio: (Math.random() * 2 + 0.5).toFixed(2),
+            totalTrades: Math.floor(Math.random() * 100 + 20)
+        };
+
+        container.innerHTML = `
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="text-muted small">Total Return</div>
+                    <div class="fw-semibold ${results.totalReturn >= 0 ? 'text-success' : 'text-danger'}">
+                        ${results.totalReturn >= 0 ? '+' : ''}${results.totalReturn}%
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-muted small">Win Rate</div>
+                    <div class="fw-semibold">${results.winRate}%</div>
+                </div>
+                <div class="col-6">
+                    <div class="text-muted small">Max Drawdown</div>
+                    <div class="fw-semibold text-warning">-${results.maxDrawdown}%</div>
+                </div>
+                <div class="col-6">
+                    <div class="text-muted small">Sharpe Ratio</div>
+                    <div class="fw-semibold">${results.sharpeRatio}</div>
+                </div>
+                <div class="col-12">
+                    <div class="text-muted small">Total Trades</div>
+                    <div class="fw-semibold">${results.totalTrades}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function loadTemplate(templateName) {
+        const templates = {
+            rsi_reversal: {
+                name: 'RSI Reversal Strategy',
+                entryConditions: 'RSI(14) < 30 AND price above 20-period SMA',
+                exitConditions: 'RSI(14) > 70 OR stop loss at -3%',
+                indicators: ['rsi']
+            },
+            macd_crossover: {
+                name: 'MACD Crossover Strategy', 
+                entryConditions: 'MACD line crosses above signal line AND histogram > 0',
+                exitConditions: 'MACD line crosses below signal line OR stop loss at -4%',
+                indicators: ['macd']
+            },
+            trend_following: {
+                name: 'Trend Following Strategy',
+                entryConditions: 'Price above EMA(21) AND EMA(21) rising',
+                exitConditions: 'Price below EMA(21) OR trailing stop at -5%',
+                indicators: ['ema']
+            }
+        };
+
+        const template = templates[templateName];
+        if (!template) return;
+
+        document.getElementById('strategyName').value = template.name;
+        document.getElementById('entryConditions').value = template.entryConditions;
+        document.getElementById('exitConditions').value = template.exitConditions;
+
+        // Reset all indicators
+        ['rsi', 'macd', 'ema', 'bb'].forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = false;
+        });
+
+        // Set template indicators
+        template.indicators.forEach(indicator => {
+            const checkbox = document.getElementById(indicator);
+            if (checkbox) checkbox.checked = true;
+        });
+
+        updateStrategyChart();
+    }
+
+    function saveStrategy() {
+        const strategy = {
+            name: document.getElementById('strategyName').value,
+            pair: document.getElementById('tradingPair').value,
+            timeframe: document.getElementById('timeframe').value,
+            entryConditions: document.getElementById('entryConditions').value,
+            exitConditions: document.getElementById('exitConditions').value,
+            riskPerTrade: document.getElementById('riskPerTrade').value,
+            maxPositions: document.getElementById('maxPositions').value,
+            indicators: getSelectedStudies()
+        };
+
+        // Here you would typically send to your backend
+        console.log('Saving strategy:', strategy);
+        
+        // Show success message
+        alert('Strategy saved successfully!');
+    }
+</script>
+{% endblock %}
