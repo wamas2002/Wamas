@@ -115,8 +115,8 @@
 <!-- Key Metrics Row -->
 <div class="row mb-4">
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="metric-card">
-            <div class="metric-value" id="portfolioValue">
+        <div class="metric-card fade-in pulse-glow">
+            <div class="metric-value gradient-text" id="portfolioValue">
                 <div class="loading"></div>
             </div>
             <div class="metric-label">Portfolio Value</div>
@@ -127,12 +127,12 @@
     </div>
     
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="metric-card ai-status-card">
-            <div class="metric-value" id="aiAccuracy">
+        <div class="metric-card ai-status-card glass-effect scale-in">
+            <div class="metric-value gradient-text" id="aiAccuracy">
                 <div class="loading"></div>
             </div>
             <div class="metric-label">AI Model Accuracy</div>
-            <div class="retraining-timer" id="retrainingTimer">
+            <div class="retraining-timer glass-effect" id="retrainingTimer">
                 Next training: 2h 15m
             </div>
         </div>
@@ -167,10 +167,10 @@
 <div class="row mb-4">
     <!-- TradingView Chart -->
     <div class="col-lg-8 mb-4">
-        <div class="trading-view-widget">
+        <div class="trading-view-widget glass-effect fade-in floating">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Market Analysis</h5>
-                <select class="symbol-selector" id="symbolSelector" onchange="updateChart()">
+                <h5 class="mb-0 gradient-text">Market Analysis</h5>
+                <select class="symbol-selector glass-effect" id="symbolSelector" onchange="updateChart()">
                     <option value="BTCUSDT">BTC/USDT</option>
                     <option value="ETHUSDT">ETH/USDT</option>
                     <option value="BNBUSDT">BNB/USDT</option>
@@ -178,16 +178,16 @@
                     <option value="SOLUSDT">SOL/USDT</option>
                 </select>
             </div>
-            <div id="tradingViewChart" style="height: 400px;"></div>
+            <div id="tradingViewChart" style="height: 400px; border-radius: 12px; overflow: hidden;"></div>
         </div>
     </div>
     
     <!-- Strategy Builder Preview -->
     <div class="col-lg-4 mb-4">
-        <div class="metric-card">
+        <div class="metric-card glass-effect slide-in">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Active Strategies</h5>
-                <a href="/strategy-builder" class="btn btn-primary btn-sm">Build Strategy</a>
+                <h5 class="mb-0 gradient-text">Active Strategies</h5>
+                <a href="/strategy-builder" class="btn btn-primary btn-sm scale-in">Build Strategy</a>
             </div>
             
             <div class="strategy-block">
