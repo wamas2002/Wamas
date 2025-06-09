@@ -99,18 +99,9 @@ class MultiExchangeConnector:
                     'timestamp': ticker['timestamp']
                 }
             except Exception as e:
-                logger.warning(f"Failed to fetch {symbol} from {exchange_name}: {e}")
-                # Generate realistic price variation
-                base_price = 67000 if 'BTC' in symbol else 3500 if 'ETH' in symbol else 1.0
-                variation = np.random.uniform(-0.002, 0.002)  # ±0.2% variation
-                prices[exchange_name] = {
-                    'price': base_price * (1 + variation),
-                    'bid': base_price * (1 + variation - 0.001),
-                    'ask': base_price * (1 + variation + 0.001),
-                    'volume': np.random.uniform(1000, 50000),
-                    'change_24h': np.random.uniform(-5, 5),
-                    'timestamp': int(datetime.now().timestamp() * 1000)
-                }
+                logger.error(f"Failed to fetch authentic data for {symbol} from {exchange_name}: {e}")
+                # Do not add mock data - skip this exchange
+                continue
         
         # Calculate arbitrage opportunities
         if len(prices) > 1:
@@ -134,103 +125,30 @@ class MultiExchangeConnector:
         }
     
     def get_exchange_portfolio(self, exchange_name: str) -> Dict:
-        """Get portfolio breakdown for specific exchange"""
+        """Get authentic portfolio breakdown for specific exchange"""
         try:
-            # Since we don't have API keys, generate realistic portfolio data
-            base_assets = ['BTC', 'ETH', 'BNB', 'ADA', 'DOT', 'USDT']
-            portfolio = {}
-            total_value = 0
+            exchange = self.exchanges.get(exchange_name)
+            if not exchange:
+                raise Exception(f"Exchange {exchange_name} not supported")
             
-            for asset in base_assets:
-                if asset == 'USDT':
-                    balance = np.random.uniform(1000, 5000)
-                    price = 1.0
-                elif asset == 'BTC':
-                    balance = np.random.uniform(0.01, 0.5)
-                    price = 67000 + np.random.uniform(-1000, 1000)
-                elif asset == 'ETH':
-                    balance = np.random.uniform(0.1, 5.0)
-                    price = 3500 + np.random.uniform(-100, 100)
-                else:
-                    balance = np.random.uniform(10, 1000)
-                    price = np.random.uniform(0.5, 50)
-                
-                value = balance * price
-                total_value += value
-                
-                portfolio[asset] = {
-                    'balance': balance,
-                    'price': price,
-                    'value': value,
-                    'percentage': 0,  # Will calculate after total
-                    'change_24h': np.random.uniform(-10, 10)
-                }
-            
-            # Calculate percentages
-            for asset in portfolio:
-                portfolio[asset]['percentage'] = (portfolio[asset]['value'] / total_value) * 100
-            
-            return {
-                'exchange': exchange_name,
-                'total_value': total_value,
-                'assets': portfolio,
-                'asset_count': len(portfolio),
-                'last_updated': datetime.now().isoformat()
-            }
+            # Fetch authentic balance data (requires API keys in production)
+            # For now, we'll raise an error to force authentic API key configuration
+            raise Exception(f"Authentic portfolio access requires API keys for {exchange_name}. Please configure authentication.")
             
         except Exception as e:
-            logger.error(f"Error getting {exchange_name} portfolio: {e}")
-            return {'error': str(e)}
+            logger.error(f"Error getting authentic {exchange_name} portfolio: {e}")
+            raise Exception(f"Unable to fetch authentic portfolio from {exchange_name}: {e}")
     
     def get_aggregated_portfolio(self) -> Dict:
-        """Get aggregated portfolio across all exchanges"""
+        """Get authentic aggregated portfolio across all exchanges"""
         try:
-            aggregated = {}
-            total_value = 0
-            exchange_breakdown = {}
-            
-            for exchange_name in self.exchanges.keys():
-                portfolio = self.get_exchange_portfolio(exchange_name)
-                if 'error' not in portfolio:
-                    exchange_breakdown[exchange_name] = {
-                        'value': portfolio['total_value'],
-                        'asset_count': portfolio['asset_count']
-                    }
-                    total_value += portfolio['total_value']
-                    
-                    # Aggregate assets
-                    for asset, data in portfolio['assets'].items():
-                        if asset not in aggregated:
-                            aggregated[asset] = {
-                                'total_balance': 0,
-                                'total_value': 0,
-                                'exchanges': {},
-                                'avg_price': 0
-                            }
-                        
-                        aggregated[asset]['total_balance'] += data['balance']
-                        aggregated[asset]['total_value'] += data['value']
-                        aggregated[asset]['exchanges'][exchange_name] = {
-                            'balance': data['balance'],
-                            'value': data['value']
-                        }
-                        aggregated[asset]['avg_price'] = data['price']  # Last price wins
-            
-            # Calculate percentages for aggregated portfolio
-            for asset in aggregated:
-                aggregated[asset]['percentage'] = (aggregated[asset]['total_value'] / total_value) * 100
-            
-            return {
-                'total_value': total_value,
-                'assets': aggregated,
-                'exchanges': exchange_breakdown,
-                'diversification_score': len(aggregated) * 10,  # Simple score
-                'last_updated': datetime.now().isoformat()
-            }
+            # Require authentic portfolio data from each exchange
+            # Cannot aggregate without real portfolio access
+            raise Exception("Authentic aggregated portfolio requires API keys for all exchanges. Please configure authentication for OKX, Binance, and other exchanges.")
             
         except Exception as e:
-            logger.error(f"Error aggregating portfolio: {e}")
-            return {'error': str(e)}
+            logger.error(f"Error getting authentic aggregated portfolio: {e}")
+            raise Exception(f"Unable to fetch authentic aggregated portfolio: {e}")
     
     def get_exchange_orderbook(self, symbol: str, exchange_name: str, limit: int = 20) -> Dict:
         """Get orderbook data from specific exchange"""
@@ -251,29 +169,8 @@ class MultiExchangeConnector:
             }
             
         except Exception as e:
-            logger.warning(f"Failed to fetch orderbook for {symbol} from {exchange_name}: {e}")
-            # Generate realistic orderbook
-            base_price = 67000 if 'BTC' in symbol else 3500 if 'ETH' in symbol else 1.0
-            
-            bids = []
-            asks = []
-            
-            for i in range(limit):
-                bid_price = base_price * (1 - (i + 1) * 0.001)
-                ask_price = base_price * (1 + (i + 1) * 0.001)
-                volume = np.random.uniform(0.1, 10)
-                
-                bids.append([bid_price, volume])
-                asks.append([ask_price, volume])
-            
-            return {
-                'symbol': symbol,
-                'exchange': exchange_name,
-                'bids': bids,
-                'asks': asks,
-                'spread': asks[0][0] - bids[0][0],
-                'timestamp': int(datetime.now().timestamp() * 1000)
-            }
+            logger.error(f"Failed to fetch authentic orderbook for {symbol} from {exchange_name}: {e}")
+            raise Exception(f"Unable to fetch authentic orderbook data for {symbol} from {exchange_name}: {e}")
     
     def compare_exchanges(self, symbol: str) -> Dict:
         """Compare trading conditions across exchanges"""

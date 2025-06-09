@@ -49,8 +49,9 @@ class MultiTimeframeAnalyzer:
                     }
                     
                 except Exception as e:
-                    logger.warning(f"Failed to fetch {tf} data for {symbol}: {e}")
-                    multi_tf_data[tf] = self._generate_fallback_timeframe_data(symbol, tf, limit)
+                    logger.error(f"Failed to fetch authentic {tf} data for {symbol}: {e}")
+                    # Skip this timeframe if authentic data unavailable
+                    continue
             
             return {
                 'success': True,
@@ -63,7 +64,7 @@ class MultiTimeframeAnalyzer:
             
         except Exception as e:
             logger.error(f"Multi-timeframe analysis error: {e}")
-            return self._generate_fallback_data(symbol, limit)
+            raise Exception(f"Unable to fetch authentic multi-timeframe data for {symbol}: {e}")
     
     def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate technical indicators for timeframe analysis"""
@@ -299,40 +300,34 @@ class MultiTimeframeAnalyzer:
                 'recommendations': [{'action': 'HOLD', 'reason': 'Analysis unavailable', 'confidence': 0.5}]
             }
     
-    def _generate_fallback_data(self, symbol: str, limit: int) -> Dict:
-        """Generate realistic fallback data when API fails"""
-        multi_tf_data = {}
-        
-        for tf in self.timeframes:
-            multi_tf_data[tf] = self._generate_fallback_timeframe_data(symbol, tf, limit)
-        
-        return {
-            'success': True,
-            'symbol': symbol,
-            'exchange': 'okx',
-            'timeframes': multi_tf_data,
-            'analysis': {
-                'overall_trend': 'neutral',
-                'strength': 'moderate',
-                'buy_signals': 2,
-                'sell_signals': 1,
-                'recommendations': [{'action': 'HOLD', 'reason': 'Using fallback data', 'confidence': 0.5}]
-            },
-            'last_updated': datetime.now().isoformat()
-        }
-    
-    def _generate_fallback_timeframe_data(self, symbol: str, timeframe: str, limit: int) -> Dict:
-        """Generate fallback data for a specific timeframe"""
-        base_price = 67000 if 'BTC' in symbol else 3500 if 'ETH' in symbol else 1.0
-        
-        return {
-            'data': [],
-            'current_price': base_price * (1 + np.random.uniform(-0.05, 0.05)),
-            'change_24h': np.random.uniform(-5, 5),
-            'volume_24h': np.random.uniform(1000000, 10000000),
-            'trend': np.random.choice(['bullish', 'bearish', 'neutral']),
-            'signals': []
-        }
+    def _get_authentic_data_only(self, symbol: str, exchange: str) -> Dict:
+        """Get only authentic market data, no fallback allowed"""
+        try:
+            exchange_obj = self.exchanges.get(exchange)
+            if not exchange_obj:
+                raise Exception(f"Exchange {exchange} not available")
+            
+            # Fetch real OHLCV data for primary timeframe
+            ohlcv = exchange_obj.fetch_ohlcv(symbol, '1h', limit=100)
+            if not ohlcv:
+                raise Exception(f"No market data available for {symbol}")
+            
+            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+            
+            return {
+                'success': True,
+                'symbol': symbol,
+                'exchange': exchange,
+                'authentic_data': True,
+                'last_price': float(df['close'].iloc[-1]),
+                'volume_24h': float(df['volume'].sum()),
+                'last_updated': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Authentic data fetch failed for {symbol}: {e}")
+            raise Exception(f"Unable to fetch authentic market data for {symbol} from {exchange}: {e}")
 
 # Plugin instance
 multi_timeframe_analyzer = MultiTimeframeAnalyzer()

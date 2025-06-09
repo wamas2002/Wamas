@@ -1033,24 +1033,7 @@ def api_multi_timeframe_analysis():
         
     except Exception as e:
         logger.error(f"Multi-timeframe analysis error: {e}")
-        # Return authentic-based fallback
-        return jsonify({
-            'success': True,
-            'symbol': data.get('symbol', 'BTC/USDT'),
-            'exchange': data.get('exchange', 'okx'),
-            'timeframes': {
-                '1h': {'trend': 'bullish', 'signals': [{'type': 'buy', 'indicator': 'RSI'}]},
-                '4h': {'trend': 'neutral', 'signals': []},
-                '1d': {'trend': 'bearish', 'signals': [{'type': 'sell', 'indicator': 'MACD'}]}
-            },
-            'analysis': {
-                'overall_trend': 'neutral',
-                'strength': 'moderate',
-                'buy_signals': 3,
-                'sell_signals': 2,
-                'recommendations': [{'action': 'HOLD', 'reason': 'Mixed signals', 'confidence': 0.6}]
-            }
-        })
+        return jsonify({'error': f'Unable to fetch authentic multi-timeframe data: {str(e)}'}), 500
 
 @app.route('/api/exchange-prices', methods=['POST'])
 def api_exchange_prices():
