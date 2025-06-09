@@ -193,6 +193,14 @@ def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
 if __name__ == '__main__':
-    logger.info("Starting Modern Trading Platform on port 5001")
+    import os
+    port = int(os.environ.get('PORT', 8080))
+    logger.info(f"Starting Modern Trading Platform on port {port}")
     logger.info("Professional UI with 3Commas/TradingView design")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    
+    # Ensure proper server startup
+    try:
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        raise

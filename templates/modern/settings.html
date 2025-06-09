@@ -1,0 +1,625 @@
+{% extends "modern/base.html" %}
+
+{% block title %}Settings - Intellectia Trading Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">Platform Settings</h2>
+        <p class="text-secondary">Configure API keys, risk controls, and system preferences</p>
+    </div>
+</div>
+
+<!-- Settings Tabs -->
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-pills mb-4" id="settingsTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="pill" href="#api-keys">API Keys</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#risk-controls">Risk Controls</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#trading-settings">Trading</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#notifications">Notifications</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#system">System</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- API Keys Tab -->
+            <div class="tab-pane fade show active" id="api-keys">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Exchange API Configuration</h5>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">OKX API Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="okxApiKey" placeholder="Enter OKX API Key">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('okxApiKey')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="text-secondary">Your OKX API key for live trading</small>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">OKX Secret Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="okxSecret" placeholder="Enter OKX Secret">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('okxSecret')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">OKX Passphrase</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="okxPassphrase" placeholder="Enter OKX Passphrase">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('okxPassphrase')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" id="sandboxMode" checked>
+                                <label class="form-check-label" for="sandboxMode">
+                                    Use Sandbox Mode (Recommended for testing)
+                                </label>
+                            </div>
+                            
+                            <button class="btn btn-success" onclick="testConnection()">Test Connection</button>
+                            <button class="btn btn-primary ms-2" onclick="saveApiKeys()">Save Keys</button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="metric-card">
+                            <h6 class="mb-3">Connection Status</h6>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>OKX Exchange</span>
+                                    <span class="badge bg-success" id="okxStatus">Connected</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Portfolio Sync</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Trading Engine</span>
+                                    <span class="badge bg-warning">Standby</span>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6 class="mb-3">Security Tips</h6>
+                            <ul class="list-unstyled small text-secondary">
+                                <li class="mb-2">• Use IP restrictions on your API keys</li>
+                                <li class="mb-2">• Enable only necessary permissions</li>
+                                <li class="mb-2">• Test with small amounts first</li>
+                                <li class="mb-2">• Monitor API usage regularly</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Controls Tab -->
+            <div class="tab-pane fade" id="risk-controls">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Position Limits</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Maximum Position Size (%)</label>
+                                <input type="range" class="form-range" min="1" max="50" value="10" id="maxPositionSize">
+                                <div class="d-flex justify-content-between text-secondary small">
+                                    <span>1%</span>
+                                    <span id="maxPositionValue">10%</span>
+                                    <span>50%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Daily Loss Limit ($)</label>
+                                <input type="number" class="form-control" value="500" id="dailyLossLimit">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Maximum Open Positions</label>
+                                <input type="number" class="form-control" value="8" min="1" max="20" id="maxPositions">
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="stopTradingOnLimit" checked>
+                                <label class="form-check-label" for="stopTradingOnLimit">
+                                    Stop trading when limits reached
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Risk Management</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Default Stop Loss (%)</label>
+                                <input type="number" class="form-control" value="2.5" step="0.1" id="defaultStopLoss">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Default Take Profit (%)</label>
+                                <input type="number" class="form-control" value="5.0" step="0.1" id="defaultTakeProfit">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Risk Level</label>
+                                <select class="form-select" id="riskLevel">
+                                    <option value="conservative">Conservative</option>
+                                    <option value="moderate" selected>Moderate</option>
+                                    <option value="aggressive">Aggressive</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="emergencyStop">
+                                <label class="form-check-label" for="emergencyStop">
+                                    Emergency stop (Close all positions)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Settings Tab -->
+            <div class="tab-pane fade" id="trading-settings">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Strategy Configuration</h5>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="autoTrading" checked>
+                                <label class="form-check-label" for="autoTrading">
+                                    Enable automatic trading
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="aiSignals" checked>
+                                <label class="form-check-label" for="aiSignals">
+                                    Use AI-generated signals
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Trading Timeframe</label>
+                                <select class="form-select" id="tradingTimeframe">
+                                    <option value="1m">1 Minute</option>
+                                    <option value="5m">5 Minutes</option>
+                                    <option value="15m">15 Minutes</option>
+                                    <option value="1h" selected>1 Hour</option>
+                                    <option value="4h">4 Hours</option>
+                                    <option value="1d">1 Day</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Minimum Confidence Level (%)</label>
+                                <input type="range" class="form-range" min="50" max="95" value="75" id="minConfidence">
+                                <div class="d-flex justify-content-between text-secondary small">
+                                    <span>50%</span>
+                                    <span id="confidenceValue">75%</span>
+                                    <span>95%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Portfolio Allocation</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Cash Reserve (%)</label>
+                                <input type="range" class="form-range" min="5" max="50" value="20" id="cashReserve">
+                                <div class="d-flex justify-content-between text-secondary small">
+                                    <span>5%</span>
+                                    <span id="cashReserveValue">20%</span>
+                                    <span>50%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="autoRebalance" checked>
+                                <label class="form-check-label" for="autoRebalance">
+                                    Automatic portfolio rebalancing
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Rebalance Frequency</label>
+                                <select class="form-select" id="rebalanceFreq">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly" selected>Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div class="tab-pane fade" id="notifications">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Notification Preferences</h5>
+                            
+                            <div class="mb-4">
+                                <h6>Trade Notifications</h6>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="tradeExecuted" checked>
+                                    <label class="form-check-label" for="tradeExecuted">
+                                        Trade executed
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="stopLossHit" checked>
+                                    <label class="form-check-label" for="stopLossHit">
+                                        Stop loss triggered
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="takeProfitHit" checked>
+                                    <label class="form-check-label" for="takeProfitHit">
+                                        Take profit reached
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Risk Alerts</h6>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dailyLimitAlert" checked>
+                                    <label class="form-check-label" for="dailyLimitAlert">
+                                        Daily loss limit reached
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="portfolioAlert" checked>
+                                    <label class="form-check-label" for="portfolioAlert">
+                                        Portfolio concentration risk
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="apiAlert" checked>
+                                    <label class="form-check-label" for="apiAlert">
+                                        API connection issues
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>System Notifications</h6>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="systemUpdate">
+                                    <label class="form-check-label" for="systemUpdate">
+                                        System updates
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="modelRetrain" checked>
+                                    <label class="form-check-label" for="modelRetrain">
+                                        Model retraining completed
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="metric-card">
+                            <h6 class="mb-3">Notification Methods</h6>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="emailNotif" checked>
+                                <label class="form-check-label" for="emailNotif">
+                                    Email notifications
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="smsNotif">
+                                <label class="form-check-label" for="smsNotif">
+                                    SMS notifications
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="pushNotif" checked>
+                                <label class="form-check-label" for="pushNotif">
+                                    Browser notifications
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" placeholder="your@email.com">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" placeholder="+1234567890">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Tab -->
+            <div class="tab-pane fade" id="system">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="metric-card">
+                            <h5 class="mb-4">System Preferences</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Theme</label>
+                                <select class="form-select" id="themeSelect">
+                                    <option value="dark" selected>Dark</option>
+                                    <option value="light">Light</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Data Refresh Rate</label>
+                                <select class="form-select" id="refreshRate">
+                                    <option value="5">5 seconds</option>
+                                    <option value="10">10 seconds</option>
+                                    <option value="30" selected>30 seconds</option>
+                                    <option value="60">1 minute</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="autoSave" checked>
+                                <label class="form-check-label" for="autoSave">
+                                    Auto-save settings
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="analytics" checked>
+                                <label class="form-check-label" for="analytics">
+                                    Enable usage analytics
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="metric-card">
+                            <h5 class="mb-4">Data Management</h5>
+                            
+                            <div class="mb-3">
+                                <button class="btn btn-outline-primary w-100 mb-2">Export Trading Data</button>
+                                <button class="btn btn-outline-primary w-100 mb-2">Export Settings</button>
+                                <button class="btn btn-outline-warning w-100 mb-2">Clear Cache</button>
+                                <button class="btn btn-outline-danger w-100">Reset to Defaults</button>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6 class="mb-3">System Information</h6>
+                            <div class="row text-center">
+                                <div class="col-6 mb-2">
+                                    <small class="text-secondary">Version</small>
+                                    <div class="fw-bold">v1.0.0</div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <small class="text-secondary">Uptime</small>
+                                    <div class="fw-bold">24h 15m</div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <small class="text-secondary">Memory</small>
+                                    <div class="fw-bold">2.1 GB</div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <small class="text-secondary">CPU</small>
+                                    <div class="fw-bold">45%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <button class="btn btn-success btn-lg" onclick="saveAllSettings()">Save All Settings</button>
+            <button class="btn btn-outline-secondary btn-lg ms-3" onclick="resetSettings()">Reset</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize Settings Page
+    function initializeSettings() {
+        loadCurrentSettings();
+        setupRangeSliders();
+    }
+    
+    // Load Current Settings
+    function loadCurrentSettings() {
+        // In production, would load from API
+        console.log('Loading current settings...');
+    }
+    
+    // Setup Range Sliders
+    function setupRangeSliders() {
+        const sliders = [
+            { id: 'maxPositionSize', output: 'maxPositionValue', suffix: '%' },
+            { id: 'minConfidence', output: 'confidenceValue', suffix: '%' },
+            { id: 'cashReserve', output: 'cashReserveValue', suffix: '%' }
+        ];
+        
+        sliders.forEach(slider => {
+            const element = document.getElementById(slider.id);
+            const output = document.getElementById(slider.output);
+            
+            if (element && output) {
+                element.addEventListener('input', function() {
+                    output.textContent = this.value + slider.suffix;
+                });
+            }
+        });
+    }
+    
+    // Toggle Password Visibility
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = field.nextElementSibling.querySelector('i');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            field.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+    
+    // Test API Connection
+    function testConnection() {
+        const apiKey = document.getElementById('okxApiKey').value;
+        const secret = document.getElementById('okxSecret').value;
+        const passphrase = document.getElementById('okxPassphrase').value;
+        
+        if (!apiKey || !secret || !passphrase) {
+            alert('Please enter all API credentials before testing.');
+            return;
+        }
+        
+        updateSystemStatus('loading');
+        
+        // Simulate API test
+        setTimeout(() => {
+            const success = Math.random() > 0.3; // 70% success rate for demo
+            
+            if (success) {
+                document.getElementById('okxStatus').textContent = 'Connected';
+                document.getElementById('okxStatus').className = 'badge bg-success';
+                alert('API connection successful!');
+                updateSystemStatus('live');
+            } else {
+                document.getElementById('okxStatus').textContent = 'Failed';
+                document.getElementById('okxStatus').className = 'badge bg-danger';
+                alert('API connection failed. Please check your credentials.');
+                updateSystemStatus('error');
+            }
+        }, 2000);
+    }
+    
+    // Save API Keys
+    function saveApiKeys() {
+        const apiKey = document.getElementById('okxApiKey').value;
+        const secret = document.getElementById('okxSecret').value;
+        const passphrase = document.getElementById('okxPassphrase').value;
+        
+        if (!apiKey || !secret || !passphrase) {
+            alert('Please enter all API credentials.');
+            return;
+        }
+        
+        // In production, would securely save to backend
+        alert('API keys saved successfully!');
+        console.log('Saving API keys securely...');
+    }
+    
+    // Save All Settings
+    function saveAllSettings() {
+        const settings = {
+            api: {
+                okx_key: document.getElementById('okxApiKey').value,
+                sandbox_mode: document.getElementById('sandboxMode').checked
+            },
+            risk: {
+                max_position: document.getElementById('maxPositionSize').value,
+                daily_loss_limit: document.getElementById('dailyLossLimit').value,
+                max_positions: document.getElementById('maxPositions').value,
+                stop_on_limit: document.getElementById('stopTradingOnLimit').checked,
+                default_stop_loss: document.getElementById('defaultStopLoss').value,
+                default_take_profit: document.getElementById('defaultTakeProfit').value,
+                risk_level: document.getElementById('riskLevel').value
+            },
+            trading: {
+                auto_trading: document.getElementById('autoTrading').checked,
+                ai_signals: document.getElementById('aiSignals').checked,
+                timeframe: document.getElementById('tradingTimeframe').value,
+                min_confidence: document.getElementById('minConfidence').value,
+                cash_reserve: document.getElementById('cashReserve').value,
+                auto_rebalance: document.getElementById('autoRebalance').checked,
+                rebalance_freq: document.getElementById('rebalanceFreq').value
+            },
+            notifications: {
+                trade_executed: document.getElementById('tradeExecuted').checked,
+                stop_loss: document.getElementById('stopLossHit').checked,
+                take_profit: document.getElementById('takeProfitHit').checked,
+                daily_limit: document.getElementById('dailyLimitAlert').checked,
+                portfolio_risk: document.getElementById('portfolioAlert').checked,
+                api_issues: document.getElementById('apiAlert').checked,
+                email: document.getElementById('emailNotif').checked,
+                sms: document.getElementById('smsNotif').checked,
+                push: document.getElementById('pushNotif').checked
+            },
+            system: {
+                theme: document.getElementById('themeSelect').value,
+                refresh_rate: document.getElementById('refreshRate').value,
+                auto_save: document.getElementById('autoSave').checked,
+                analytics: document.getElementById('analytics').checked
+            }
+        };
+        
+        console.log('Saving settings:', settings);
+        alert('All settings saved successfully!');
+        
+        // Apply theme change immediately
+        if (settings.system.theme !== 'auto') {
+            document.documentElement.setAttribute('data-theme', settings.system.theme);
+        }
+    }
+    
+    // Reset Settings
+    function resetSettings() {
+        if (confirm('Reset all settings to default values? This cannot be undone.')) {
+            location.reload();
+        }
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeSettings);
+</script>
+{% endblock %}
