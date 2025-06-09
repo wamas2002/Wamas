@@ -25,6 +25,17 @@ class RealDataService:
         
         self._initialize_okx_connection()
     
+    def safe_get_price(self, data):
+        """Safely extract price from data"""
+        if isinstance(data, (int, float)):
+            return float(data)
+        elif isinstance(data, dict):
+            return float(data.get('price', data.get('last', data.get('close', 0.0))))
+        elif hasattr(data, 'price'):
+            return float(data.price)
+        else:
+            return 0.0
+
     def _initialize_okx_connection(self):
         """Initialize OKX exchange connection for market data"""
         try:

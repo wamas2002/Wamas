@@ -20,6 +20,29 @@ app.config['SECRET_KEY'] = 'modern-trading-platform-2024'
 # Initialize data service
 data_service = RealDataService()
 
+
+def safe_get_price(data):
+    """Safely extract price from data"""
+    if isinstance(data, (int, float)):
+        return float(data)
+    elif isinstance(data, dict):
+        return float(data.get('price', data.get('last', data.get('close', 0.0))))
+    elif hasattr(data, 'price'):
+        return float(data.price)
+    else:
+        return 0.0
+
+def safe_get_value(data):
+    """Safely extract value from data"""
+    if isinstance(data, (int, float)):
+        return float(data)
+    elif isinstance(data, dict):
+        return float(data.get('value', data.get('current_value', 0.0)))
+    elif hasattr(data, 'value'):
+        return float(data.value)
+    else:
+        return 0.0
+
 class ModernTradingInterface:
     def __init__(self):
         self.data_service = data_service
