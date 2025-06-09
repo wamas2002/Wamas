@@ -1,0 +1,59 @@
+# 🚀 Goal:
+# Enhance the existing trading system with advanced, modular features that improve visibility, usability, and performance —
+# without altering any of the core trading logic, AI models, or data pipelines.
+
+# 🔒 Constraints:
+# - DO NOT modify core backend (model training, execution engine, database schema, OKX data handlers)
+# - Maintain full compatibility with live data sources and all current modules
+# - Only ADD new frontend components or parallel helper modules
+
+# ✅ New Features to Implement:
+
+## 1. 📊 Multi-Timeframe + Multi-Chart Analysis (MTFA)
+# - Add the ability to view multiple TradingView widget charts per symbol (1h, 4h, 1d, 1w)
+# - Embed within dashboard and strategy builder pages using tabbed or side-by-side layout
+# - Ensure charts reflect real-time data for the selected pair
+
+## 2. 🧠 AI Explainability & Model Insights
+# - Add a panel that shows:
+#   - Model used (e.g., GradientBoost, LSTM)
+#   - Confidence score
+#   - Feature importance rankings
+#   - Explanation of why a trade signal was generated
+# - Integrate SHAP, LIME, or surrogate explainers if available, or fallback to rule-based summary
+
+## 3. 🔍 Real-Time Screener / Signal Scanner
+# - Scan all supported pairs every X minutes for:
+#   - Trade signals from AI models
+#   - Strategy triggers (e.g., RSI cross, MACD divergence)
+#   - Volatility spikes or volume surges
+# - Display in a new "📡 Screener" tab with sortable results
+
+## 4. 🧪 Advanced Backtesting Visualization
+# - Improve existing backtest interface to include:
+#   - Equity curve
+#   - Drawdown chart
+#   - Trade-by-trade profit heatmap
+#   - Annotated TradingView chart with entry/exit markers
+# - Allow comparison between strategies and models
+
+## 5. 💼 Enhanced Portfolio Management
+# - Add deeper analytics to portfolio tab:
+#   - Daily/weekly/monthly P&L summaries
+#   - Allocation donut chart by symbol & strategy
+#   - Sharpe ratio, win rate, max drawdown
+# - Include an option to simulate portfolio rebalancing suggestions (read-only)
+
+## 6. 🌐 Multi-Exchange Support (Optional but Future-Ready)
+# - Scaffold support for additional exchanges (e.g., Binance, KuCoin) using modular API adapter pattern
+# - For now, just allow user to input alternate API credentials via UI
+# - Keep OKX as the only active exchange unless user explicitly switches
+
+# 🖥 UI/UX Integration:
+# - All new features must integrate into existing design framework (Flask/Streamlit or HTML/CSS frontend)
+# - Must use real data from OKX API unless explicitly in simulation mode
+# - Use TradingView widgets wherever charting is needed
+
+# ✅ Final Output:
+# - Each module must be isolated, non-intrusive, and seamlessly integrate with the existing UI
+# - Confirm no disruption to the current workflow or data integrity
