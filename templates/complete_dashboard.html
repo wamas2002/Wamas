@@ -25,6 +25,18 @@
             --border-color: #2A3441;
         }
 
+        [data-theme="light"] {
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --accent-blue: #4F8BFF;
+            --accent-green: #00D395;
+            --accent-red: #FF4757;
+            --text-primary: #1A202C;
+            --text-secondary: #4A5568;
+            --border-color: #E2E8F0;
+        }
+
         body {
             background: var(--bg-primary);
             color: var(--text-primary);
@@ -169,6 +181,9 @@
             </div>
             
             <div class="d-flex align-items-center ms-3">
+                <button class="btn btn-sm btn-outline-light me-3" onclick="toggleTheme()" id="themeToggle">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
                 <span class="status-indicator status-online"></span>
                 <small class="text-muted">Live Data Active</small>
             </div>
@@ -324,14 +339,57 @@
         let currentSymbol = 'OKX:BTCUSDT';
         let widgets = new Map();
         
+        // Theme Management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('trading-platform-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('trading-platform-theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            // Refresh all TradingView widgets with new theme
+            setTimeout(() => {
+                widgets.forEach((widget, containerId) => {
+                    try {
+                        widget.remove();
+                    } catch (e) {}
+                });
+                widgets.clear();
+                initializeDashboard();
+            }, 500);
+        }
+
+        function updateThemeIcon(theme) {
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        
         // TradingView Widget Manager
         class TradingViewManager {
             constructor() {
+                this.getCurrentTheme = () => {
+                    return document.documentElement.getAttribute('data-theme') || 'dark';
+                };
+                
                 this.defaultConfig = {
-                    theme: 'dark',
+                    get theme() {
+                        return document.documentElement.getAttribute('data-theme') || 'dark';
+                    },
                     style: '1',
                     locale: 'en',
-                    toolbar_bg: '#252D3D',
+                    get toolbar_bg() {
+                        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+                        return theme === 'dark' ? '#252D3D' : '#FFFFFF';
+                    },
                     enable_publishing: false,
                     withdateranges: true,
                     hide_side_toolbar: false,
@@ -541,6 +599,19 @@
                 });
             }, 500);
         }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Complete Trading Platform Dashboard...');
+            initializeTheme();
+            initializeDashboard();
+            loadPortfolioData();
+            loadAISignals();
+            
+            // Set up real-time updates
+            setInterval(loadPortfolioData, 30000);
+            setInterval(loadAISignals, 30000);
+        });
 
         console.log('Complete Trading Platform Dashboard loaded successfully');
     </script>
