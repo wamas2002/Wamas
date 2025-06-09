@@ -805,7 +805,8 @@ def api_saved_strategies():
         ai_strategies = get_all_strategies()
         
         # Get strategies from saved_strategies table
-        conn = sqlite3.connect(db_manager.db_path)
+        conn = sqlite3.connect(db_manager.db_path, timeout=30.0)
+        conn.execute('PRAGMA busy_timeout = 30000')
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -845,6 +846,20 @@ def api_saved_strategies():
         logger.error(f"Error loading saved strategies: {e}")
         return jsonify({'error': str(e)}), 500
 
+def execute_db_operation(operation_func, max_retries=3, retry_delay=0.5):
+    """Execute database operations with retry logic for handling locks"""
+    import time
+    
+    for attempt in range(max_retries):
+        try:
+            return operation_func()
+        except sqlite3.OperationalError as e:
+            if "database is locked" in str(e).lower() and attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                continue
+            raise e
+    raise sqlite3.OperationalError("Database operation failed after maximum retries")
+
 @app.route('/api/strategies/save', methods=['POST'])
 def api_save_strategy():
     """Save AI-generated strategy to the existing system storage"""
@@ -854,51 +869,58 @@ def api_save_strategy():
         if not data or not data.get('name') or not data.get('code'):
             return jsonify({'error': 'Strategy name and code are required'}), 400
         
-        # Check for duplicate names
-        existing_strategies = get_all_strategies()
-        if any(s['name'] == data['name'] for s in existing_strategies):
-            return jsonify({'error': 'Strategy name already exists. Please choose a different name.'}), 400
+        def save_strategy_operation():
+            # Check for duplicate names
+            existing_strategies = get_all_strategies()
+            if any(s['name'] == data['name'] for s in existing_strategies):
+                raise ValueError('Strategy name already exists. Please choose a different name.')
+            
+            # Save strategy to database using WAL mode for better concurrency
+            conn = sqlite3.connect(db_manager.db_path, timeout=30.0)
+            conn.execute('PRAGMA journal_mode=WAL')  # Write-Ahead Logging for better concurrency
+            conn.execute('PRAGMA busy_timeout = 30000')
+            conn.execute('PRAGMA synchronous = NORMAL')  # Faster writes
+            cursor = conn.cursor()
+            
+            # Create strategies table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS saved_strategies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE NOT NULL,
+                    description TEXT,
+                    code TEXT NOT NULL,
+                    parameters TEXT,
+                    visual_blocks TEXT,
+                    strategy_type TEXT DEFAULT 'ai_generated',
+                    created_by TEXT DEFAULT 'AI Assistant',
+                    tags TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Insert the new strategy
+            cursor.execute('''
+                INSERT INTO saved_strategies 
+                (name, description, code, parameters, visual_blocks, strategy_type, created_by, tags)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                data['name'],
+                data.get('description', ''),
+                data['code'],
+                json.dumps(data.get('parameters', {})),
+                json.dumps(data.get('visual_blocks', [])),
+                data.get('strategy_type', 'ai_generated'),
+                data.get('created_by', 'AI Assistant'),
+                json.dumps(data.get('tags', []))
+            ))
+            
+            strategy_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            return strategy_id
         
-        # Save strategy to database using existing strategy storage logic
-        conn = sqlite3.connect(db_manager.db_path)
-        cursor = conn.cursor()
-        
-        # Create strategies table if it doesn't exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS saved_strategies (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE NOT NULL,
-                description TEXT,
-                code TEXT NOT NULL,
-                parameters TEXT,
-                visual_blocks TEXT,
-                strategy_type TEXT DEFAULT 'ai_generated',
-                created_by TEXT DEFAULT 'AI Assistant',
-                tags TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Insert the new strategy
-        cursor.execute('''
-            INSERT INTO saved_strategies 
-            (name, description, code, parameters, visual_blocks, strategy_type, created_by, tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            data['name'],
-            data.get('description', ''),
-            data['code'],
-            json.dumps(data.get('parameters', {})),
-            json.dumps(data.get('visual_blocks', [])),
-            data.get('strategy_type', 'ai_generated'),
-            data.get('created_by', 'AI Assistant'),
-            json.dumps(data.get('tags', []))
-        ))
-        
-        strategy_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+        strategy_id = execute_db_operation(save_strategy_operation)
         
         logger.info(f"Strategy '{data['name']}' saved successfully with ID {strategy_id}")
         
@@ -908,6 +930,8 @@ def api_save_strategy():
             'message': f"Strategy '{data['name']}' saved successfully to your library"
         })
         
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Strategy name already exists. Please choose a different name.'}), 400
     except Exception as e:
@@ -918,7 +942,8 @@ def api_save_strategy():
 def api_get_strategy(strategy_id):
     """Get a specific saved strategy by ID"""
     try:
-        conn = sqlite3.connect(db_manager.db_path)
+        conn = sqlite3.connect(db_manager.db_path, timeout=30.0)
+        conn.execute('PRAGMA busy_timeout = 30000')
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -957,7 +982,8 @@ def api_get_strategy(strategy_id):
 def api_delete_strategy(strategy_id):
     """Delete a saved strategy by ID"""
     try:
-        conn = sqlite3.connect(db_manager.db_path)
+        conn = sqlite3.connect(db_manager.db_path, timeout=30.0)
+        conn.execute('PRAGMA busy_timeout = 30000')
         cursor = conn.cursor()
         
         # Check if strategy exists
