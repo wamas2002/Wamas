@@ -353,6 +353,9 @@
     async function loadDashboardData() {
         try {
             const response = await fetch('/api/dashboard-data');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             dashboardData = await response.json();
             
             if (dashboardData.error) {
@@ -366,6 +369,8 @@
         } catch (error) {
             console.error('Dashboard data error:', error);
             updateSystemStatus('error', error.message);
+            // Prevent unhandled rejection
+            return Promise.resolve();
         }
     }
     

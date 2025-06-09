@@ -200,8 +200,8 @@ if __name__ == '__main__':
     import os
     import socket
     
-    # Use port 5000 for workflow compatibility
-    port = 5000
+    # Use port 8080 for reliable deployment
+    port = 8080
     logger.info(f"Starting Modern Trading Platform on port {port}")
     logger.info("Professional UI with 3Commas/TradingView design")
     
