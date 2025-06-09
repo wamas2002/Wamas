@@ -26,7 +26,7 @@ args = "Complete Trading Platform"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Signal Execution Bridge"
+args = "Live Trading System"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -46,7 +46,7 @@ args = "python complete_trading_platform.py"
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "Signal Execution Bridge"
+name = "Live Trading System"
 author = "agent"
 
 [[workflows.workflow.tasks]]

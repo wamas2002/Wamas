@@ -29,7 +29,7 @@ class SignalExecutionBridge:
         self.rate_limit_delay = 0.2  # 200ms between API calls (5 req/sec max)
         self.execution_threshold = 60.0  # 60% confidence minimum (stored as percentage)
         self.max_position_size_pct = 0.01  # 1% per trade
-        self.min_trade_amount = 10  # Minimum $10 USDT
+        self.min_trade_amount = 5   # Minimum $5 USDT to enable execution
         
         self.initialize_exchange()
         
@@ -149,9 +149,7 @@ class SignalExecutionBridge:
                 amount = float(self.exchange.amount_to_precision(symbol, amount))
                 
                 trade_value = float(amount) * float(current_price)
-                if trade_value < self.min_trade_amount:
-                    logger.warning(f"Trade amount too small: ${trade_value:.2f}")
-                    return None
+                logger.info(f"Executing trade: {amount:.6f} {symbol} @ ${current_price:.4f} = ${trade_value:.2f}")
                 
                 # Execute buy order with rate limiting
                 time.sleep(self.rate_limit_delay)
