@@ -14,6 +14,21 @@ import json
 import time
 
 class RealDataService:
+    def safe_extract_price(self, data):
+        """Safely extract price from any data type"""
+        if isinstance(data, (int, float)):
+            return float(data)
+        elif isinstance(data, dict):
+            return float(data.get('price', data.get('last', data.get('close', 0.0))))
+        elif hasattr(data, 'price'):
+            return float(data.price)
+        elif hasattr(data, 'last'):
+            return float(data.last)
+        elif hasattr(data, 'close'):
+            return float(data.close)
+        else:
+            return 0.0
+
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
@@ -32,7 +47,7 @@ class RealDataService:
         elif isinstance(data, dict):
             return float(data.get('price', data.get('last', data.get('close', 0.0))))
         elif hasattr(data, 'price'):
-            return float(data.price)
+            return float(float(data) if isinstance(data, (int, float)) else float(data.get("price", data.get("last", data.get("close", 0.0)))) if isinstance(data, dict) else getattr(data, "price", 0.0))
         else:
             return 0.0
 

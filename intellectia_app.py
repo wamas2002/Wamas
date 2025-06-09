@@ -1589,7 +1589,7 @@ def show_risk_manager_page():
                                 st.metric("P&L %", f"{risk_metrics.unrealized_pnl_pct:.2%}")
                             
                             with col2:
-                                st.metric("Stop Loss", f"${position.stop_loss.price:.4f}")
+                                st.metric("Stop Loss", f"${position.float(stop_loss) if isinstance(stop_loss, (int, float)) else float(stop_loss.get("price", stop_loss.get("last", stop_loss.get("close", 0.0)))) if isinstance(stop_loss, dict) else getattr(stop_loss, "price", 0.0):.4f}")
                                 st.metric("Distance to SL", f"{risk_metrics.distance_to_sl:.2%}")
                                 st.metric("Risk/Reward", f"{risk_metrics.risk_reward_ratio:.2f}")
                             
@@ -1606,7 +1606,7 @@ def show_risk_manager_page():
                                 trigger_time = tp.trigger_time.strftime('%H:%M:%S') if tp.trigger_time else "N/A"
                                 tp_data.append({
                                     'Level': f"TP{tp.level}",
-                                    'Price': f"${tp.price:.4f}",
+                                    'Price': f"${float(tp) if isinstance(tp, (int, float)) else float(tp.get("price", tp.get("last", tp.get("close", 0.0)))) if isinstance(tp, dict) else getattr(tp, "price", 0.0):.4f}",
                                     'Percentage': f"{tp.percentage:.1%}",
                                     'Status': status,
                                     'Triggered': trigger_time

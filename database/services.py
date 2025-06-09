@@ -12,6 +12,21 @@ from .models import (
 )
 
 class DatabaseService:
+    def safe_extract_price(self, data):
+        """Safely extract price from any data type"""
+        if isinstance(data, (int, float)):
+            return float(data)
+        elif isinstance(data, dict):
+            return float(data.get('price', data.get('last', data.get('close', 0.0))))
+        elif hasattr(data, 'price'):
+            return float(data.price)
+        elif hasattr(data, 'last'):
+            return float(data.last)
+        elif hasattr(data, 'close'):
+            return float(data.close)
+        else:
+            return 0.0
+
     """Comprehensive database service for the trading system"""
     
     def __init__(self):
