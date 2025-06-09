@@ -192,15 +192,46 @@ def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
+def create_app():
+    """Application factory"""
+    return app
+
 if __name__ == '__main__':
     import os
+    import time
+    import socket
+    
     port = int(os.environ.get('PORT', 8080))
     logger.info(f"Starting Modern Trading Platform on port {port}")
     logger.info("Professional UI with 3Commas/TradingView design")
     
-    # Ensure proper server startup
-    try:
-        app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
-    except Exception as e:
-        logger.error(f"Failed to start server: {e}")
-        raise
+    # Check if port is available
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('127.0.0.1', port))
+    sock.close()
+    
+    if result == 0:
+        logger.warning(f"Port {port} is already in use, trying alternative ports")
+        for alt_port in [8081, 8082, 8083, 3000, 3001]:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(('127.0.0.1', alt_port))
+            sock.close()
+            if result != 0:
+                port = alt_port
+                logger.info(f"Using alternative port {port}")
+                break
+    
+    # Ensure proper server startup with retry mechanism
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Starting Flask server (attempt {attempt + 1}/{max_retries})")
+            app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
+            break
+        except Exception as e:
+            logger.error(f"Failed to start server on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+            else:
+                logger.error("All startup attempts failed")
+                raise
