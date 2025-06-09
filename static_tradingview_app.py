@@ -1,26 +1,23 @@
 """
-Professional Trading Platform with Integrated TradingView Widgets
-Real-time charts on every page using official TradingView widgets
+Static Professional Trading Platform with TradingView Integration
+Bypasses backend data processing to focus on TradingView widget functionality
 """
 
 from flask import Flask, render_template, jsonify, request
 import logging
 import json
 from datetime import datetime
-from real_data_service import RealDataService
+import random
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'tradingview-platform-2024'
+app.config['SECRET_KEY'] = 'static-tradingview-platform-2024'
 
-# Initialize data service
-data_service = RealDataService()
-
-class TradingViewManager:
-    """Manage TradingView widget configurations"""
+class StaticTradingViewManager:
+    """Manage TradingView widget configurations with static data"""
     
     def __init__(self):
         self.default_symbols = {
@@ -31,15 +28,13 @@ class TradingViewManager:
             'SOL': 'OKX:SOLUSDT',
             'XRP': 'OKX:XRPUSDT',
             'DOT': 'OKX:DOTUSDT',
-            'AVAX': 'OKX:AVAXUSDT',
-            'PI': 'OKX:PIUSDT'
+            'AVAX': 'OKX:AVAXUSDT'
         }
         
     def get_widget_config(self, symbol='BTCUSDT', container_id='tradingview_widget', 
                          width='100%', height='500', theme='dark', studies=None):
         """Generate TradingView widget configuration"""
         
-        # Convert symbol to TradingView format
         tv_symbol = self.convert_to_tv_symbol(symbol)
         
         config = {
@@ -81,22 +76,139 @@ class TradingViewManager:
         """Get available trading symbols"""
         return list(self.default_symbols.keys())
 
-# Initialize TradingView manager
-tv_manager = TradingViewManager()
+# Initialize static TradingView manager
+tv_manager = StaticTradingViewManager()
+
+def generate_static_portfolio_data():
+    """Generate static portfolio data for demonstration"""
+    return {
+        'total_value': 125840.50,
+        'daily_pnl': 3.42,
+        'cash_balance': 15420.00,
+        'positions': [
+            {
+                'symbol': 'BTC',
+                'quantity': 1.85,
+                'avg_price': 45200.00,
+                'current_price': 46800.00,
+                'current_value': 86580.00,
+                'unrealized_pnl': 3.54,
+                'allocation_pct': 68.8
+            },
+            {
+                'symbol': 'ETH',
+                'quantity': 12.4,
+                'avg_price': 2420.00,
+                'current_price': 2580.00,
+                'current_value': 31992.00,
+                'unrealized_pnl': 6.61,
+                'allocation_pct': 25.4
+            },
+            {
+                'symbol': 'BNB',
+                'quantity': 15.2,
+                'avg_price': 310.00,
+                'current_price': 325.00,
+                'current_value': 4940.00,
+                'unrealized_pnl': 4.84,
+                'allocation_pct': 3.9
+            },
+            {
+                'symbol': 'ADA',
+                'quantity': 850.0,
+                'avg_price': 0.45,
+                'current_price': 0.48,
+                'current_value': 408.00,
+                'unrealized_pnl': 6.67,
+                'allocation_pct': 0.3
+            }
+        ]
+    }
+
+def generate_static_ai_performance():
+    """Generate static AI performance data"""
+    return {
+        'overall_accuracy': 78.5,
+        'active_models': 6,
+        'total_predictions': 1247,
+        'avg_confidence': 73.2,
+        'overall_win_rate': 71.8,
+        'model_performance': {
+            'LightGBM': {
+                'accuracy': 82.1,
+                'total_trades': 156,
+                'avg_win_rate': 74.3
+            },
+            'XGBoost': {
+                'accuracy': 79.8,
+                'total_trades': 142,
+                'avg_win_rate': 72.5
+            },
+            'Neural Network': {
+                'accuracy': 75.2,
+                'total_trades': 189,
+                'avg_win_rate': 68.9
+            }
+        }
+    }
+
+def generate_static_technical_signals():
+    """Generate static technical signals"""
+    return {
+        'BTC': {
+            'signal': 'Strong Buy',
+            'direction': 'BUY',
+            'confidence': 85.2,
+            'rsi': 45.6,
+            'macd': 'Bullish'
+        },
+        'ETH': {
+            'signal': 'Buy',
+            'direction': 'BUY',
+            'confidence': 72.8,
+            'rsi': 52.3,
+            'macd': 'Neutral'
+        },
+        'BNB': {
+            'signal': 'Hold',
+            'direction': 'HOLD',
+            'confidence': 61.5,
+            'rsi': 58.9,
+            'macd': 'Bearish'
+        },
+        'ADA': {
+            'signal': 'Sell',
+            'direction': 'SELL',
+            'confidence': 68.3,
+            'rsi': 71.2,
+            'macd': 'Bearish'
+        }
+    }
+
+def generate_static_risk_metrics():
+    """Generate static risk metrics"""
+    return {
+        'risk_level': 'Medium',
+        'largest_position': 'BTC',
+        'largest_position_pct': 68.8,
+        'portfolio_beta': 1.15,
+        'sharpe_ratio': 1.42,
+        'max_drawdown': 8.5,
+        'var_95': 4200.00
+    }
 
 @app.route('/')
 def dashboard():
     """Dashboard with TradingView widget"""
     try:
-        # Get dashboard data
-        dashboard_data = data_service.get_real_portfolio_data()
-        ai_data = data_service.get_real_ai_performance()
+        # Get static dashboard data
+        dashboard_data = generate_static_portfolio_data()
+        ai_data = generate_static_ai_performance()
         
         # Get main symbol for chart
         main_symbol = 'BTCUSDT'
         positions = dashboard_data.get('positions', [])
         if positions:
-            # Use largest position as main symbol
             largest_pos = max(positions, key=lambda x: x.get('current_value', 0))
             main_symbol = largest_pos.get('symbol', 'BTC') + 'USDT'
         
@@ -108,7 +220,7 @@ def dashboard():
             studies=['RSI', 'MACD']
         )
         
-        return render_template('tradingview/dashboard.html', 
+        return render_template('tradingview/clean_dashboard.html', 
                              widget_config=json.dumps(widget_config),
                              dashboard_data=dashboard_data,
                              ai_data=ai_data,
@@ -121,7 +233,7 @@ def dashboard():
 def portfolio():
     """Portfolio page with charts for each holding"""
     try:
-        portfolio_data = data_service.get_real_portfolio_data()
+        portfolio_data = generate_static_portfolio_data()
         positions = portfolio_data.get('positions', [])
         
         # Create widget configs for each position
@@ -149,7 +261,6 @@ def portfolio():
 def strategy_builder():
     """Strategy builder with TradingView integration"""
     try:
-        # Default strategy symbol
         strategy_symbol = request.args.get('symbol', 'BTCUSDT')
         
         widget_config = tv_manager.get_widget_config(
@@ -171,7 +282,6 @@ def strategy_builder():
 def analytics():
     """Analytics page with historical performance charts"""
     try:
-        # Get performance data for multiple symbols
         symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']
         analytics_widgets = []
         
@@ -196,15 +306,14 @@ def analytics():
 def ai_panel():
     """AI panel with forecasting charts"""
     try:
-        ai_data = data_service.get_real_ai_performance()
-        technical_signals = data_service.get_real_technical_signals()
+        ai_data = generate_static_ai_performance()
+        technical_signals = generate_static_technical_signals()
         
-        # Get symbols with AI predictions
         ai_symbols = list(technical_signals.keys())
         ai_widgets = []
         
-        for symbol in ai_symbols[:3]:  # Show top 3 AI-monitored symbols
-            full_symbol = symbol + 'USDT' if not symbol.endswith('USDT') else symbol
+        for symbol in ai_symbols[:3]:
+            full_symbol = symbol + 'USDT'
             widget_config = tv_manager.get_widget_config(
                 symbol=full_symbol,
                 container_id=f"ai_{symbol.lower()}",
@@ -232,10 +341,10 @@ def api_dashboard_data():
     """Get dashboard data"""
     try:
         data = {
-            'portfolio': data_service.get_real_portfolio_data(),
-            'ai_performance': data_service.get_real_ai_performance(),
-            'technical_signals': data_service.get_real_technical_signals(),
-            'risk_metrics': data_service.get_real_risk_metrics(),
+            'portfolio': generate_static_portfolio_data(),
+            'ai_performance': generate_static_ai_performance(),
+            'technical_signals': generate_static_technical_signals(),
+            'risk_metrics': generate_static_risk_metrics(),
             'system_status': {
                 'status': 'live',
                 'last_sync': datetime.now().strftime('%H:%M:%S'),
@@ -252,7 +361,7 @@ def api_dashboard_data():
 def api_symbol_data(symbol):
     """Get data for specific symbol"""
     try:
-        technical_signals = data_service.get_real_technical_signals()
+        technical_signals = generate_static_technical_signals()
         symbol_data = technical_signals.get(symbol, {})
         
         return jsonify({
@@ -297,8 +406,8 @@ def internal_error(error):
                          error='Internal server error'), 500
 
 if __name__ == '__main__':
-    logger.info("Starting Professional Trading Platform with TradingView Integration")
-    logger.info("Real-time charts integrated across all pages")
-    logger.info("Starting Flask server on port 5001")
+    logger.info("Starting Static Professional Trading Platform with TradingView Integration")
+    logger.info("Real-time TradingView charts with static backend data")
+    logger.info("Starting Flask server on port 5002")
     
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    app.run(host='0.0.0.0', port=5002, debug=False)
