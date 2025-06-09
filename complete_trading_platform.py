@@ -359,7 +359,12 @@ ai_thread.start()
 
 @app.route('/')
 def dashboard():
-    """Main dashboard with TradingView widgets"""
+    """Main clean trading dashboard without JavaScript errors"""
+    return render_template('clean_trading_dashboard.html')
+
+@app.route('/legacy')
+def legacy_dashboard():
+    """Legacy dashboard with TradingView widgets"""
     try:
         widget_config = tv_manager.get_widget_config('BTCUSDT')
         return render_template('complete_dashboard.html', 
