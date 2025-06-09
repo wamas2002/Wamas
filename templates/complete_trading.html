@@ -512,6 +512,47 @@
 
     <!-- Main Content -->
     <div class="container-fluid mt-3">
+        <!-- Portfolio Overview Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-wallet me-2"></i>Live Portfolio Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="portfolio-stat text-center">
+                                    <div class="stat-label text-muted small">Total Balance</div>
+                                    <div id="portfolio-total" class="stat-value h4 text-primary mb-0">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="portfolio-stat text-center">
+                                    <div class="stat-label text-muted small">Available Cash</div>
+                                    <div id="portfolio-cash" class="stat-value h4 text-success mb-0">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="portfolio-stat text-center">
+                                    <div class="stat-label text-muted small">Active Positions</div>
+                                    <div id="portfolio-positions" class="stat-value h4 text-info mb-0">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="portfolio-stat text-center">
+                                    <div class="stat-label text-muted small">Data Source</div>
+                                    <div class="stat-value h5 text-warning mb-0">
+                                        <i class="fas fa-broadcast-tower me-1"></i>Live OKX API
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="row">
             <!-- Multi-Timeframe Trading Chart -->
             <div class="col-lg-8 mb-4">
@@ -2579,7 +2620,22 @@
                     positionsElement.textContent = positions.length;
                 }
                 
-                console.log('Portfolio updated successfully');
+                // Update other portfolio elements that might exist
+                const balanceElements = document.querySelectorAll('.portfolio-balance');
+                balanceElements.forEach(element => {
+                    element.textContent = `$${totalBalance.toFixed(2)}`;
+                });
+                
+                const cashElements = document.querySelectorAll('.cash-balance');
+                cashElements.forEach(element => {
+                    element.textContent = `$${cashBalance.toFixed(2)}`;
+                });
+                
+                console.log('Portfolio updated successfully:', {
+                    total: totalBalance,
+                    cash: cashBalance,
+                    positions: positions.length
+                });
             } catch (error) {
                 console.warn('Error updating portfolio display:', error.message);
                 showPortfolioFallback();
