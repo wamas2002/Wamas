@@ -22,7 +22,7 @@ args = "install_packages"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Minimal TradingView Platform"
+args = "Complete Trading Platform"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -33,13 +33,13 @@ task = "shell.exec"
 args = "uv add pandas plotly scikit-learn pandas-ta requests websocket-client"
 
 [[workflows.workflow]]
-name = "Minimal TradingView Platform"
+name = "Complete Trading Platform"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python minimal_tradingview_app.py"
-waitForPort = 5003
+args = "python complete_trading_platform.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000

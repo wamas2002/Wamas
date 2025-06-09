@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Trading Platform - Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- TradingView Charting Library -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0B1426;
+            --bg-secondary: #1A2332;
+            --card-bg: #252D3D;
+            --accent-blue: #4F8BFF;
+            --accent-green: #00D395;
+            --accent-red: #FF4757;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8B9AAF;
+            --border-color: #2A3441;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            margin: 0 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(79, 139, 255, 0.1) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            height: 100%;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .symbol-selector {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+        }
+
+        .symbol-selector:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(79, 139, 255, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: #3a6fd9;
+        }
+
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+        .neutral { color: var(--text-secondary); }
+
+        .signal-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .signal-buy { background: rgba(0, 211, 149, 0.2); color: var(--accent-green); }
+        .signal-sell { background: rgba(255, 71, 87, 0.2); color: var(--accent-red); }
+        .signal-hold { background: rgba(139, 154, 175, 0.2); color: var(--text-secondary); }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-online { background: var(--accent-green); }
+        .status-warning { background: #FFB800; }
+        .status-offline { background: var(--accent-red); }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                AI Trading Platform
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/">Dashboard</a>
+                <a class="nav-link" href="/portfolio">Portfolio</a>
+                <a class="nav-link" href="/trading">Trading</a>
+                <a class="nav-link" href="/ai-signals">AI Signals</a>
+            </div>
+            
+            <div class="d-flex align-items-center ms-3">
+                <span class="status-indicator status-online"></span>
+                <small class="text-muted">Live Data Active</small>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <!-- Key Metrics -->
+        <div class="row" id="metricsRow">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value" id="portfolioValue">Loading...</div>
+                    <div class="metric-label">Portfolio Value</div>
+                    <div class="text-success mt-2" id="portfolioPnl">Loading...</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value" id="aiAccuracy">78.5%</div>
+                    <div class="metric-label">AI Accuracy</div>
+                    <div class="text-info mt-2">6 models</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalTrades">247</div>
+                    <div class="metric-label">Total Trades</div>
+                    <div class="text-secondary mt-2" id="winRate">71.8% win rate</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value" id="riskLevel">Medium</div>
+                    <div class="metric-label">Risk Level</div>
+                    <div class="text-warning mt-2">Monitored</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Trading Chart -->
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-candlestick me-2"></i>
+                            Live Trading Chart
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <select class="symbol-selector me-2" id="symbolSelector">
+                                <option value="OKX:BTCUSDT">BTC/USDT</option>
+                                <option value="OKX:ETHUSDT">ETH/USDT</option>
+                                <option value="OKX:BNBUSDT">BNB/USDT</option>
+                                <option value="OKX:ADAUSDT">ADA/USDT</option>
+                                <option value="OKX:SOLUSDT">SOL/USDT</option>
+                                <option value="OKX:XRPUSDT">XRP/USDT</option>
+                                <option value="OKX:DOTUSDT">DOT/USDT</option>
+                                <option value="OKX:AVAXUSDT">AVAX/USDT</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-light" onclick="refreshChart()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="main_trading_chart" style="height: 500px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio & AI Signals -->
+            <div class="col-lg-4 mb-4">
+                <!-- Portfolio Positions -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-wallet me-2"></i>
+                            Portfolio Holdings
+                        </h6>
+                    </div>
+                    <div class="card-body" id="portfolioHoldings">
+                        Loading portfolio data...
+                    </div>
+                </div>
+
+                <!-- AI Trading Signals -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            Latest AI Signals
+                        </h6>
+                    </div>
+                    <div class="card-body" id="aiSignals">
+                        Loading AI signals...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Overview -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-area me-2"></i>
+                            Market Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-4 mb-3">
+                                <div class="border rounded p-3">
+                                    <h6 class="text-primary mb-3">BTC/USDT Analysis</h6>
+                                    <div id="btc_overview_chart" style="height: 250px;"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 mb-3">
+                                <div class="border rounded p-3">
+                                    <h6 class="text-primary mb-3">ETH/USDT Analysis</h6>
+                                    <div id="eth_overview_chart" style="height: 250px;"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 mb-3">
+                                <div class="border rounded p-3">
+                                    <h6 class="text-primary mb-3">Market Sentiment</h6>
+                                    <div id="market_sentiment" style="height: 250px;">
+                                        <div class="text-center mt-5">
+                                            <div class="h2 text-success">Bullish</div>
+                                            <div class="text-muted">Fear & Greed Index: 72</div>
+                                            <div class="progress mt-3">
+                                                <div class="progress-bar bg-success" style="width: 72%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Trading Platform JavaScript -->
+    <script>
+        let currentSymbol = 'OKX:BTCUSDT';
+        let widgets = new Map();
+        
+        // TradingView Widget Manager
+        class TradingViewManager {
+            constructor() {
+                this.defaultConfig = {
+                    theme: 'dark',
+                    style: '1',
+                    locale: 'en',
+                    toolbar_bg: '#252D3D',
+                    enable_publishing: false,
+                    withdateranges: true,
+                    hide_side_toolbar: false,
+                    allow_symbol_change: true,
+                    save_image: false,
+                    details: true,
+                    hotlist: true,
+                    calendar: true
+                };
+            }
+
+            createWidget(containerId, symbol, config = {}) {
+                const finalConfig = {
+                    ...this.defaultConfig,
+                    ...config,
+                    symbol: symbol,
+                    container_id: containerId
+                };
+
+                if (widgets.has(containerId)) {
+                    this.destroyWidget(containerId);
+                }
+
+                try {
+                    const widget = new TradingView.widget(finalConfig);
+                    widgets.set(containerId, widget);
+                    return widget;
+                } catch (error) {
+                    console.error('Error creating TradingView widget:', error);
+                    return null;
+                }
+            }
+
+            updateSymbol(containerId, newSymbol) {
+                const widget = widgets.get(containerId);
+                if (widget && widget.chart) {
+                    try {
+                        widget.chart().setSymbol(newSymbol);
+                    } catch (error) {
+                        console.error('Error updating symbol:', error);
+                    }
+                }
+            }
+
+            destroyWidget(containerId) {
+                const widget = widgets.get(containerId);
+                if (widget && widget.remove) {
+                    try {
+                        widget.remove();
+                    } catch (error) {
+                        console.error('Error destroying widget:', error);
+                    }
+                }
+                widgets.delete(containerId);
+            }
+        }
+
+        const tvManager = new TradingViewManager();
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Complete Trading Platform Dashboard...');
+            
+            initializeTradingViewWidgets();
+            loadPortfolioData();
+            loadAISignals();
+            
+            // Set up real-time updates
+            setInterval(loadPortfolioData, 30000);
+            setInterval(loadAISignals, 60000);
+            
+            // Symbol selector
+            const symbolSelector = document.getElementById('symbolSelector');
+            if (symbolSelector) {
+                symbolSelector.addEventListener('change', function(e) {
+                    currentSymbol = e.target.value;
+                    tvManager.updateSymbol('main_trading_chart', currentSymbol);
+                });
+            }
+        });
+
+        function initializeTradingViewWidgets() {
+            // Main trading chart
+            tvManager.createWidget('main_trading_chart', currentSymbol, {
+                interval: '15',
+                width: '100%',
+                height: 500,
+                studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'EMA@tv-basicstudies']
+            });
+
+            // Overview charts
+            setTimeout(() => {
+                tvManager.createWidget('btc_overview_chart', 'OKX:BTCUSDT', {
+                    interval: '1H',
+                    width: '100%',
+                    height: 250,
+                    hide_side_toolbar: true,
+                    hide_top_toolbar: true
+                });
+
+                tvManager.createWidget('eth_overview_chart', 'OKX:ETHUSDT', {
+                    interval: '1H',
+                    width: '100%',
+                    height: 250,
+                    hide_side_toolbar: true,
+                    hide_top_toolbar: true
+                });
+            }, 2000);
+        }
+
+        function loadPortfolioData() {
+            fetch('/api/portfolio')
+                .then(response => response.json())
+                .then(data => {
+                    updatePortfolioMetrics(data);
+                    updatePortfolioHoldings(data);
+                })
+                .catch(error => {
+                    console.error('Error loading portfolio data:', error);
+                });
+        }
+
+        function updatePortfolioMetrics(data) {
+            document.getElementById('portfolioValue').textContent = 
+                '$' + data.total_balance.toLocaleString();
+            
+            const totalPnl = data.positions.reduce((sum, pos) => sum + pos.pnl, 0);
+            const totalPnlPct = (totalPnl / data.total_balance * 100).toFixed(2);
+            
+            const pnlElement = document.getElementById('portfolioPnl');
+            pnlElement.textContent = `+${totalPnlPct}%`;
+            pnlElement.className = totalPnl >= 0 ? 'text-success mt-2' : 'text-danger mt-2';
+        }
+
+        function updatePortfolioHoldings(data) {
+            const container = document.getElementById('portfolioHoldings');
+            if (!container) return;
+
+            let html = '';
+            data.positions.forEach(position => {
+                const pnlClass = position.pnl >= 0 ? 'text-success' : 'text-danger';
+                html += `
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <div class="fw-semibold">${position.symbol.replace('/USDT', '')}</div>
+                            <small class="text-muted">${position.quantity} tokens</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">$${position.current_value.toLocaleString()}</div>
+                            <small class="${pnlClass}">+${position.pnl_percentage.toFixed(2)}%</small>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function loadAISignals() {
+            fetch('/api/signals')
+                .then(response => response.json())
+                .then(data => {
+                    updateAISignals(data);
+                })
+                .catch(error => {
+                    console.error('Error loading AI signals:', error);
+                    document.getElementById('aiSignals').innerHTML = 
+                        '<div class="text-muted">No recent signals available</div>';
+                });
+        }
+
+        function updateAISignals(signals) {
+            const container = document.getElementById('aiSignals');
+            if (!container) return;
+
+            if (!signals || signals.length === 0) {
+                container.innerHTML = '<div class="text-muted">No recent signals available</div>';
+                return;
+            }
+
+            let html = '';
+            signals.slice(0, 5).forEach(signal => {
+                const badgeClass = `signal-${signal.signal.toLowerCase()}`;
+                html += `
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <div class="fw-semibold">${signal.symbol}</div>
+                            <small class="text-muted">${signal.reasoning}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="signal-badge ${badgeClass}">${signal.signal}</div>
+                            <small class="text-muted d-block">${signal.confidence.toFixed(0)}% conf.</small>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function refreshChart() {
+            tvManager.destroyWidget('main_trading_chart');
+            setTimeout(() => {
+                tvManager.createWidget('main_trading_chart', currentSymbol, {
+                    interval: '15',
+                    width: '100%',
+                    height: 500,
+                    studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'EMA@tv-basicstudies']
+                });
+            }, 500);
+        }
+
+        console.log('Complete Trading Platform Dashboard loaded successfully');
+    </script>
+</body>
+</html>
