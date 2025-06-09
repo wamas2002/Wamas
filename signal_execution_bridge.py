@@ -115,7 +115,12 @@ class SignalExecutionBridge:
             base_position_value = usdt_balance * self.max_position_size_pct
             position_value = base_position_value * confidence
             
-            return max(position_value, self.min_trade_amount)
+            # Ensure position is meaningful
+            if position_value < self.min_trade_amount:
+                position_value = self.min_trade_amount
+            
+            logger.info(f"Position sizing: USDT=${usdt_balance:.2f}, Base=${base_position_value:.2f}, Confidence={confidence:.1%}, Final=${position_value:.2f}")
+            return position_value
             
         except Exception as e:
             logger.error(f"Error calculating position size: {e}")
@@ -140,11 +145,12 @@ class SignalExecutionBridge:
             
             # Calculate amount
             if action == 'buy':
-                amount = position_value / current_price
-                amount = self.exchange.amount_to_precision(symbol, amount)
+                amount = float(position_value) / float(current_price)
+                amount = float(self.exchange.amount_to_precision(symbol, amount))
                 
-                if amount * current_price < self.min_trade_amount:
-                    logger.warning(f"Trade amount too small: ${amount * current_price:.2f}")
+                trade_value = float(amount) * float(current_price)
+                if trade_value < self.min_trade_amount:
+                    logger.warning(f"Trade amount too small: ${trade_value:.2f}")
                     return None
                 
                 # Execute buy order with rate limiting
@@ -156,15 +162,16 @@ class SignalExecutionBridge:
                 time.sleep(self.rate_limit_delay)
                 balance = self.exchange.fetch_balance()
                 base_currency = symbol.split('/')[0]
-                available = balance[base_currency]['free']
+                available = float(balance[base_currency]['free'])
                 
                 if available == 0:
                     logger.warning(f"No {base_currency} available to sell")
                     return None
                 
                 # Use available amount or calculated amount (whichever is smaller)
-                amount = min(available, position_value / current_price)
-                amount = self.exchange.amount_to_precision(symbol, amount)
+                calculated_amount = float(position_value) / float(current_price)
+                amount = min(available, calculated_amount)
+                amount = float(self.exchange.amount_to_precision(symbol, amount))
                 
                 # Execute sell order with rate limiting
                 time.sleep(self.rate_limit_delay)
