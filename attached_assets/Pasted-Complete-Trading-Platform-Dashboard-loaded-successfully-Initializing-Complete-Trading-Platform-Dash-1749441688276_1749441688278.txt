@@ -1,0 +1,70 @@
+Complete Trading Platform Dashboard loaded successfully
+Initializing Complete Trading Platform Dashboard...
+Error creating TradingView widget: 
+TypeError {}
+
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error loading portfolio data: 
+TypeError {}
+
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error loading portfolio data: 
+TypeError {}
+
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+Error loading portfolio data: 
+TypeError {}
+
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
