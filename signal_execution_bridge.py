@@ -27,7 +27,7 @@ class SignalExecutionBridge:
         self.is_running = False
         self.last_execution_time = {}
         self.rate_limit_delay = 0.2  # 200ms between API calls (5 req/sec max)
-        self.execution_threshold = 0.60  # 60% confidence minimum
+        self.execution_threshold = 60.0  # 60% confidence minimum (stored as percentage)
         self.max_position_size_pct = 0.01  # 1% per trade
         self.min_trade_amount = 10  # Minimum $10 USDT
         
@@ -66,11 +66,11 @@ class SignalExecutionBridge:
             cutoff_time = (datetime.now() - timedelta(seconds=60)).isoformat()
             
             cursor.execute('''
-                SELECT symbol, action, confidence, timestamp, type
+                SELECT symbol, signal, confidence, timestamp, reasoning
                 FROM ai_signals 
                 WHERE timestamp > ? 
                 AND confidence >= ?
-                AND (action = 'BUY' OR action = 'SELL')
+                AND (signal = 'BUY' OR signal = 'SELL')
                 ORDER BY timestamp DESC
             ''', (cutoff_time, self.execution_threshold))
             
@@ -78,10 +78,10 @@ class SignalExecutionBridge:
             for row in cursor.fetchall():
                 signal = {
                     'symbol': row[0],
-                    'action': row[1],
-                    'confidence': row[2],
+                    'action': row[1],  # signal from database
+                    'confidence': row[2]/100 if row[2] > 1 else row[2],  # Convert percentage to decimal
                     'timestamp': row[3],
-                    'type': row[4]
+                    'reasoning': row[4]
                 }
                 
                 # Check if we haven't processed this symbol recently
