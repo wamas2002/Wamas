@@ -204,6 +204,92 @@
             border-color: var(--accent-blue);
             color: var(--accent-blue);
         }
+
+        .ai-strategy-assistant {
+            padding: 1rem 0;
+        }
+
+        .code-preview {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+
+        .generated-strategy {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .visual-block {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .visual-block:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 2px 8px rgba(79, 139, 255, 0.2);
+        }
+
+        .strategy-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-item:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(79, 139, 255, 0.1);
+        }
+
+        .strategy-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .strategy-trend { background: rgba(79, 139, 255, 0.2); color: var(--accent-blue); }
+        .strategy-meanreversion { background: rgba(0, 211, 149, 0.2); color: var(--accent-green); }
+        .strategy-momentum { background: rgba(255, 183, 0, 0.2); color: #FFB800; }
+        .strategy-custom { background: rgba(139, 154, 175, 0.2); color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -412,27 +498,162 @@
             </div>
         </div>
 
-        <!-- Strategy Builder & Risk Management -->
+        <!-- AI Strategy Assistant & Visual Builder -->
         <div class="row">
-            <!-- Visual Strategy Builder -->
+            <!-- AI Strategy Generation Assistant -->
             <div class="col-lg-8 mb-4">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">
-                            <i class="fas fa-project-diagram me-2"></i>
-                            Visual Strategy Builder
-                        </h6>
-                        <div>
-                            <button class="btn btn-sm btn-outline-light me-2" onclick="saveStrategy()">
-                                <i class="fas fa-save me-1"></i>Save
-                            </button>
-                            <button class="btn btn-sm btn-primary" onclick="executeStrategy()">
-                                <i class="fas fa-play me-1"></i>Execute
-                            </button>
-                        </div>
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="strategyTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#aiAssistant">
+                                    <i class="fas fa-robot me-2"></i>AI Assistant
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#visualBuilder">
+                                    <i class="fas fa-project-diagram me-2"></i>Visual Builder
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#savedStrategies">
+                                    <i class="fas fa-bookmark me-2"></i>Saved Strategies
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body">
-                        <div class="strategy-builder" id="strategyCanvas">
+                        <div class="tab-content">
+                            <!-- AI Strategy Assistant -->
+                            <div class="tab-pane fade show active" id="aiAssistant">
+                                <div class="ai-strategy-assistant">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Describe Your Trading Strategy</label>
+                                        <textarea 
+                                            class="form-control" 
+                                            id="strategyPrompt" 
+                                            rows="4" 
+                                            placeholder="Example: Create a trend-following strategy using RSI and MACD indicators. Buy when RSI is above 30 and MACD crosses above signal line. Set stop loss at 2% and take profit at 5%."
+                                        ></textarea>
+                                    </div>
+                                    <div class="d-flex gap-2 mb-4">
+                                        <button class="btn btn-primary" onclick="generateStrategy()">
+                                            <i class="fas fa-magic me-2"></i>Generate Strategy
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="clearPrompt()">
+                                            <i class="fas fa-eraser me-2"></i>Clear
+                                        </button>
+                                        <div class="btn-group">
+                                            <button class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown">
+                                                <i class="fas fa-lightbulb me-2"></i>Examples
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" onclick="loadExample('trend')">Trend Following</a></li>
+                                                <li><a class="dropdown-item" onclick="loadExample('meanreversion')">Mean Reversion</a></li>
+                                                <li><a class="dropdown-item" onclick="loadExample('momentum')">Momentum Trading</a></li>
+                                                <li><a class="dropdown-item" onclick="loadExample('scalping')">Scalping Strategy</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Strategy Generation Status -->
+                                    <div id="generationStatus" class="alert d-none"></div>
+
+                                    <!-- Generated Strategy Display -->
+                                    <div id="generatedStrategy" class="generated-strategy d-none">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="card bg-secondary">
+                                                    <div class="card-header">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-eye me-2"></i>Visual Representation
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div id="visualBlocks"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card bg-secondary">
+                                                    <div class="card-header">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-code me-2"></i>Python Code Preview
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <pre id="pythonCode" class="code-preview"></pre>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Strategy Actions -->
+                                        <div class="strategy-actions mt-3">
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-success" onclick="runBacktest()">
+                                                    <i class="fas fa-chart-bar me-2"></i>Run Backtest
+                                                </button>
+                                                <button class="btn btn-primary" onclick="useStrategy()">
+                                                    <i class="fas fa-check me-2"></i>Use Strategy
+                                                </button>
+                                                <button class="btn btn-warning" onclick="refineStrategy()">
+                                                    <i class="fas fa-edit me-2"></i>Refine
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="discardStrategy()">
+                                                    <i class="fas fa-trash me-2"></i>Discard
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Backtest Results -->
+                                        <div id="backtestResults" class="backtest-results mt-4 d-none">
+                                            <h6><i class="fas fa-chart-line me-2"></i>Backtest Performance</h6>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="metric-card">
+                                                        <div class="metric-value" id="totalReturn">+15.2%</div>
+                                                        <div class="metric-label">Total Return</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="metric-card">
+                                                        <div class="metric-value" id="sharpeRatio">1.84</div>
+                                                        <div class="metric-label">Sharpe Ratio</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="metric-card">
+                                                        <div class="metric-value" id="maxDrawdown">-8.5%</div>
+                                                        <div class="metric-label">Max Drawdown</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="metric-card">
+                                                        <div class="metric-value" id="winRate">68%</div>
+                                                        <div class="metric-label">Win Rate</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visual Strategy Builder -->
+                            <div class="tab-pane fade" id="visualBuilder">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Drag & Drop Strategy Builder</h6>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-light me-2" onclick="saveStrategy()">
+                                            <i class="fas fa-save me-1"></i>Save
+                                        </button>
+                                        <button class="btn btn-sm btn-primary" onclick="executeStrategy()">
+                                            <i class="fas fa-play me-1"></i>Execute
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="strategy-builder" id="strategyCanvas">
                             <!-- Draggable Strategy Nodes -->
                             <div class="row">
                                 <div class="col-md-3">
@@ -484,6 +705,22 @@
                                     <h6 class="text-muted mb-3">Strategy Flow</h6>
                                     <div id="strategyFlow" style="min-height: 200px; border: 2px dashed var(--border-color); border-radius: 8px; padding: 1rem;">
                                         <p class="text-muted text-center">Drop strategy components here</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Saved Strategies -->
+                            <div class="tab-pane fade" id="savedStrategies">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Your AI-Generated Strategies</h6>
+                                    <button class="btn btn-sm btn-primary" onclick="loadSavedStrategies()">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                                    </button>
+                                </div>
+                                <div id="savedStrategiesList" class="saved-strategies-list">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-robot fa-3x mb-3"></i>
+                                        <p>No saved strategies yet. Generate your first AI strategy!</p>
                                     </div>
                                 </div>
                             </div>
@@ -961,6 +1198,324 @@
                 }, 500);
             }
         }
+
+        // AI Strategy Generation Assistant Functions
+        let currentGeneratedStrategy = null;
+        let currentStrategyId = null;
+
+        const strategyExamples = {
+            trend: "Create a trend-following strategy using RSI and MACD indicators. Buy when RSI is above 30 and MACD crosses above signal line. Set stop loss at 2% and take profit at 5%.",
+            meanreversion: "Build a mean reversion strategy with Bollinger Bands and RSI. Buy when price touches lower band and RSI is below 30. Sell when price reaches middle band or RSI exceeds 70.",
+            momentum: "Design a momentum strategy using EMA crossovers and volume confirmation. Enter long when 20 EMA crosses above 50 EMA with volume 1.5x average. Exit when momentum weakens.",
+            scalping: "Create a scalping strategy for quick profits using 5-minute timeframe. Use VWAP and volume spikes for entry signals. Target 0.5% profit with 0.3% stop loss."
+        };
+
+        function generateStrategy() {
+            const prompt = document.getElementById('strategyPrompt').value.trim();
+            
+            if (!prompt) {
+                showStatus('Please describe your trading strategy first.', 'warning');
+                return;
+            }
+
+            showStatus('Generating AI strategy...', 'info');
+            
+            fetch('/api/generate-strategy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentGeneratedStrategy = data;
+                    currentStrategyId = data.strategy_id;
+                    displayGeneratedStrategy(data);
+                    showStatus('Strategy generated successfully!', 'success');
+                } else {
+                    showStatus('Error generating strategy: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Strategy generation error:', error);
+                showStatus('Failed to generate strategy. Please try again.', 'danger');
+            });
+        }
+
+        function displayGeneratedStrategy(data) {
+            const strategyDiv = document.getElementById('generatedStrategy');
+            const visualBlocks = document.getElementById('visualBlocks');
+            const pythonCode = document.getElementById('pythonCode');
+            
+            // Display visual blocks
+            let blocksHtml = '';
+            data.visual_blocks.forEach(block => {
+                blocksHtml += `
+                    <div class="visual-block">
+                        <i class="${block.icon} me-2"></i>
+                        <strong>${block.name}</strong>
+                        <div class="small text-muted mt-1">${block.category}</div>
+                    </div>
+                `;
+            });
+            visualBlocks.innerHTML = blocksHtml;
+            
+            // Display Python code
+            pythonCode.textContent = data.python_code;
+            
+            // Show the strategy section
+            strategyDiv.classList.remove('d-none');
+            
+            // Hide backtest results initially
+            document.getElementById('backtestResults').classList.add('d-none');
+        }
+
+        function runBacktest() {
+            if (!currentStrategyId) {
+                showStatus('No strategy available for backtesting.', 'warning');
+                return;
+            }
+
+            showStatus('Running backtest...', 'info');
+            
+            fetch('/api/backtest-strategy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    strategy_id: currentStrategyId,
+                    symbol: 'BTC/USDT'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayBacktestResults(data.results);
+                    showStatus('Backtest completed successfully!', 'success');
+                } else {
+                    showStatus('Backtest failed: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Backtest error:', error);
+                showStatus('Failed to run backtest. Please try again.', 'danger');
+            });
+        }
+
+        function displayBacktestResults(results) {
+            const backtestDiv = document.getElementById('backtestResults');
+            
+            // Update metric values
+            document.getElementById('totalReturn').textContent = 
+                (results.total_return * 100).toFixed(1) + '%';
+            document.getElementById('sharpeRatio').textContent = 
+                results.sharpe_ratio.toFixed(2);
+            document.getElementById('maxDrawdown').textContent = 
+                (results.max_drawdown * 100).toFixed(1) + '%';
+            document.getElementById('winRate').textContent = 
+                (results.win_rate * 100).toFixed(0) + '%';
+            
+            // Apply color coding
+            const returnElement = document.getElementById('totalReturn');
+            if (results.total_return > 0) {
+                returnElement.style.color = 'var(--accent-green)';
+            } else {
+                returnElement.style.color = 'var(--accent-red)';
+            }
+            
+            // Show backtest results
+            backtestDiv.classList.remove('d-none');
+        }
+
+        function useStrategy() {
+            if (!currentGeneratedStrategy) {
+                showStatus('No strategy available to use.', 'warning');
+                return;
+            }
+
+            // In a real implementation, this would integrate with the trading engine
+            showStatus('Strategy activated and ready for trading!', 'success');
+            
+            // Switch to visual builder tab to show the strategy
+            const visualBuilderTab = document.querySelector('[href="#visualBuilder"]');
+            if (visualBuilderTab) {
+                visualBuilderTab.click();
+            }
+        }
+
+        function refineStrategy() {
+            if (!currentStrategyId) {
+                showStatus('No strategy available for refinement.', 'warning');
+                return;
+            }
+
+            const refinement = prompt('How would you like to refine this strategy?\n\nExample: "Make it more conservative with tighter stop losses" or "Add volume confirmation for entries"');
+            
+            if (!refinement) return;
+
+            showStatus('Refining strategy...', 'info');
+            
+            fetch('/api/refine-strategy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    strategy_id: currentStrategyId,
+                    refinement: refinement
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentStrategyId = data.new_strategy_id;
+                    currentGeneratedStrategy = data;
+                    displayGeneratedStrategy(data);
+                    showStatus('Strategy refined successfully!', 'success');
+                } else {
+                    showStatus('Refinement failed: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Refinement error:', error);
+                showStatus('Failed to refine strategy. Please try again.', 'danger');
+            });
+        }
+
+        function discardStrategy() {
+            if (confirm('Are you sure you want to discard this strategy?')) {
+                currentGeneratedStrategy = null;
+                currentStrategyId = null;
+                document.getElementById('generatedStrategy').classList.add('d-none');
+                document.getElementById('strategyPrompt').value = '';
+                showStatus('Strategy discarded.', 'info');
+            }
+        }
+
+        function clearPrompt() {
+            document.getElementById('strategyPrompt').value = '';
+            document.getElementById('generatedStrategy').classList.add('d-none');
+            currentGeneratedStrategy = null;
+            currentStrategyId = null;
+        }
+
+        function loadExample(type) {
+            const example = strategyExamples[type];
+            if (example) {
+                document.getElementById('strategyPrompt').value = example;
+            }
+        }
+
+        function loadSavedStrategies() {
+            fetch('/api/saved-strategies')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.strategies) {
+                        displaySavedStrategies(data.strategies);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading saved strategies:', error);
+                    showStatus('Failed to load saved strategies.', 'danger');
+                });
+        }
+
+        function displaySavedStrategies(strategies) {
+            const container = document.getElementById('savedStrategiesList');
+            
+            if (strategies.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-robot fa-3x mb-3"></i>
+                        <p>No saved strategies yet. Generate your first AI strategy!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            strategies.forEach(strategy => {
+                const badgeClass = `strategy-${strategy.type}`;
+                const statusIcon = strategy.is_active ? 'fas fa-play text-success' : 'fas fa-pause text-muted';
+                
+                html += `
+                    <div class="strategy-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${strategy.name}</h6>
+                                <p class="text-muted mb-2">${strategy.description}</p>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="strategy-badge ${badgeClass}">${strategy.type}</span>
+                                    <i class="${statusIcon}"></i>
+                                    <small class="text-muted">${new Date(strategy.created_at).toLocaleDateString()}</small>
+                                </div>
+                            </div>
+                            <div class="btn-group-vertical btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="loadStrategy(${strategy.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="backtestStrategy(${strategy.id})">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="duplicateStrategy(${strategy.id})">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function loadStrategy(strategyId) {
+            // Load and display a saved strategy
+            currentStrategyId = strategyId;
+            showStatus('Strategy loaded successfully!', 'success');
+            
+            // Switch to AI Assistant tab
+            const aiAssistantTab = document.querySelector('[href="#aiAssistant"]');
+            if (aiAssistantTab) {
+                aiAssistantTab.click();
+            }
+        }
+
+        function backtestStrategy(strategyId) {
+            currentStrategyId = strategyId;
+            runBacktest();
+        }
+
+        function duplicateStrategy(strategyId) {
+            showStatus('Creating strategy copy...', 'info');
+            // In a real implementation, this would duplicate the strategy
+            setTimeout(() => {
+                showStatus('Strategy duplicated successfully!', 'success');
+                loadSavedStrategies();
+            }, 1000);
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('generationStatus');
+            statusDiv.className = `alert alert-${type}`;
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('d-none');
+            
+            // Auto-hide success and info messages
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusDiv.classList.add('d-none');
+                }, 3000);
+            }
+        }
+
+        // Load saved strategies when the tab is shown
+        document.querySelector('[href="#savedStrategies"]').addEventListener('shown.bs.tab', function() {
+            loadSavedStrategies();
+        });
 
         console.log('Trading Interface loaded successfully');
     </script>

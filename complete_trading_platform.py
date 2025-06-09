@@ -15,6 +15,12 @@ import os
 from typing import Dict, List, Optional
 import threading
 import time
+from ai_strategy_generator import (
+    generate_strategy_from_prompt, 
+    run_strategy_backtest, 
+    refine_existing_strategy,
+    get_all_strategies
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -720,6 +726,72 @@ def api_alerts():
         logger.error(f"Alerts API error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/generate-strategy', methods=['POST'])
+def api_generate_strategy():
+    """Generate trading strategy from natural language prompt"""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '')
+        
+        if not prompt:
+            return jsonify({'error': 'Strategy prompt is required'}), 400
+        
+        logger.info(f"Generating strategy from prompt: {prompt[:100]}...")
+        result = generate_strategy_from_prompt(prompt)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Strategy generation error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/backtest-strategy', methods=['POST'])
+def api_backtest_strategy():
+    """Run backtest for generated strategy"""
+    try:
+        data = request.get_json()
+        strategy_id = data.get('strategy_id')
+        symbol = data.get('symbol', 'BTC/USDT')
+        
+        if not strategy_id:
+            return jsonify({'error': 'Strategy ID is required'}), 400
+        
+        logger.info(f"Running backtest for strategy {strategy_id}")
+        result = run_strategy_backtest(strategy_id, symbol)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Backtest error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/refine-strategy', methods=['POST'])
+def api_refine_strategy():
+    """Refine existing strategy based on user feedback"""
+    try:
+        data = request.get_json()
+        strategy_id = data.get('strategy_id')
+        refinement = data.get('refinement', '')
+        
+        if not strategy_id or not refinement:
+            return jsonify({'error': 'Strategy ID and refinement text are required'}), 400
+        
+        logger.info(f"Refining strategy {strategy_id}")
+        result = refine_existing_strategy(strategy_id, refinement)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Strategy refinement error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/saved-strategies')
+def api_saved_strategies():
+    """Get all saved AI-generated strategies"""
+    try:
+        strategies = get_all_strategies()
+        return jsonify({'strategies': strategies})
+    except Exception as e:
+        logger.error(f"Error loading saved strategies: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint"""
@@ -730,6 +802,7 @@ def api_health():
         'features': [
             'Real OKX market data',
             'AI signal generation',
+            'AI strategy generation',
             'TradingView integration',
             'Portfolio management',
             'Order placement',
