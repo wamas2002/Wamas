@@ -70,7 +70,7 @@
 
         .main-grid {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 300px 1fr 350px;
             grid-template-rows: auto 1fr;
             height: calc(100vh - 80px);
             gap: 1rem;
@@ -175,10 +175,82 @@
             100% { transform: rotate(360deg); }
         }
 
+        .scanner-panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .scanner-item {
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .scanner-symbol {
+            font-weight: 600;
+            color: var(--accent-blue);
+            font-size: 1rem;
+        }
+
+        .scanner-metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .metric-positive { color: var(--accent-green); }
+        .metric-negative { color: var(--accent-red); }
+        .metric-neutral { color: var(--text-secondary); }
+
+        .feature-tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 280px 1fr 300px;
+            }
+        }
+
         @media (max-width: 768px) {
             .main-grid {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
+                grid-template-rows: auto auto auto 1fr;
                 padding: 1rem;
             }
             
@@ -260,6 +332,44 @@
                 </div>
             </div>
         </main>
+
+        <aside class="scanner-panel">
+            <div class="feature-tabs">
+                <button class="tab-button active" onclick="switchTab('scanner')">Scanner</button>
+                <button class="tab-button" onclick="switchTab('analysis')">Analysis</button>
+                <button class="tab-button" onclick="switchTab('alerts')">Alerts</button>
+            </div>
+
+            <div id="scanner-tab" class="tab-content active">
+                <h4><i class="fas fa-search me-2"></i>Smart Scanner</h4>
+                <div id="scanner-results">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Scanning markets...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="analysis-tab" class="tab-content">
+                <h4><i class="fas fa-chart-bar me-2"></i>Market Analysis</h4>
+                <div id="analysis-results">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading analysis...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="alerts-tab" class="tab-content">
+                <h4><i class="fas fa-bell me-2"></i>Active Alerts</h4>
+                <div id="alerts-list">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading alerts...</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 
     <script>
@@ -268,6 +378,9 @@
             constructor() {
                 this.portfolioData = null;
                 this.signalsData = [];
+                this.scannerData = [];
+                this.analysisData = {};
+                this.alertsData = [];
                 this.chartWidget = null;
                 this.init();
             }
@@ -276,6 +389,9 @@
                 this.setupTradingViewChart();
                 this.loadPortfolioData();
                 this.loadSignalsData();
+                this.loadScannerData();
+                this.loadAnalysisData();
+                this.loadAlertsData();
                 this.startDataRefresh();
                 this.updateLastRefresh();
             }
@@ -321,6 +437,30 @@
                 }
             }
 
+            async loadScannerData() {
+                const response = await fetch('/api/screener/scan');
+                if (response.ok) {
+                    this.scannerData = await response.json();
+                    this.updateScannerDisplay();
+                }
+            }
+
+            async loadAnalysisData() {
+                const response = await fetch('/api/ai/model-insights');
+                if (response.ok) {
+                    this.analysisData = await response.json();
+                    this.updateAnalysisDisplay();
+                }
+            }
+
+            async loadAlertsData() {
+                const response = await fetch('/api/trading/active-positions');
+                if (response.ok) {
+                    this.alertsData = await response.json();
+                    this.updateAlertsDisplay();
+                }
+            }
+
             updatePortfolioDisplay() {
                 if (this.portfolioData) {
                     document.getElementById('total-balance').textContent = 
@@ -355,6 +495,90 @@
                 document.getElementById('signal-count').textContent = this.signalsData.length;
             }
 
+            updateScannerDisplay() {
+                const container = document.getElementById('scanner-results');
+                if (!this.scannerData || this.scannerData.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No scanner results</p>';
+                    return;
+                }
+
+                container.innerHTML = this.scannerData.map(item => `
+                    <div class="scanner-item">
+                        <div class="scanner-symbol">${item.symbol}</div>
+                        <div class="scanner-metric">
+                            <span>Price Change</span>
+                            <span class="${item.change >= 0 ? 'metric-positive' : 'metric-negative'}">
+                                ${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%
+                            </span>
+                        </div>
+                        <div class="scanner-metric">
+                            <span>Volume</span>
+                            <span class="metric-neutral">${item.volume || 'N/A'}</span>
+                        </div>
+                        <div class="scanner-metric">
+                            <span>RSI</span>
+                            <span class="${item.rsi > 70 ? 'metric-negative' : item.rsi < 30 ? 'metric-positive' : 'metric-neutral'}">
+                                ${item.rsi ? item.rsi.toFixed(1) : 'N/A'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateAnalysisDisplay() {
+                const container = document.getElementById('analysis-results');
+                if (!this.analysisData || !this.analysisData.success) {
+                    container.innerHTML = '<p class="text-muted">Analysis not available</p>';
+                    return;
+                }
+
+                const features = this.analysisData.features || [];
+                container.innerHTML = `
+                    <div class="scanner-item">
+                        <div class="scanner-symbol">Model Confidence</div>
+                        <div class="scanner-metric">
+                            <span>Overall Score</span>
+                            <span class="metric-positive">${this.analysisData.confidence}%</span>
+                        </div>
+                    </div>
+                    ${features.map(feature => `
+                        <div class="scanner-item">
+                            <div class="scanner-symbol">${feature.name}</div>
+                            <div class="scanner-metric">
+                                <span>Importance</span>
+                                <span class="metric-neutral">${(feature.importance * 100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+
+            updateAlertsDisplay() {
+                const container = document.getElementById('alerts-list');
+                if (!this.alertsData || this.alertsData.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No active alerts</p>';
+                    return;
+                }
+
+                container.innerHTML = this.alertsData.map(alert => `
+                    <div class="scanner-item">
+                        <div class="scanner-symbol">${alert.symbol}</div>
+                        <div class="scanner-metric">
+                            <span>Side</span>
+                            <span class="${alert.side === 'buy' ? 'metric-positive' : 'metric-negative'}">
+                                ${alert.side.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="scanner-metric">
+                            <span>P&L</span>
+                            <span class="${alert.current_pnl >= 0 ? 'metric-positive' : 'metric-negative'}">
+                                ${alert.current_pnl >= 0 ? '+' : ''}${alert.current_pnl.toFixed(2)}%
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
             updateLastRefresh() {
                 const now = new Date();
                 document.getElementById('last-update').textContent = 
@@ -365,9 +589,31 @@
                 setInterval(() => {
                     this.loadPortfolioData();
                     this.loadSignalsData();
+                    this.loadScannerData();
+                    this.loadAnalysisData();
+                    this.loadAlertsData();
                     this.updateLastRefresh();
                 }, 10000);
             }
+        }
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Activate corresponding button
+            event.target.classList.add('active');
         }
 
         // Initialize dashboard when page loads
