@@ -200,19 +200,8 @@ if __name__ == '__main__':
     import os
     import socket
     
-    # Find available port
-    def find_available_port():
-        for port in [5000, 8080, 8081, 8082, 3000]:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            try:
-                result = sock.connect_ex(('127.0.0.1', port))
-                if result != 0:
-                    return port
-            finally:
-                sock.close()
-        return 8080
-    
-    port = find_available_port()
+    # Use port 5000 for workflow compatibility
+    port = 5000
     logger.info(f"Starting Modern Trading Platform on port {port}")
     logger.info("Professional UI with 3Commas/TradingView design")
     
