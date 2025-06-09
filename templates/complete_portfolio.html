@@ -356,14 +356,52 @@
         let currentPosition = 'OKX:BTCUSDT';
         let portfolioWidget = null;
         
+        // Theme Management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('trading-platform-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('trading-platform-theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            // Refresh TradingView widget with new theme
+            if (portfolioWidget) {
+                setTimeout(() => {
+                    try {
+                        portfolioWidget.remove();
+                    } catch (e) {}
+                    initializePortfolioChart();
+                }, 500);
+            }
+        }
+
+        function updateThemeIcon(theme) {
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        
         // TradingView Widget Manager
         class TradingViewManager {
             constructor() {
                 this.defaultConfig = {
-                    theme: 'dark',
+                    get theme() {
+                        return document.documentElement.getAttribute('data-theme') || 'dark';
+                    },
                     style: '1',
                     locale: 'en',
-                    toolbar_bg: '#252D3D',
+                    get toolbar_bg() {
+                        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+                        return theme === 'dark' ? '#252D3D' : '#FFFFFF';
+                    },
                     enable_publishing: false,
                     withdateranges: true,
                     hide_side_toolbar: false,
@@ -405,6 +443,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Initializing Portfolio Management...');
             
+            initializeTheme();
             initializePortfolioChart();
             loadPortfolioData();
             

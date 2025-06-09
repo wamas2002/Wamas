@@ -600,6 +600,33 @@
             }, 500);
         }
 
+        function initializeDashboard() {
+            // Initialize main trading chart
+            tvManager.createWidget('main_trading_chart', currentSymbol, {
+                interval: '15',
+                width: '100%',
+                height: 500,
+                studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'EMA@tv-basicstudies']
+            });
+
+            // Initialize portfolio summary chart
+            tvManager.createWidget('portfolio_summary_chart', 'OKX:BTCUSDT', {
+                interval: '1D',
+                width: '100%',
+                height: 300,
+                hide_top_toolbar: true
+            });
+
+            // Symbol selector event
+            const symbolSelector = document.getElementById('symbolSelector');
+            if (symbolSelector) {
+                symbolSelector.addEventListener('change', function(e) {
+                    currentSymbol = e.target.value;
+                    refreshChart();
+                });
+            }
+        }
+
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Initializing Complete Trading Platform Dashboard...');

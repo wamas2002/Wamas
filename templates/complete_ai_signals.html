@@ -25,6 +25,18 @@
             --border-color: #2A3441;
         }
 
+        [data-theme="light"] {
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --accent-blue: #4F8BFF;
+            --accent-green: #00D395;
+            --accent-red: #FF4757;
+            --text-primary: #1A202C;
+            --text-secondary: #4A5568;
+            --border-color: #E2E8F0;
+        }
+
         body {
             background: var(--bg-primary);
             color: var(--text-primary);
@@ -215,6 +227,9 @@
             </div>
             
             <div class="d-flex align-items-center ms-3">
+                <button class="btn btn-sm btn-outline-light me-3" onclick="toggleTheme()" id="themeToggle">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
                 <span class="status-indicator status-online"></span>
                 <small class="text-muted">AI Models Active</small>
             </div>
