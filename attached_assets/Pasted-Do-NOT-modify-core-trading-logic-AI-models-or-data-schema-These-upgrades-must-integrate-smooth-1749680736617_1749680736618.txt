@@ -1,0 +1,42 @@
+Do NOT modify core trading logic, AI models, or data schema.
+⚠️ These upgrades must integrate smoothly with the current modular system without disrupting existing live trading or UI flow.
+
+✅ OBJECTIVE:
+
+Upgrade the current system with enhanced AI explainability, strategy visualization, backtesting clarity, live screener, and persistent strategy management
+
+🔧 TASKS TO IMPLEMENT:
+	1.	🧠 AI Explainability Layer
+	•	For each AI signal shown in the UI, display:
+	•	The contributing indicators (e.g. RSI, MACD, LSTM signal)
+	•	Model confidence score
+	•	Signal rationale summary (e.g., “Bullish crossover detected”)
+	•	Add this panel inside the AI Strategy or Signal Logs tab.
+	2.	📊 Enhanced Strategy Backtesting View
+	•	Visualize backtested trade entries/exits directly on charts.
+	•	Add performance charts: cumulative return, drawdown, Sharpe ratio.
+	•	Show summary statistics for each strategy test: win rate, avg trade duration, profit factor.
+	3.	🔍 Real-Time Signal Screener
+	•	Add a new tab: “Signal Scanner”
+	•	Filters to include:
+	•	RSI (<30, >70)
+	•	MACD (bullish/bearish cross)
+	•	Volume above 20-day average
+	•	Timeframe filters: 1h, 4h, 1d
+	•	Output filtered pairs with real-time updates.
+	4.	🧠 Strategy Persistence & Management
+	•	Enable full save/load/edit/delete of user-generated strategies from the UI.
+	•	Save to current DB or strategies/ directory using consistent naming.
+	•	Load saved strategies into the visual Strategy Builder for editing.
+🔗 UI INTEGRATION:
+	•	All updates must appear inside the current UI 
+	•	Use TradingView widget overlays where needed.
+	•	Use tabs or collapsible cards for screener and explainability panels.
+Once completed, verify:
+	•	AI signals display clear justification
+	•	Signal Scanner filters and updates correctly
+	•	Backtest results are visualized and exportable
+	•	User strategies can be saved and reloaded without errors
+
+✅ DO NOT introduce sandbox data or mockups — only real data from OKX or supported live sources.
+✅ All improvements must respect current system modularity and API structure.

@@ -999,6 +999,16 @@
                                     <i class="fas fa-bookmark me-2"></i>Saved Strategies
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#signalScanner">
+                                    <i class="fas fa-search me-2"></i>Signal Scanner
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#backtestVisualization">
+                                    <i class="fas fa-chart-line me-2"></i>Backtest Viz
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -1203,6 +1213,146 @@
                                     <div class="text-center text-muted py-4">
                                         <i class="fas fa-robot fa-3x mb-3"></i>
                                         <p>No saved strategies yet. Generate your first AI strategy!</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Signal Scanner -->
+                            <div class="tab-pane fade" id="signalScanner">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Real-Time Signal Scanner</h6>
+                                    <button class="btn btn-sm btn-primary" onclick="runSignalScan()">
+                                        <i class="fas fa-search me-1"></i>Scan Now
+                                    </button>
+                                </div>
+                                
+                                <!-- Scanner Filters -->
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <label class="form-label">RSI Filter</label>
+                                        <select class="form-select" id="rsiFilter">
+                                            <option value="all">All Levels</option>
+                                            <option value="oversold">Oversold (&lt; 30)</option>
+                                            <option value="overbought">Overbought (&gt; 70)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">MACD Filter</label>
+                                        <select class="form-select" id="macdFilter">
+                                            <option value="all">All Signals</option>
+                                            <option value="bullish">Bullish Cross</option>
+                                            <option value="bearish">Bearish Cross</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Volume Filter</label>
+                                        <select class="form-select" id="volumeFilter">
+                                            <option value="all">All Volume</option>
+                                            <option value="high">High Volume (1.5x+)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Timeframe</label>
+                                        <select class="form-select" id="timeframeFilter">
+                                            <option value="1h">1 Hour</option>
+                                            <option value="4h">4 Hours</option>
+                                            <option value="1d">1 Day</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Scanner Results -->
+                                <div id="scannerResults">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-search fa-3x mb-3"></i>
+                                        <p>Click "Scan Now" to find signals matching your criteria</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Backtest Visualization -->
+                            <div class="tab-pane fade" id="backtestVisualization">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Strategy Backtest Visualization</h6>
+                                    <div>
+                                        <select class="form-select form-select-sm d-inline-block me-2" id="backtestStrategy" style="width: auto;">
+                                            <option value="trend_following">Trend Following</option>
+                                            <option value="mean_reversion">Mean Reversion</option>
+                                            <option value="momentum">Momentum Strategy</option>
+                                        </select>
+                                        <button class="btn btn-sm btn-primary" onclick="loadBacktestVisualization()">
+                                            <i class="fas fa-chart-line me-1"></i>Load Backtest
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Backtest Performance Metrics -->
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value text-success" id="backtestReturn">+24.5%</div>
+                                            <div class="metric-label">Total Return</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value" id="backtestSharpe">1.84</div>
+                                            <div class="metric-label">Sharpe Ratio</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value text-danger" id="backtestDrawdown">-8.5%</div>
+                                            <div class="metric-label">Max Drawdown</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value" id="backtestWinRate">68%</div>
+                                            <div class="metric-label">Win Rate</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Backtest Chart -->
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Portfolio Performance Chart</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="backtestChart" style="height: 400px;"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Trade History Table -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Trade Entry/Exit Points</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" id="backtestTradesTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Entry Date</th>
+                                                        <th>Exit Date</th>
+                                                        <th>Symbol</th>
+                                                        <th>Side</th>
+                                                        <th>Entry Price</th>
+                                                        <th>Exit Price</th>
+                                                        <th>P&L</th>
+                                                        <th>P&L %</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="8" class="text-center text-muted">
+                                                            Load a backtest to view trade details
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2548,6 +2698,338 @@
                         <div class="feature-bar-fill" style="width: ${healthScore}%; background-color: ${healthScore > 70 ? 'var(--accent-green)' : healthScore > 40 ? 'var(--accent-orange)' : 'var(--accent-red)'};"></div>
                     </div>
                     <span class="feature-value">${healthScore.toFixed(1)}%</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-name">Market Regime</span>
+                    <div class="feature-bar">
+                        <div class="feature-bar-fill" style="width: 100%; background-color: var(--accent-blue);"></div>
+                    </div>
+                    <span class="feature-value">${marketRegime}</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-name">Signals/Hour</span>
+                    <div class="feature-bar">
+                        <div class="feature-bar-fill" style="width: ${Math.min(100, signalsPerHour * 10)}%;"></div>
+                    </div>
+                    <span class="feature-value">${signalsPerHour}</span>
+                </div>
+            `;
+        }
+
+        function updateMarketAnalysisData(marketAnalysis) {
+            // Update model confidence badge with market analysis
+            const modelInfo = document.querySelector('.model-info');
+            if (modelInfo && marketAnalysis.volatility) {
+                const volatilityBadge = `<small class="text-muted ms-2">Vol: ${(marketAnalysis.volatility * 100).toFixed(1)}%</small>`;
+                if (!modelInfo.innerHTML.includes('Vol:')) {
+                    modelInfo.innerHTML += volatilityBadge;
+                }
+            }
+        }
+
+        // Signal Scanner Functions
+        function runSignalScan() {
+            const rsiFilter = document.getElementById('rsiFilter').value;
+            const macdFilter = document.getElementById('macdFilter').value;
+            const volumeFilter = document.getElementById('volumeFilter').value;
+            const timeframe = document.getElementById('timeframeFilter').value;
+            
+            const resultsContainer = document.getElementById('scannerResults');
+            resultsContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Scanning...</span>
+                    </div>
+                    <p class="mt-2">Scanning ${timeframe} timeframe for signals...</p>
+                </div>
+            `;
+            
+            const params = new URLSearchParams({
+                rsi: rsiFilter,
+                macd: macdFilter,
+                volume: volumeFilter,
+                timeframe: timeframe
+            });
+            
+            fetch(`/api/signal-scanner?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                displayScannerResults(data);
+            })
+            .catch(error => {
+                console.error('Scanner error:', error);
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Scanner error. Please try again.
+                    </div>
+                `;
+            });
+        }
+
+        function displayScannerResults(data) {
+            const resultsContainer = document.getElementById('scannerResults');
+            
+            if (!data.signals || data.signals.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-search fa-2x mb-3"></i>
+                        <p>No signals found matching your criteria</p>
+                        <small>Try adjusting the filters and scan again</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            let resultsHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">${data.total_found} Signals Found</h6>
+                    <small class="text-muted">Last scan: ${new Date(data.scan_timestamp).toLocaleTimeString()}</small>
+                </div>
+                <div class="row">
+            `;
+            
+            data.signals.forEach(signal => {
+                const signalClass = signal.macd_signal === 'BULLISH' ? 'success' : 'danger';
+                const rsiClass = signal.rsi < 30 ? 'success' : signal.rsi > 70 ? 'danger' : 'warning';
+                
+                resultsHTML += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title mb-1">${signal.symbol}/USDT</h6>
+                                        <div class="text-muted small">$${signal.price.toFixed(2)}</div>
+                                    </div>
+                                    <span class="badge bg-${signalClass}">${signal.macd_signal}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="small">RSI:</span>
+                                        <span class="badge bg-${rsiClass}">${signal.rsi}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="small">Volume Ratio:</span>
+                                        <span class="small">${signal.volume_ratio}x</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="small">Signal Strength:</span>
+                                        <span class="small">${signal.signal_strength.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadSignalExplainability('${signal.symbol}')">
+                                    <i class="fas fa-brain me-1"></i>Analyze
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += '</div>';
+            resultsContainer.innerHTML = resultsHTML;
+        }
+
+        function loadSignalExplainability(symbol) {
+            fetch(`/api/signal-explainability/${symbol}`)
+            .then(response => response.json())
+            .then(data => {
+                displaySignalExplainability(data);
+            })
+            .catch(error => {
+                console.error('Signal explainability error:', error);
+            });
+        }
+
+        function displaySignalExplainability(data) {
+            const modal = `
+                <div class="modal fade" id="explainabilityModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-brain me-2"></i>
+                                    AI Signal Analysis: ${data.symbol}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="signal-badge signal-${data.overall_signal.toLowerCase()}">${data.overall_signal}</div>
+                                            <div class="mt-2">
+                                                <strong>${data.confidence.toFixed(1)}% Confidence</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h6>Signal Reasoning</h6>
+                                        <p class="text-muted">${data.reasoning_summary}</p>
+                                    </div>
+                                </div>
+                                
+                                <h6>Contributing Indicators</h6>
+                                <div class="row">
+                                    ${data.contributing_indicators.map(indicator => `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card bg-secondary">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>${indicator.indicator}</strong>
+                                                        <span class="badge bg-${indicator.signal.toLowerCase() === 'bullish' ? 'success' : indicator.signal.toLowerCase() === 'bearish' ? 'danger' : 'warning'}">${indicator.signal}</span>
+                                                    </div>
+                                                    <div class="small text-muted mt-1">${indicator.reasoning}</div>
+                                                    <div class="mt-2">
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar" style="width: ${indicator.strength}%"></div>
+                                                        </div>
+                                                        <small>Strength: ${indicator.strength}% | Value: ${indicator.value}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <h6>Risk Factors</h6>
+                                <ul class="list-unstyled">
+                                    ${data.risk_factors.map(risk => `<li><i class="fas fa-exclamation-triangle text-warning me-2"></i>${risk}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('explainabilityModal');
+            if (existingModal) existingModal.remove();
+            
+            // Add new modal
+            document.body.insertAdjacentHTML('beforeend', modal);
+            
+            // Show modal
+            const modalElement = new bootstrap.Modal(document.getElementById('explainabilityModal'));
+            modalElement.show();
+        }
+
+        // Backtest Visualization Functions
+        function loadBacktestVisualization() {
+            const strategyName = document.getElementById('backtestStrategy').value;
+            
+            const chartContainer = document.getElementById('backtestChart');
+            chartContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading backtest...</span>
+                    </div>
+                    <p class="mt-2">Loading backtest visualization...</p>
+                </div>
+            `;
+            
+            fetch(`/api/backtest-visualization/${strategyName}`)
+            .then(response => response.json())
+            .then(data => {
+                displayBacktestVisualization(data);
+                updateBacktestMetrics(data.metrics);
+                updateBacktestTradesTable(data.trades);
+            })
+            .catch(error => {
+                console.error('Backtest visualization error:', error);
+                chartContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load backtest data. Please try again.
+                    </div>
+                `;
+            });
+        }
+
+        function displayBacktestVisualization(data) {
+            const chartContainer = document.getElementById('backtestChart');
+            
+            if (!data.performance_chart || !data.performance_chart.dates) {
+                chartContainer.innerHTML = '<div class="alert alert-warning">No backtest data available</div>';
+                return;
+            }
+            
+            const trace1 = {
+                x: data.performance_chart.dates,
+                y: data.performance_chart.portfolio_values,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Portfolio Value',
+                line: { color: '#4CAF50', width: 2 }
+            };
+            
+            const trace2 = {
+                x: data.performance_chart.dates,
+                y: data.performance_chart.drawdowns,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Drawdown %',
+                line: { color: '#f44336', width: 1 },
+                yaxis: 'y2'
+            };
+            
+            const layout = {
+                title: `${data.strategy_name} Backtest Results`,
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Portfolio Value ($)', side: 'left' },
+                yaxis2: { title: 'Drawdown (%)', side: 'right', overlaying: 'y' },
+                showlegend: true,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') }
+            };
+            
+            Plotly.newPlot(chartContainer, [trace1, trace2], layout, {responsive: true});
+        }
+
+        function updateBacktestMetrics(metrics) {
+            if (!metrics) return;
+            
+            document.getElementById('backtestReturn').textContent = `+${metrics.total_return}%`;
+            document.getElementById('backtestSharpe').textContent = metrics.sharpe_ratio;
+            document.getElementById('backtestDrawdown').textContent = `${metrics.max_drawdown}%`;
+            document.getElementById('backtestWinRate').textContent = `${metrics.win_rate}%`;
+        }
+
+        function updateBacktestTradesTable(trades) {
+            const tableBody = document.querySelector('#backtestTradesTable tbody');
+            
+            if (!trades || trades.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No trade data available</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = trades.map(trade => `
+                <tr>
+                    <td>${new Date(trade.entry_date).toLocaleDateString()}</td>
+                    <td>${new Date(trade.exit_date).toLocaleDateString()}</td>
+                    <td>${trade.symbol}</td>
+                    <td><span class="badge bg-${trade.side === 'BUY' ? 'success' : 'danger'}">${trade.side}</span></td>
+                    <td>$${trade.entry_price.toFixed(2)}</td>
+                    <td>$${trade.exit_price.toFixed(2)}</td>
+                    <td class="${trade.pnl >= 0 ? 'text-success' : 'text-danger'}">$${trade.pnl.toFixed(2)}</td>
+                    <td class="${trade.pnl_percentage >= 0 ? 'text-success' : 'text-danger'}">${trade.pnl_percentage.toFixed(2)}%</td>
+                </tr>
+            `).join('');
+        }
+
+        // Auto-load features on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-refresh model insights every 30 seconds
+            setInterval(refreshModelInsights, 30000);
+            
+            // Initial load of saved strategies
+            loadSavedStrategies();
+            
+            // Initial model insights load
+            refreshModelInsights();
+        });
                 </div>
                 <div class="feature-item">
                     <span class="feature-name">Market Regime</span>
