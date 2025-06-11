@@ -223,16 +223,28 @@ class UnifiedTradingPlatform:
                     
                     confidence = min(95, max(30, signal_strength))
                     
+                    current_price = float(df['close'].iloc[-1])
+                    
+                    # Calculate target price based on signal
+                    if signal_type == "BUY":
+                        target_price = current_price * 1.05  # 5% profit target
+                    elif signal_type == "SELL":
+                        target_price = current_price * 0.95  # 5% profit target
+                    else:
+                        target_price = current_price
+                    
                     signals.append({
                         'symbol': symbol.replace('/USDT', ''),
-                        'signal': signal_type,
+                        'action': signal_type,
                         'confidence': confidence,
+                        'current_price': current_price,
+                        'target_price': target_price,
                         'rsi': current_rsi,
                         'macd': current_macd,
                         'volume_ratio': volume_ratio,
                         'reasoning': "; ".join(reasoning_parts),
                         'timestamp': datetime.now().isoformat(),
-                        'price': float(df['close'].iloc[-1])
+                        'price': current_price
                     })
                     
                 except Exception as e:
