@@ -137,10 +137,14 @@ class UnifiedTradingPlatform:
                         logger.error(f"Error fetching data for {symbol}: {e}")
                 
                 # Calculate percentages
-                for item in portfolio_data:
-                    item['percentage'] = (item['usd_value'] / total_usd * 100) if total_usd > 0 else 0
-            
-            return portfolio_data
+                if total_usd > 0:
+                    for item in portfolio_data:
+                        item['percentage'] = (item['usd_value'] / total_usd) * 100
+                
+                return portfolio_data
+            else:
+                # Fallback when exchange is not available
+                return []
         except Exception as e:
             logger.error(f"Portfolio data error: {e}")
             return []
@@ -387,7 +391,7 @@ def index():
         <title>Unified AI Trading Platform</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         <style>
             * { box-sizing: border-box; }
