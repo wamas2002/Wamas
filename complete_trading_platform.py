@@ -1566,6 +1566,64 @@ def api_screener_scan():
 
 @app.route('/api/ai/model-insights')
 def api_ai_model_insights():
+    """Dynamic optimization recommendations and live trading insights"""
+    try:
+        # Get real-time optimization analysis
+        optimization_report = dynamic_optimizer.run_optimization_analysis()
+        
+        if 'error' in optimization_report:
+            # Fallback to basic analysis if optimizer fails
+            return jsonify({
+                'success': False,
+                'system_health': {'overall_health': 60},
+                'recommendations': [{
+                    'type': 'SYSTEM_CHECK',
+                    'priority': 'HIGH',
+                    'action': 'System analysis in progress',
+                    'confidence': 60,
+                    'timeframe': 'Analyzing...'
+                }]
+            })
+        
+        # Transform optimization data for dashboard display
+        system_health = optimization_report.get('system_health', {})
+        recommendations = optimization_report.get('recommendations', [])
+        market_conditions = optimization_report.get('market_conditions', {})
+        
+        # Create dashboard-compatible response
+        dashboard_data = {
+            'success': True,
+            'model': 'Dynamic Optimization Engine',
+            'confidence': system_health.get('overall_health', 60),
+            'system_status': {
+                'health_score': system_health.get('overall_health', 60),
+                'market_regime': system_health.get('current_regime', 'ANALYZING'),
+                'signals_per_hour': system_health.get('signals_per_hour', 0),
+                'ml_accuracy': system_health.get('ml_accuracy', 0) * 100 if system_health.get('ml_accuracy') else 0
+            },
+            'live_recommendations': recommendations[:6],  # Top 6 recommendations
+            'market_analysis': market_conditions or {},
+            'performance_insights': optimization_report.get('performance_summary', {}),
+            'next_optimization': optimization_report.get('next_analysis', ''),
+            'data_source': 'live_okx_optimization',
+            'timestamp': optimization_report.get('timestamp', datetime.now().isoformat())
+        }
+        
+        return jsonify(dashboard_data)
+        
+    except Exception as e:
+        logger.error(f"Dynamic optimization API error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'system_status': {'health_score': 50},
+            'live_recommendations': [{
+                'type': 'SYSTEM_ERROR',
+                'priority': 'HIGH',
+                'action': 'Optimization engine restart required',
+                'confidence': 70
+            }]
+        })
     """AI model insights from live market analysis"""
     try:
         market_data = data_service.get_market_data('BTC/USDT', '1h', 100)
