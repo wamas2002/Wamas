@@ -1267,29 +1267,7 @@ def api_list_strategies():
         logger.error(f"List strategies error: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/delete-strategy/<strategy_name>', methods=['DELETE'])
-def api_delete_strategy(strategy_name):
-    """Delete saved strategy"""
-    try:
-        conn = sqlite3.connect(db_manager.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('DELETE FROM saved_strategies WHERE name = ?', (strategy_name,))
-        
-        if cursor.rowcount > 0:
-            conn.commit()
-            conn.close()
-            return jsonify({
-                'success': True,
-                'message': f'Strategy "{strategy_name}" deleted successfully'
-            })
-        else:
-            conn.close()
-            return jsonify({'error': 'Strategy not found'}), 404
-            
-    except Exception as e:
-        logger.error(f"Delete strategy error: {e}")
-        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/generate-strategy', methods=['POST'])
 def api_generate_strategy():
