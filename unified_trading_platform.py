@@ -587,12 +587,17 @@ def index():
             
             function loadPortfolio() {
                 fetch('/api/unified/portfolio')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
-                        if (data.length > 0) {
+                        if (data && Array.isArray(data) && data.length > 0) {
                             const labels = data.map(item => item.symbol.replace('/USDT', ''));
-                            const values = data.map(item => item.percentage);
-                            const totalValue = data.reduce((sum, item) => sum + item.usd_value, 0);
+                            const values = data.map(item => item.percentage || 0);
+                            const totalValue = data.reduce((sum, item) => sum + (item.usd_value || 0), 0);
                             
                             Plotly.newPlot('portfolio-chart', [{
                                 type: 'pie',
@@ -618,10 +623,13 @@ def index():
                             // Update portfolio progress bar
                             const progressPercent = Math.min(100, (totalValue / 10000) * 100);
                             document.getElementById('portfolio-progress').style.width = progressPercent + '%';
+                        } else {
+                            document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; color: #ccc; padding: 50px;">No portfolio data available</div>';
                         }
                     })
                     .catch(err => {
                         console.error('Portfolio load error:', err);
+                        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; color: #f44336; padding: 50px;">Portfolio data connection error</div>';
                         showNotification('Portfolio data unavailable', 'error');
                     });
             }
@@ -630,103 +638,133 @@ def index():
                 document.getElementById('signals-loading').style.display = 'inline-block';
                 
                 fetch('/api/unified/signals')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const signalsList = document.getElementById('signals-list');
                         signalsList.innerHTML = '';
                         
-                        // Check for new signals
-                        if (data.length > lastSignalCount) {
-                            showNotification(`${data.length - lastSignalCount} new signals generated!`);
-                        }
-                        lastSignalCount = data.length;
-                        
-                        data.slice(0, 8).forEach((signal, index) => {
-                            const signalClass = signal.signal.toLowerCase();
-                            const confidenceColor = signal.confidence >= 75 ? '#4CAF50' : 
-                                                   signal.confidence >= 50 ? '#FF9800' : '#f44336';
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            // Check for new signals
+                            if (data.length > lastSignalCount) {
+                                showNotification(`${data.length - lastSignalCount} new signals generated!`);
+                            }
+                            lastSignalCount = data.length;
                             
-                            const div = document.createElement('div');
-                            div.className = `signal-item signal-${signalClass}`;
-                            div.style.animationDelay = `${index * 0.1}s`;
-                            div.innerHTML = `
-                                <div class="signal-header">
-                                    <span class="signal-symbol">${signal.symbol}</span>
-                                    <span class="signal-confidence" style="background: rgba(${confidenceColor === '#4CAF50' ? '76,175,80' : confidenceColor === '#FF9800' ? '255,152,0' : '244,67,54'},0.2); color: ${confidenceColor};">
-                                        ${signal.confidence.toFixed(1)}%
-                                    </span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-                                    <span><strong>${signal.signal}</strong></span>
-                                    <span>$${signal.price?.toFixed(2) || 'N/A'}</span>
-                                </div>
-                                <div class="signal-details">
-                                    RSI: ${signal.rsi?.toFixed(1) || 'N/A'} | 
-                                    Vol: ${signal.volume_ratio?.toFixed(2) || 'N/A'}x
-                                </div>
-                                <div class="signal-details" style="margin-top: 5px; font-style: italic;">
-                                    ${signal.reasoning}
-                                </div>
-                            `;
-                            signalsList.appendChild(div);
-                        });
+                            data.slice(0, 8).forEach((signal, index) => {
+                                const signalClass = (signal.signal || 'hold').toLowerCase();
+                                const confidence = signal.confidence || 0;
+                                const confidenceColor = confidence >= 75 ? '#4CAF50' : 
+                                                       confidence >= 50 ? '#FF9800' : '#f44336';
+                                
+                                const div = document.createElement('div');
+                                div.className = `signal-item signal-${signalClass}`;
+                                div.style.animationDelay = `${index * 0.1}s`;
+                                div.innerHTML = `
+                                    <div class="signal-header">
+                                        <span class="signal-symbol">${signal.symbol || 'Unknown'}</span>
+                                        <span class="signal-confidence" style="background: rgba(${confidenceColor === '#4CAF50' ? '76,175,80' : confidenceColor === '#FF9800' ? '255,152,0' : '244,67,54'},0.2); color: ${confidenceColor};">
+                                            ${confidence.toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                        <span><strong>${signal.signal || 'HOLD'}</strong></span>
+                                        <span>$${signal.price ? signal.price.toFixed(2) : 'N/A'}</span>
+                                    </div>
+                                    <div class="signal-details">
+                                        RSI: ${signal.rsi ? signal.rsi.toFixed(1) : 'N/A'} | 
+                                        Vol: ${signal.volume_ratio ? signal.volume_ratio.toFixed(2) : 'N/A'}x
+                                    </div>
+                                    <div class="signal-details" style="margin-top: 5px; font-style: italic;">
+                                        ${signal.reasoning || 'No analysis available'}
+                                    </div>
+                                `;
+                                signalsList.appendChild(div);
+                            });
+                            
+                            // Update live signals status
+                            const activeSignals = data.filter(s => (s.confidence || 0) >= 75).length;
+                            document.getElementById('live-signals').textContent = 
+                                `${activeSignals} High-Quality Signals`;
+                        } else {
+                            signalsList.innerHTML = '<div style="text-align: center; color: #ccc; padding: 30px;">No signals available</div>';
+                            document.getElementById('live-signals').textContent = '0 High-Quality Signals';
+                        }
                         
                         document.getElementById('signals-loading').style.display = 'none';
-                        
-                        // Update live signals status
-                        const activeSignals = data.filter(s => s.confidence >= 75).length;
-                        document.getElementById('live-signals').textContent = 
-                            `${activeSignals} High-Quality Signals`;
                     })
                     .catch(err => {
                         console.error('Signals load error:', err);
                         document.getElementById('signals-loading').style.display = 'none';
+                        document.getElementById('signals-list').innerHTML = '<div style="text-align: center; color: #f44336; padding: 30px;">Signal data connection error</div>';
                         showNotification('Signal data unavailable', 'error');
                     });
             }
             
             function loadMetrics() {
                 fetch('/api/unified/health')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
-                        const metricsDiv = document.getElementById('metrics');
-                        metricsDiv.innerHTML = `
-                            <div class="metric">
-                                <div class="metric-icon"><i class="fas fa-heartbeat"></i></div>
-                                <div class="metric-value" style="color: ${data.overall_health >= 90 ? '#4CAF50' : data.overall_health >= 70 ? '#FF9800' : '#f44336'}">
-                                    ${data.overall_health.toFixed(1)}%
+                        if (data && typeof data === 'object') {
+                            const health = data.overall_health || 0;
+                            const status = data.status || 'UNKNOWN';
+                            const components = data.components || {};
+                            
+                            const metricsDiv = document.getElementById('metrics');
+                            metricsDiv.innerHTML = `
+                                <div class="metric">
+                                    <div class="metric-icon"><i class="fas fa-heartbeat"></i></div>
+                                    <div class="metric-value" style="color: ${health >= 90 ? '#4CAF50' : health >= 70 ? '#FF9800' : '#f44336'}">
+                                        ${health.toFixed(1)}%
+                                    </div>
+                                    <div class="metric-label">System Health</div>
                                 </div>
-                                <div class="metric-label">System Health</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-icon"><i class="fas fa-shield-alt"></i></div>
-                                <div class="metric-value">${data.status}</div>
-                                <div class="metric-label">Status</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-icon"><i class="fas fa-bullseye"></i></div>
-                                <div class="metric-value">75%</div>
-                                <div class="metric-label">Confidence Threshold</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-icon"><i class="fas fa-brain"></i></div>
-                                <div class="metric-value">ACTIVE</div>
-                                <div class="metric-label">AI Generation</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-icon"><i class="fas fa-link"></i></div>
-                                <div class="metric-value">CONNECTED</div>
-                                <div class="metric-label">OKX Exchange</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-icon"><i class="fas fa-server"></i></div>
-                                <div class="metric-value">SINGLE PORT</div>
-                                <div class="metric-label">Unified Platform</div>
-                            </div>
-                        `;
+                                <div class="metric">
+                                    <div class="metric-icon"><i class="fas fa-shield-alt"></i></div>
+                                    <div class="metric-value">${status}</div>
+                                    <div class="metric-label">Status</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-icon"><i class="fas fa-bullseye"></i></div>
+                                    <div class="metric-value">75%</div>
+                                    <div class="metric-label">Confidence Threshold</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-icon"><i class="fas fa-brain"></i></div>
+                                    <div class="metric-value" style="color: ${components.signal_generation >= 75 ? '#4CAF50' : '#FF9800'}">
+                                        ${components.signal_generation >= 75 ? 'ACTIVE' : 'STANDBY'}
+                                    </div>
+                                    <div class="metric-label">AI Generation</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-icon"><i class="fas fa-link"></i></div>
+                                    <div class="metric-value" style="color: ${components.api_connectivity >= 75 ? '#4CAF50' : '#f44336'}">
+                                        ${components.api_connectivity >= 75 ? 'CONNECTED' : 'DISCONNECTED'}
+                                    </div>
+                                    <div class="metric-label">OKX Exchange</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-icon"><i class="fas fa-server"></i></div>
+                                    <div class="metric-value">SINGLE PORT</div>
+                                    <div class="metric-label">Unified Platform</div>
+                                </div>
+                            `;
+                        } else {
+                            document.getElementById('metrics').innerHTML = '<div style="text-align: center; color: #ccc; padding: 30px;">Health data unavailable</div>';
+                        }
                     })
                     .catch(err => {
                         console.error('Metrics load error:', err);
+                        document.getElementById('metrics').innerHTML = '<div style="text-align: center; color: #f44336; padding: 30px;">Health monitoring connection error</div>';
                         showNotification('Health metrics unavailable', 'error');
                     });
             }
