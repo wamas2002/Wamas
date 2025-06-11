@@ -34,7 +34,7 @@ args = "Advanced Monitor Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Enhanced Monitor"
+args = "Simple Trading Monitor"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -71,12 +71,12 @@ args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002"
 waitForPort = 5002
 
 [[workflows.workflow]]
-name = "Enhanced Monitor"
+name = "Simple Trading Monitor"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run live_trading_monitor_dashboard.py --server.port 5001 --server.address 0.0.0.0"
+args = "streamlit run simple_trading_dashboard.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
 [[ports]]
