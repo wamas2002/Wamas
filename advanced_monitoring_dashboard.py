@@ -25,6 +25,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Add custom CSS to fix WebSocket issues
+st.markdown("""
+<style>
+    .main .block-container {
+        padding-top: 1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 class AdvancedTradingMonitor:
     def __init__(self):
         self.exchange = self.connect_okx()
@@ -282,7 +291,7 @@ def main():
     # Set up auto-refresh
     if auto_refresh:
         time.sleep(30)
-        st.experimental_rerun()
+        st.rerun()
     
     # Main metrics row
     st.header("📊 System Overview")
