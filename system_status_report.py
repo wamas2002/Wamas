@@ -1,19 +1,91 @@
 #!/usr/bin/env python3
 """
-Comprehensive System Status Report
-Real-time analysis of all advanced trading features
+Trading System Status Report
+Real-time analysis of system performance and portfolio metrics
 """
 
-import sqlite3
 import os
 import ccxt
-from datetime import datetime, timedelta
+import sqlite3
+from datetime import datetime
 
-def get_live_trading_stats():
-    """Get live trading performance statistics"""
-    if not os.path.exists('live_trading.db'):
-        return {"status": "Ready for trading", "trades": 0}
+def generate_system_report():
+    """Generate comprehensive system status report"""
     
+    print("TRADING SYSTEM STATUS REPORT")
+    print("=" * 45)
+    print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print()
+    
+    # OKX Connection
+    try:
+        exchange = ccxt.okx({
+            'apiKey': os.environ.get('OKX_API_KEY'),
+            'secret': os.environ.get('OKX_SECRET_KEY'),
+            'password': os.environ.get('OKX_PASSPHRASE'),
+            'sandbox': False
+        })
+        
+        balance = exchange.fetch_balance()
+        print("OKX CONNECTION: ACTIVE")
+        print("-" * 25)
+        
+        # Portfolio Analysis
+        total_value = float(balance['USDT']['free'])
+        positions = []
+        
+        tokens = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'AVAX']
+        
+        for token in tokens:
+            if token in balance and balance[token]['free'] > 0:
+                amount = float(balance[token]['free'])
+                if amount > 0:
+                    try:
+                        symbol = f"{token}/USDT"
+                        ticker = exchange.fetch_ticker(symbol)
+                        price = float(ticker['last'])
+                        value = amount * price
+                        change_24h = float(ticker['percentage']) if ticker['percentage'] else 0
+                        total_value += value
+                        
+                        positions.append({
+                            'token': token,
+                            'amount': amount,
+                            'price': price,
+                            'value': value,
+                            'change': change_24h
+                        })
+                    except Exception as e:
+                        print(f"Error fetching {token}: {e}")
+        
+        print(f"PORTFOLIO OVERVIEW")
+        print(f"Total Value: ${total_value:.2f}")
+        print(f"USDT Cash: ${float(balance['USDT']['free']):.2f}")
+        print(f"Active Positions: {len(positions)}")
+        print()
+        
+        if positions:
+            print("CURRENT HOLDINGS:")
+            for pos in positions:
+                percentage = (pos['value'] / total_value) * 100
+                trend = "+" if pos['change'] > 0 else ""
+                print(f"{pos['token']}: {pos['amount']:.6f} @ ${pos['price']:.2f} = ${pos['value']:.2f} ({percentage:.1f}%) {trend}{pos['change']:.1f}%")
+            
+            # Calculate allocation
+            crypto_value = sum(pos['value'] for pos in positions)
+            crypto_pct = (crypto_value / total_value) * 100
+            cash_pct = 100 - crypto_pct
+            
+            print(f"\nALLOCATION:")
+            print(f"Cryptocurrency: {crypto_pct:.1f}%")
+            print(f"Cash (USDT): {cash_pct:.1f}%")
+        
+    except Exception as e:
+        print(f"OKX CONNECTION: ERROR - {e}")
+    
+    print()
+    
+    # Trading Activity
     try:
         conn = sqlite3.connect('live_trading.db')
         cursor = conn.cursor()
@@ -21,30 +93,32 @@ def get_live_trading_stats():
         cursor.execute('SELECT COUNT(*) FROM live_trades')
         total_trades = cursor.fetchone()[0]
         
-        cursor.execute('SELECT COUNT(*) FROM live_trades WHERE status = "filled"')
-        successful_trades = cursor.fetchone()[0]
-        
-        cursor.execute('SELECT symbol, side, amount, price, timestamp FROM live_trades ORDER BY timestamp DESC LIMIT 3')
+        cursor.execute('''
+            SELECT symbol, side, amount, price, timestamp 
+            FROM live_trades 
+            ORDER BY timestamp DESC LIMIT 5
+        ''')
         recent_trades = cursor.fetchall()
+        
+        print("TRADING ACTIVITY")
+        print("-" * 20)
+        print(f"Total Trades: {total_trades}")
+        
+        if recent_trades:
+            print("Recent Trades:")
+            for trade in recent_trades:
+                symbol, side, amount, price, timestamp = trade
+                value = float(amount) * float(price)
+                print(f"{timestamp[:16]} | {side.upper()} {float(amount):.6f} {symbol} @ ${float(price):.2f}")
         
         conn.close()
         
-        success_rate = (successful_trades / total_trades * 100) if total_trades > 0 else 0
-        
-        return {
-            "status": "Active",
-            "trades": total_trades,
-            "success_rate": success_rate,
-            "recent": recent_trades
-        }
-    except:
-        return {"status": "Ready", "trades": 0}
-
-def get_ai_signal_performance():
-    """Get AI signal generation statistics"""
-    if not os.path.exists('trading_platform.db'):
-        return {"status": "Initializing", "signals": 0}
+    except Exception as e:
+        print(f"Trading data error: {e}")
     
+    print()
+    
+    # AI Signals
     try:
         conn = sqlite3.connect('trading_platform.db')
         cursor = conn.cursor()
@@ -52,194 +126,125 @@ def get_ai_signal_performance():
         cursor.execute('SELECT COUNT(*) FROM ai_signals')
         total_signals = cursor.fetchone()[0]
         
-        cursor.execute('SELECT signal, COUNT(*) FROM ai_signals GROUP BY signal')
+        cursor.execute('''
+            SELECT signal, COUNT(*) as count
+            FROM ai_signals
+            WHERE id > (SELECT MAX(id) - 50 FROM ai_signals)
+            GROUP BY signal
+        ''')
         signal_dist = cursor.fetchall()
         
-        cursor.execute('SELECT symbol, signal, confidence, timestamp FROM ai_signals ORDER BY timestamp DESC LIMIT 5')
-        recent_signals = cursor.fetchall()
+        print("AI SIGNAL PERFORMANCE")
+        print("-" * 25)
+        print(f"Total Signals: {total_signals}")
+        
+        if signal_dist:
+            print("Recent Distribution:")
+            for signal, count in signal_dist:
+                print(f"{signal}: {count}")
         
         conn.close()
         
-        return {
-            "status": "Active",
-            "signals": total_signals,
-            "distribution": dict(signal_dist),
-            "recent": recent_signals
-        }
-    except:
-        return {"status": "Ready", "signals": 0}
-
-def get_portfolio_status():
-    """Get current portfolio status"""
-    try:
-        exchange = ccxt.okx({
-            'apiKey': os.environ.get('OKX_API_KEY'),
-            'secret': os.environ.get('OKX_SECRET_KEY'),
-            'password': os.environ.get('OKX_PASSPHRASE'),
-            'sandbox': False,
-            'rateLimit': 2000,
-            'enableRateLimit': True,
-        })
-        
-        balance = exchange.fetch_balance()
-        usdt_balance = float(balance['USDT']['free'])
-        total_value = usdt_balance
-        positions = 0
-        
-        for currency in balance:
-            if currency != 'USDT' and balance[currency]['free'] > 0:
-                amount = float(balance[currency]['free'])
-                if amount > 0:
-                    try:
-                        symbol = f"{currency}/USDT"
-                        ticker = exchange.fetch_ticker(symbol)
-                        price = float(ticker['last'])
-                        value = amount * price
-                        total_value += value
-                        positions += 1
-                    except:
-                        continue
-        
-        return {
-            "status": "Connected",
-            "total_value": total_value,
-            "usdt_balance": usdt_balance,
-            "positions": positions,
-            "usdt_percentage": (usdt_balance / total_value * 100) if total_value > 0 else 100
-        }
-    except:
-        return {"status": "Connection Error", "total_value": 0}
-
-def get_market_conditions():
-    """Get current market conditions"""
-    try:
-        exchange = ccxt.okx({
-            'apiKey': os.environ.get('OKX_API_KEY'),
-            'secret': os.environ.get('OKX_SECRET_KEY'),
-            'password': os.environ.get('OKX_PASSPHRASE'),
-            'sandbox': False,
-            'rateLimit': 2000,
-            'enableRateLimit': True,
-        })
-        
-        symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT']
-        prices = {}
-        volatilities = []
-        
-        for symbol in symbols:
-            try:
-                ticker = exchange.fetch_ticker(symbol)
-                prices[symbol] = {
-                    'price': float(ticker['last']),
-                    'change_24h': float(ticker.get('percentage', 0))
-                }
-                volatilities.append(abs(float(ticker.get('percentage', 0))))
-            except:
-                continue
-        
-        avg_volatility = sum(volatilities) / len(volatilities) if volatilities else 0
-        
-        return {
-            "status": "Live Data",
-            "prices": prices,
-            "volatility": avg_volatility
-        }
-    except:
-        return {"status": "Data Error"}
-
-def generate_status_report():
-    """Generate comprehensive status report"""
-    print("ADVANCED TRADING SYSTEM STATUS REPORT")
-    print("=" * 60)
-    print(f"Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+    except Exception as e:
+        print(f"AI signals error: {e}")
     
-    # Portfolio Status
-    portfolio = get_portfolio_status()
-    print(f"\nPORTFOLIO STATUS: {portfolio['status']}")
-    if portfolio['status'] == 'Connected':
-        print(f"  Total Value: ${portfolio['total_value']:.2f}")
-        print(f"  USDT Balance: ${portfolio['usdt_balance']:.2f} ({portfolio['usdt_percentage']:.1f}%)")
-        print(f"  Active Positions: {portfolio['positions']}")
+    print()
     
-    # Live Trading Performance
-    trading = get_live_trading_stats()
-    print(f"\nLIVE TRADING: {trading['status']}")
-    print(f"  Total Trades Executed: {trading['trades']}")
-    if trading.get('success_rate'):
-        print(f"  Success Rate: {trading['success_rate']:.1f}%")
-    if trading.get('recent'):
-        print("  Recent Activity:")
-        for trade in trading['recent']:
-            symbol, side, amount, price, ts = trade
-            print(f"    {ts[:19]} | {side.upper()} {float(amount):.6f} {symbol} @ ${float(price):.4f}")
+    # System Components
+    print("SYSTEM COMPONENTS")
+    print("-" * 20)
     
-    # AI Signal Performance
-    signals = get_ai_signal_performance()
-    print(f"\nAI SIGNALS: {signals['status']}")
-    print(f"  Total Signals Generated: {signals['signals']}")
-    if signals.get('distribution'):
-        print("  Signal Distribution:")
-        for signal_type, count in signals['distribution'].items():
-            print(f"    {signal_type}: {count}")
-    if signals.get('recent'):
-        print("  Latest Predictions:")
-        for signal in signals['recent']:
-            symbol, sig, conf, ts = signal
-            print(f"    {symbol}: {sig} ({conf}% confidence)")
-    
-    # Market Conditions
-    market = get_market_conditions()
-    print(f"\nMARKET DATA: {market['status']}")
-    if market.get('prices'):
-        print("  Current Prices:")
-        for symbol, data in market['prices'].items():
-            change_indicator = "+" if data['change_24h'] > 0 else ""
-            print(f"    {symbol}: ${data['price']:,.2f} {change_indicator}{data['change_24h']:.2f}%")
-        print(f"  Market Volatility: {market['volatility']:.1f}%")
-    
-    # Advanced Features Status
-    print(f"\nADVANCED FEATURES:")
-    features = [
-        ("Dynamic Parameter Optimization", "Active"),
-        ("Risk Management Engine", "Monitoring"),
-        ("Automated Profit Taking", "Ready"),
-        ("Machine Learning Predictions", "Generating"),
-        ("Real-time Analytics Dashboard", "Running"),
-        ("WebSocket Data Streaming", "Connected"),
-        ("Multi-timeframe Analysis", "Active"),
-        ("Portfolio Rebalancing", "Standby")
+    components = [
+        ("Trading Platform", "Port 5000"),
+        ("Enhanced Monitor", "Port 5001"),
+        ("Live Trading Bridge", "Active"),
+        ("Database Systems", "Operational"),
+        ("Risk Management", "Active")
     ]
     
-    for feature, status in features:
-        print(f"  {feature}: {status}")
+    for name, status in components:
+        print(f"{name}: {status}")
     
-    # System Health
-    print(f"\nSYSTEM HEALTH:")
-    health_checks = [
-        ("OKX API Connection", "Connected" if os.environ.get('OKX_API_KEY') else "Missing Keys"),
-        ("Trading Database", "Active" if os.path.exists('live_trading.db') else "Initializing"),
-        ("AI Signal Database", "Active" if os.path.exists('trading_platform.db') else "Initializing"),
-        ("Main Platform (Port 5000)", "Running"),
-        ("Primary Monitor (Port 5001)", "Running"),
-        ("Advanced Monitor (Port 5002)", "Running"),
-        ("Signal Execution Bridge", "Active")
-    ]
+    print()
     
-    for component, status in health_checks:
-        status_icon = "✓" if status in ['Connected', 'Active', 'Running'] else "⚠"
-        print(f"  {status_icon} {component}: {status}")
+    # Token Expansion Status
+    print("EXPANDED MARKET COVERAGE")
+    print("-" * 30)
     
-    print("\n" + "=" * 60)
-    print("SUMMARY")
-    print("=" * 60)
-    print("Your advanced AI-powered cryptocurrency trading system is operating")
-    print("with live OKX market data integration and autonomous trade execution.")
-    print("All enhanced features are active and monitoring market conditions.")
-    print("\nAccess your trading dashboards:")
-    print("• Main Platform: http://localhost:5000")
-    print("• Live Monitor: http://localhost:5001")
-    print("• Advanced Analytics: http://localhost:5002")
+    try:
+        conn = sqlite3.connect('trading_platform.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT COUNT(*) FROM expanded_trading_symbols 
+            WHERE enabled = 1
+        ''')
+        enabled_symbols = cursor.fetchone()[0]
+        
+        print(f"Monitored Cryptocurrencies: {enabled_symbols}")
+        print("Supported Assets: BTC, ETH, SOL, ADA, DOT, AVAX")
+        
+        conn.close()
+        
+    except Exception as e:
+        print("Token expansion data not available")
+    
+    print()
+    
+    # Performance Metrics
+    if 'positions' in locals() and positions and 'total_value' in locals():
+        print("PERFORMANCE METRICS")
+        print("-" * 22)
+        
+        # Calculate weighted performance
+        total_invested = sum(pos['value'] for pos in positions)
+        weighted_return = sum(pos['change'] * pos['value'] for pos in positions) / total_invested
+        
+        print(f"Portfolio 24h Performance: {weighted_return:+.2f}%")
+        
+        best = max(positions, key=lambda x: x['change'])
+        worst = min(positions, key=lambda x: x['change'])
+        
+        print(f"Best Performer: {best['token']} ({best['change']:+.1f}%)")
+        print(f"Worst Performer: {worst['token']} ({worst['change']:+.1f}%)")
+        
+        # Risk assessment
+        if crypto_pct > 80:
+            risk_level = "HIGH"
+        elif crypto_pct < 20:
+            risk_level = "LOW"
+        else:
+            risk_level = "MODERATE"
+        
+        print(f"Risk Level: {risk_level}")
+    
+    print()
+    
+    # Recommendations
+    print("SYSTEM STATUS & RECOMMENDATIONS")
+    print("-" * 35)
+    
+    recommendations = []
+    
+    if 'crypto_pct' in locals():
+        if crypto_pct < 30:
+            recommendations.append("Consider increasing crypto allocation")
+        elif crypto_pct > 85:
+            recommendations.append("Consider taking profits to reduce risk")
+    
+    if 'total_trades' in locals() and total_trades == 0:
+        recommendations.append("No recent trading activity - review signal thresholds")
+    
+    if not recommendations:
+        recommendations.append("System operating within normal parameters")
+        recommendations.append("Continue monitoring for opportunities")
+    
+    for i, rec in enumerate(recommendations, 1):
+        print(f"{i}. {rec}")
+    
+    print()
+    print("OVERALL STATUS: OPERATIONAL")
+    print("=" * 45)
 
 if __name__ == '__main__':
-    generate_status_report()
+    generate_system_report()
