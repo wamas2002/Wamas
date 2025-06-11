@@ -38,7 +38,7 @@ args = "Simple Trading Monitor"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Advanced Trading AI"
+args = "Enhanced Trading AI"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -93,12 +93,12 @@ task = "shell.exec"
 args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
 
 [[workflows.workflow]]
-name = "Advanced Trading AI"
+name = "Enhanced Trading AI"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python comprehensive_trading_engine.py"
+args = "python enhanced_trading_system.py"
 
 [[ports]]
 localPort = 5000
