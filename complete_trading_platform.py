@@ -4,6 +4,7 @@ Full trading system functionality with real OKX data and TradingView widgets
 """
 
 from flask import Flask, render_template, jsonify, request
+from flask_socketio import SocketIO, emit
 import logging
 import json
 import sqlite3
@@ -32,6 +33,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+# Configure SocketIO with CORS support
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
 app.config['SECRET_KEY'] = 'complete-trading-platform-2024'
 
 class OKXDataService:
@@ -1632,4 +1636,4 @@ if __name__ == '__main__':
     logger.info("Features: Real OKX data, AI signals, TradingView widgets, Portfolio management")
     logger.info("Starting server on port 5000")
     
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=False)
