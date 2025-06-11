@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-Portfolio Sync Fix - Updates database with real OKX data
-"""
-
 import sqlite3
 import os
 import ccxt
 from datetime import datetime
 
-def sync_okx_to_database():
-    """Sync OKX portfolio to database"""
+def fix_portfolio_sync():
+    """Fix portfolio synchronization with OKX"""
     
     # Connect to OKX
     exchange = ccxt.okx({
@@ -17,19 +13,20 @@ def sync_okx_to_database():
         'secret': os.environ.get('OKX_SECRET_KEY'),
         'password': os.environ.get('OKX_PASSPHRASE'),
         'sandbox': False,
-        'timeout': 10000
+        'timeout': 8000
     })
     
     balance = exchange.fetch_balance()
     
-    # Connect to database
-    conn = sqlite3.connect('trading_platform.db')
+    # Work with the correct database path
+    db_path = '/home/runner/workspace/trading_platform.db'
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Clear existing portfolio data
     cursor.execute("DELETE FROM portfolio")
     
-    # Insert USDT balance
+    # Sync USDT balance
     usdt_balance = float(balance['USDT']['free'])
     cursor.execute('''
         INSERT INTO portfolio (symbol, quantity, avg_price, current_price)
@@ -37,9 +34,9 @@ def sync_okx_to_database():
     ''', ('USDT', usdt_balance, 1.0, 1.0))
     
     total_value = usdt_balance
-    holdings_count = 0
+    synced_tokens = 0
     
-    # Process crypto holdings
+    # Sync crypto holdings
     tokens = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'AVAX']
     
     for token in tokens:
@@ -57,51 +54,24 @@ def sync_okx_to_database():
                     ''', (token, amount, price, price))
                     
                     total_value += value
-                    holdings_count += 1
-                    print(f"Synced {token}: {amount:.6f} @ ${price:.2f} = ${value:.2f}")
+                    synced_tokens += 1
+                    print(f"Synced {token}: {amount:.6f} @ ${price:.2f}")
                     
                 except Exception as e:
                     print(f"Error syncing {token}: {e}")
     
-    # Update live_trading database
-    live_conn = sqlite3.connect('live_trading.db')
-    live_cursor = live_conn.cursor()
-    
-    # Create portfolio_sync table
-    live_cursor.execute('''
-        CREATE TABLE IF NOT EXISTS portfolio_sync (
-            id INTEGER PRIMARY KEY,
-            total_value REAL,
-            usdt_balance REAL,
-            crypto_holdings INTEGER,
-            last_sync TEXT
-        )
-    ''')
-    
-    # Clear and insert current sync data
-    live_cursor.execute("DELETE FROM portfolio_sync")
-    live_cursor.execute('''
-        INSERT INTO portfolio_sync (total_value, usdt_balance, crypto_holdings, last_sync)
-        VALUES (?, ?, ?, ?)
-    ''', (total_value, usdt_balance, holdings_count, datetime.now().isoformat()))
-    
-    # Commit changes
     conn.commit()
-    live_conn.commit()
-    
     conn.close()
-    live_conn.close()
     
-    print(f"\nPortfolio sync complete:")
+    print(f"Portfolio sync complete:")
     print(f"Total Value: ${total_value:.2f}")
-    print(f"USDT Balance: ${usdt_balance:.2f}")
-    print(f"Crypto Holdings: {holdings_count} tokens")
+    print(f"USDT: ${usdt_balance:.2f}")
+    print(f"Crypto tokens: {synced_tokens}")
     
-    return True
+    return total_value, synced_tokens
 
 if __name__ == "__main__":
     try:
-        sync_okx_to_database()
-        print("Portfolio synchronization successful!")
+        fix_portfolio_sync()
     except Exception as e:
-        print(f"Sync failed: {e}")
+        print(f"Sync error: {e}")
