@@ -115,9 +115,9 @@
 <!-- Key Metrics Row -->
 <div class="row mb-4">
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="metric-card fade-in pulse-glow">
+        <div class="metric-card fade-in pulse-glow glow-border" style="animation-delay: 0.1s;">
             <div class="metric-value gradient-text" id="portfolioValue">
-                <div class="loading"></div>
+                <div class="loading shimmer"></div>
             </div>
             <div class="metric-label">Portfolio Value</div>
             <div class="metric-change positive" id="portfolioChange">
@@ -127,37 +127,37 @@
     </div>
 
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="metric-card ai-status-card glass-effect scale-in">
+        <div class="metric-card ai-status-card glass-effect scale-in" style="animation-delay: 0.2s;">
             <div class="metric-value gradient-text" id="aiAccuracy">
-                <div class="loading"></div>
+                <div class="loading shimmer"></div>
             </div>
             <div class="metric-label">AI Model Accuracy</div>
             <div class="retraining-timer glass-effect" id="retrainingTimer">
-                Next training: 2h 15m
+                <i class="fas fa-brain"></i> Next training: 2h 15m
             </div>
         </div>
     </div>
 
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="metric-card">
-            <div class="metric-value" id="winRate">
-                <div class="loading"></div>
+        <div class="metric-card slide-up" style="animation-delay: 0.3s;">
+            <div class="metric-value gradient-text" id="winRate">
+                <div class="loading shimmer"></div>
             </div>
             <div class="metric-label">Strategy Win Rate</div>
             <div class="metric-change neutral" id="totalTrades">
-                0 trades today
+                <i class="fas fa-chart-line"></i> 0 trades today
             </div>
         </div>
     </div>
 
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="metric-card">
-            <div class="metric-value" id="marketVolatility">
-                <div class="loading"></div>
+        <div class="metric-card rotate-in" style="animation-delay: 0.4s;">
+            <div class="metric-value gradient-text" id="marketVolatility">
+                <div class="loading shimmer"></div>
             </div>
             <div class="metric-label">Market Volatility</div>
             <div class="metric-change" id="volatilityChange">
-                Calculating...
+                <i class="fas fa-wave-square"></i> Calculating...
             </div>
         </div>
     </div>
@@ -324,6 +324,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="/static/js/visual-enhancements.js"></script>
 <script>
     let dashboardData = {};
     let chartData = {};
