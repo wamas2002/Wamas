@@ -489,7 +489,8 @@ def index():
                 </button>
             </div>
             
-            <div id="dashboard-view">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="page-view">
                 <div class="grid">
                     <div class="card">
                         <h3><i class="fas fa-chart-pie"></i> Portfolio Overview</h3>
@@ -542,6 +543,88 @@ def index():
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Portfolio View -->
+            <div id="portfolio-view" class="page-view" style="display:none;">
+                <div class="card">
+                    <h3><i class="fas fa-wallet"></i> Portfolio Management</h3>
+                    <div id="detailed-portfolio"></div>
+                </div>
+                <div class="grid">
+                    <div class="card">
+                        <h3><i class="fas fa-chart-line"></i> Performance Analytics</h3>
+                        <div id="portfolio-performance"></div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-balance-scale"></i> Asset Allocation</h3>
+                        <div id="asset-allocation"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signals View -->
+            <div id="signals-view" class="page-view" style="display:none;">
+                <div class="grid">
+                    <div class="card">
+                        <h3><i class="fas fa-brain"></i> AI Signal Analysis</h3>
+                        <div id="detailed-signals"></div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-chart-bar"></i> Signal Performance</h3>
+                        <div id="signal-performance"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-history"></i> Signal History</h3>
+                    <div id="signal-history"></div>
+                </div>
+            </div>
+
+            <!-- Monitoring View -->
+            <div id="monitoring-view" class="page-view" style="display:none;">
+                <div class="grid">
+                    <div class="card">
+                        <h3><i class="fas fa-heartbeat"></i> System Health</h3>
+                        <div id="system-health"></div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-server"></i> Component Status</h3>
+                        <div id="component-status"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-chart-area"></i> Performance Metrics</h3>
+                    <div id="performance-metrics"></div>
+                </div>
+            </div>
+
+            <!-- Scanner View -->
+            <div id="scanner-view" class="page-view" style="display:none;">
+                <div class="card">
+                    <h3><i class="fas fa-search"></i> Advanced Market Scanner</h3>
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <select id="scanner-rsi-filter" style="background: #333; color: #fff; border: 1px solid #555; padding: 10px; border-radius: 5px;">
+                                <option value="all">All RSI Levels</option>
+                                <option value="oversold">Oversold (RSI < 30)</option>
+                                <option value="neutral">Neutral (30-70)</option>
+                                <option value="overbought">Overbought (RSI > 70)</option>
+                            </select>
+                            <select id="scanner-confidence-filter" style="background: #333; color: #fff; border: 1px solid #555; padding: 10px; border-radius: 5px;">
+                                <option value="50">Min 50% Confidence</option>
+                                <option value="60">Min 60% Confidence</option>
+                                <option value="70">Min 70% Confidence</option>
+                                <option value="75">Min 75% Confidence</option>
+                                <option value="80">Min 80% Confidence</option>
+                            </select>
+                            <button onclick="runAdvancedScan()" style="background: #4CAF50; border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                <i class="fas fa-search"></i> Scan
+                            </button>
+                        </div>
+                    </div>
+                    <div id="advanced-scanner-results"></div>
                 </div>
             </div>
         </div>
@@ -836,30 +919,51 @@ def index():
                     });
             }
             
+            function hideAllViews() {
+                const views = ['dashboard-view', 'portfolio-view', 'signals-view', 'monitoring-view', 'scanner-view'];
+                views.forEach(view => {
+                    document.getElementById(view).style.display = 'none';
+                });
+            }
+            
             function showDashboard() {
+                hideAllViews();
                 document.getElementById('dashboard-view').style.display = 'block';
                 setActiveButton(0);
                 refreshData();
+                showNotification('Dashboard loaded');
             }
             
             function showPortfolio() {
-                showNotification('Loading enhanced portfolio view...');
-                // Future: Show detailed portfolio management interface
+                hideAllViews();
+                document.getElementById('portfolio-view').style.display = 'block';
+                setActiveButton(1);
+                loadDetailedPortfolio();
+                showNotification('Portfolio view loaded');
             }
             
             function showSignals() {
-                showNotification('Loading detailed signal analysis...');
-                // Future: Show comprehensive signal analysis tools
+                hideAllViews();
+                document.getElementById('signals-view').style.display = 'block';
+                setActiveButton(2);
+                loadDetailedSignals();
+                showNotification('Signals analysis loaded');
             }
             
             function showMonitoring() {
-                showNotification('Loading system monitoring dashboard...');
-                // Future: Show detailed system health monitoring
+                hideAllViews();
+                document.getElementById('monitoring-view').style.display = 'block';
+                setActiveButton(3);
+                loadSystemMonitoring();
+                showNotification('System monitoring loaded');
             }
             
             function showScanner() {
-                showNotification('Loading advanced market scanner...');
-                updateScanner();
+                hideAllViews();
+                document.getElementById('scanner-view').style.display = 'block';
+                setActiveButton(4);
+                runAdvancedScan();
+                showNotification('Market scanner loaded');
             }
             
             function setActiveButton(index) {
@@ -869,6 +973,135 @@ def index():
                 });
             }
             
+            function loadDetailedPortfolio() {
+                fetch('/api/unified/portfolio')
+                    .then(response => response.json())
+                    .then(data => {
+                        const portfolioDiv = document.getElementById('detailed-portfolio');
+                        let html = '<table style="width: 100%; border-collapse: collapse; color: #fff;">';
+                        html += '<tr style="border-bottom: 1px solid #555;"><th style="padding: 10px; text-align: left;">Asset</th><th style="padding: 10px; text-align: right;">Balance</th><th style="padding: 10px; text-align: right;">Value (USD)</th><th style="padding: 10px; text-align: right;">Allocation</th></tr>';
+                        
+                        data.forEach(item => {
+                            html += `<tr style="border-bottom: 1px solid #333;">
+                                <td style="padding: 10px;">${item.symbol}</td>
+                                <td style="padding: 10px; text-align: right;">${item.balance.toFixed(6)}</td>
+                                <td style="padding: 10px; text-align: right;">$${item.value_usd.toFixed(2)}</td>
+                                <td style="padding: 10px; text-align: right;">${item.percentage.toFixed(1)}%</td>
+                            </tr>`;
+                        });
+                        html += '</table>';
+                        portfolioDiv.innerHTML = html;
+                    })
+                    .catch(err => portfolioDiv.innerHTML = '<p>Loading portfolio data...</p>');
+            }
+            
+            function loadDetailedSignals() {
+                fetch('/api/unified/signals')
+                    .then(response => response.json())
+                    .then(data => {
+                        const signalsDiv = document.getElementById('detailed-signals');
+                        let html = '';
+                        
+                        data.forEach(signal => {
+                            const confidenceClass = signal.confidence >= 75 ? 'signal-buy' : 'signal-hold';
+                            html += `<div class="signal-item ${confidenceClass}" style="margin-bottom: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h4 style="margin: 0; color: #fff;">${signal.symbol}</h4>
+                                    <span style="background: ${signal.confidence >= 75 ? '#4CAF50' : '#ff9800'}; padding: 5px 10px; border-radius: 15px; font-size: 12px;">${signal.confidence.toFixed(1)}%</span>
+                                </div>
+                                <p style="margin: 5px 0; color: #ccc;">Action: ${signal.action}</p>
+                                <p style="margin: 5px 0; color: #ccc;">Price: $${signal.current_price.toFixed(2)} → Target: $${signal.target_price.toFixed(2)}</p>
+                                <p style="margin: 5px 0; color: #aaa; font-size: 14px;">${signal.reasoning || 'AI analysis'}</p>
+                            </div>`;
+                        });
+                        
+                        signalsDiv.innerHTML = html || '<p>No signals available</p>';
+                    })
+                    .catch(err => signalsDiv.innerHTML = '<p>Loading signal data...</p>');
+            }
+            
+            function loadSystemMonitoring() {
+                fetch('/api/unified/health')
+                    .then(response => response.json())
+                    .then(data => {
+                        const healthDiv = document.getElementById('system-health');
+                        const statusDiv = document.getElementById('component-status');
+                        
+                        healthDiv.innerHTML = `
+                            <div style="text-align: center; padding: 20px;">
+                                <div style="font-size: 48px; color: ${data.overall_health >= 90 ? '#4CAF50' : data.overall_health >= 70 ? '#ff9800' : '#f44336'};">
+                                    ${data.overall_health.toFixed(1)}%
+                                </div>
+                                <div style="font-size: 18px; margin-top: 10px; color: #ccc;">
+                                    System Health: ${data.status}
+                                </div>
+                            </div>
+                        `;
+                        
+                        statusDiv.innerHTML = `
+                            <div style="display: grid; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                                    <span>Exchange Connection</span>
+                                    <span style="color: ${data.exchange_connected ? '#4CAF50' : '#f44336'}">${data.exchange_connected ? 'Connected' : 'Disconnected'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                                    <span>Database</span>
+                                    <span style="color: ${data.database_connected ? '#4CAF50' : '#f44336'}">${data.database_connected ? 'Connected' : 'Disconnected'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                                    <span>Signal Generation</span>
+                                    <span style="color: #4CAF50">Active</span>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(err => {
+                        document.getElementById('system-health').innerHTML = '<p>Loading health data...</p>';
+                        document.getElementById('component-status').innerHTML = '<p>Loading status...</p>';
+                    });
+            }
+            
+            function runAdvancedScan() {
+                const rsiFilter = document.getElementById('scanner-rsi-filter')?.value || 'all';
+                const confidenceFilter = document.getElementById('scanner-confidence-filter')?.value || '50';
+                
+                fetch(`/api/unified/scanner?rsi=${rsiFilter}&confidence=${confidenceFilter}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultsDiv = document.getElementById('advanced-scanner-results');
+                        let html = '';
+                        
+                        if (data.signals && data.signals.length > 0) {
+                            html = '<div style="display: grid; gap: 10px;">';
+                            data.signals.forEach(signal => {
+                                const actionColor = signal.signal === 'BUY' ? '#4CAF50' : signal.signal === 'SELL' ? '#f44336' : '#ff9800';
+                                html += `<div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; border-left: 3px solid ${actionColor};">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <h4 style="margin: 0; color: #fff;">${signal.symbol}</h4>
+                                        <div style="display: flex; gap: 10px;">
+                                            <span style="background: ${actionColor}; padding: 3px 8px; border-radius: 12px; font-size: 12px; color: #fff;">${signal.signal}</span>
+                                            <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 12px; font-size: 12px;">${signal.confidence.toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 14px; color: #ccc;">
+                                        <div>Price: $${signal.price.toFixed(2)}</div>
+                                        <div>RSI: ${signal.rsi.toFixed(1)}</div>
+                                        <div>Volume: ${(signal.volume_ratio || 1).toFixed(2)}x</div>
+                                    </div>
+                                </div>`;
+                            });
+                            html += '</div>';
+                        } else {
+                            html = '<div style="text-align: center; color: #ccc; padding: 40px;">No signals match current filters</div>';
+                        }
+                        
+                        resultsDiv.innerHTML = html;
+                    })
+                    .catch(err => {
+                        document.getElementById('advanced-scanner-results').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Scanner temporarily unavailable</div>';
+                    });
+            }
+
             // Enhanced initialization
             document.addEventListener('DOMContentLoaded', function() {
                 refreshData();
