@@ -150,111 +150,87 @@ class UnifiedTradingPlatform:
             return []
     
     def generate_ai_signals(self):
-        """Generate comprehensive AI trading signals"""
+        """Generate comprehensive AI trading signals using enhanced system"""
         signals = []
         
         try:
-            symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'ADA/USDT', 'DOT/USDT', 'AVAX/USDT']
+            # Connect to enhanced trading system database for real signals
+            conn = sqlite3.connect('enhanced_trading.db')
+            cursor = conn.cursor()
             
-            for symbol in symbols:
-                try:
-                    # Get market data
-                    ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=50)
-                    if len(ohlcv) < 20:
-                        continue
-                    
-                    df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-                    
-                    # Calculate technical indicators
-                    # RSI
-                    delta = df['close'].diff()
-                    gain = delta.where(delta > 0, 0).rolling(14).mean()
-                    loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
-                    rs = gain / loss
-                    rsi = 100 - (100 / (1 + rs))
-                    current_rsi = float(rsi.iloc[-1])
-                    
-                    # MACD
-                    exp1 = df['close'].ewm(span=12).mean()
-                    exp2 = df['close'].ewm(span=26).mean()
-                    macd = exp1 - exp2
-                    signal_line = macd.ewm(span=9).mean()
-                    current_macd = float(macd.iloc[-1])
-                    current_signal = float(signal_line.iloc[-1])
-                    
-                    # Volume analysis
-                    volume_sma = df['volume'].rolling(20).mean()
-                    volume_ratio = float(df['volume'].iloc[-1] / volume_sma.iloc[-1])
-                    
-                    # Generate signal
-                    signal_strength = 0
-                    reasoning_parts = []
-                    
-                    # RSI analysis
-                    if current_rsi < 30:
-                        signal_strength += 30
-                        reasoning_parts.append("RSI oversold")
-                    elif current_rsi > 70:
-                        signal_strength += 25
-                        reasoning_parts.append("RSI overbought")
-                    
-                    # MACD analysis
-                    if current_macd > current_signal:
-                        signal_strength += 25
-                        reasoning_parts.append("MACD bullish")
-                    else:
-                        signal_strength += 15
-                        reasoning_parts.append("MACD bearish")
-                    
-                    # Volume confirmation
-                    if volume_ratio > 1.2:
-                        signal_strength += 20
-                        reasoning_parts.append("High volume")
-                    
-                    # Determine signal direction
-                    if current_rsi < 35 and current_macd > current_signal:
-                        signal_type = "BUY"
-                        signal_strength += 10
-                    elif current_rsi > 65 and current_macd < current_signal:
-                        signal_type = "SELL"
-                        signal_strength += 10
-                    else:
-                        signal_type = "HOLD"
-                    
-                    confidence = min(95, max(30, signal_strength))
-                    
-                    current_price = float(df['close'].iloc[-1])
-                    
-                    # Calculate target price based on signal
-                    if signal_type == "BUY":
-                        target_price = current_price * 1.05  # 5% profit target
-                    elif signal_type == "SELL":
-                        target_price = current_price * 0.95  # 5% profit target
-                    else:
-                        target_price = current_price
-                    
+            # Get latest signals from the Enhanced Trading AI system
+            cursor.execute("""
+                SELECT symbol, signal_type, confidence, price, target_price, reasoning, timestamp
+                FROM ai_signals 
+                WHERE timestamp > datetime('now', '-30 minutes')
+                ORDER BY timestamp DESC, confidence DESC
+                LIMIT 20
+            """)
+            
+            db_signals = cursor.fetchall()
+            conn.close()
+            
+            if db_signals:
+                for signal in db_signals:
+                    symbol, signal_type, confidence, price, target_price, reasoning, timestamp = signal
                     signals.append({
-                        'symbol': symbol.replace('/USDT', ''),
+                        'symbol': symbol,
                         'action': signal_type,
-                        'confidence': confidence,
-                        'current_price': current_price,
-                        'target_price': target_price,
-                        'rsi': current_rsi,
-                        'macd': current_macd,
-                        'volume_ratio': volume_ratio,
-                        'reasoning': "; ".join(reasoning_parts),
-                        'timestamp': datetime.now().isoformat(),
-                        'price': current_price
+                        'confidence': float(confidence),
+                        'current_price': float(price) if price else 0,
+                        'target_price': float(target_price) if target_price else 0,
+                        'reasoning': reasoning or 'Enhanced AI analysis',
+                        'timestamp': timestamp
                     })
-                    
-                except Exception as e:
-                    logger.error(f"Signal generation error for {symbol}: {e}")
+            
+            # Fallback: Generate basic signals if no enhanced signals available
+            if not signals:
+                symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'ADA/USDT', 'DOT/USDT', 'AVAX/USDT']
+                
+                for symbol in symbols:
+                    try:
+                        # Get current market price from exchange
+                        if self.exchange:
+                            ticker = self.exchange.fetch_ticker(symbol)
+                            current_price = float(ticker['last'])
+                        else:
+                            current_price = 0
+                        
+                        # Generate basic signal with real price data
+                        signals.append({
+                            'symbol': symbol.replace('/USDT', ''),
+                            'action': 'HOLD',
+                            'confidence': 45.0,
+                            'current_price': current_price,
+                            'target_price': current_price * 1.02,
+                            'reasoning': 'Waiting for strong market signal',
+                            'timestamp': datetime.now().isoformat()
+                        })
+                    except Exception as e:
+                        logger.error(f"Fallback signal error for {symbol}: {e}")
             
             # Save signals to database
             self.save_signals_to_db(signals)
             
         except Exception as e:
             logger.error(f"AI signal generation error: {e}")
+            # Return basic signals with current market prices if enhanced system fails
+            try:
+                basic_signals = []
+                symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'AVAX']
+                for symbol in symbols:
+                    basic_signals.append({
+                        'symbol': symbol,
+                        'action': 'HOLD',
+                        'confidence': 50.0,
+                        'current_price': 0,
+                        'target_price': 0,
+                        'reasoning': 'System initializing',
+                        'timestamp': datetime.now().isoformat()
+                    })
+                return basic_signals
+            except:
+                return []
         
         return signals
     
