@@ -28,6 +28,16 @@ from real_time_screener import (
     get_screener_stats
 )
 
+# Import dynamic optimization engine
+import importlib.util
+spec = importlib.util.spec_from_file_location("dynamic_optimization_dashboard", "dynamic_optimization_dashboard.py")
+dynamic_optimization_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(dynamic_optimization_module)
+DynamicOptimizationEngine = dynamic_optimization_module.DynamicOptimizationEngine
+
+# Initialize dynamic optimizer
+dynamic_optimizer = DynamicOptimizationEngine()
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

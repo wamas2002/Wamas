@@ -44,6 +44,10 @@ args = "Enhanced Trading AI"
 task = "workflow.run"
 args = "ML Optimizer"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Dynamic Optimizer"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -111,6 +115,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python advanced_ml_optimizer.py"
+
+[[workflows.workflow]]
+name = "Dynamic Optimizer"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python dynamic_optimization_dashboard.py"
 
 [[ports]]
 localPort = 5000
