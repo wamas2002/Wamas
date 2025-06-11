@@ -586,12 +586,24 @@ def index():
             }
             
             function loadPortfolio() {
-                fetch('/api/unified/portfolio')
+                fetch('/api/unified/portfolio', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                         }
-                        return response.json();
+                        return response.text();
+                    })
+                    .then(text => {
+                        if (!text || text.trim() === '') {
+                            throw new Error('Empty response received');
+                        }
+                        return JSON.parse(text);
                     })
                     .then(data => {
                         if (data && Array.isArray(data) && data.length > 0) {
@@ -637,12 +649,24 @@ def index():
             function loadSignals() {
                 document.getElementById('signals-loading').style.display = 'inline-block';
                 
-                fetch('/api/unified/signals')
+                fetch('/api/unified/signals', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                         }
-                        return response.json();
+                        return response.text();
+                    })
+                    .then(text => {
+                        if (!text || text.trim() === '') {
+                            throw new Error('Empty response received');
+                        }
+                        return JSON.parse(text);
                     })
                     .then(data => {
                         const signalsList = document.getElementById('signals-list');
@@ -706,12 +730,24 @@ def index():
             }
             
             function loadMetrics() {
-                fetch('/api/unified/health')
+                fetch('/api/unified/health', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                         }
-                        return response.json();
+                        return response.text();
+                    })
+                    .then(text => {
+                        if (!text || text.trim() === '') {
+                            throw new Error('Empty response received');
+                        }
+                        return JSON.parse(text);
                     })
                     .then(data => {
                         if (data && typeof data === 'object') {
