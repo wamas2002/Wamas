@@ -880,30 +880,50 @@ def api_unified_portfolio():
     """Get portfolio data for unified platform"""
     try:
         portfolio = unified_platform.get_portfolio_data()
-        return jsonify(portfolio)
+        logger.info(f"Portfolio API response: {len(portfolio) if portfolio else 0} items")
+        response = jsonify(portfolio)
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
     except Exception as e:
         logger.error(f"Portfolio API error: {e}")
-        return jsonify({'error': str(e)}), 500
+        error_response = jsonify({'error': str(e), 'status': 'error'})
+        error_response.headers['Content-Type'] = 'application/json'
+        return error_response, 500
 
 @app.route('/api/unified/signals')
 def api_unified_signals():
     """Get latest AI signals"""
     try:
         signals = unified_platform.generate_ai_signals()
-        return jsonify(signals)
+        logger.info(f"Signals API response: {len(signals) if signals else 0} signals")
+        response = jsonify(signals)
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
     except Exception as e:
         logger.error(f"Signals API error: {e}")
-        return jsonify({'error': str(e)}), 500
+        error_response = jsonify({'error': str(e), 'status': 'error'})
+        error_response.headers['Content-Type'] = 'application/json'
+        return error_response, 500
 
 @app.route('/api/unified/health')
 def api_unified_health():
     """Get system health status"""
     try:
         health = unified_platform.get_system_health()
-        return jsonify(health)
+        logger.info(f"Health API response: {health.get('status', 'UNKNOWN')} at {health.get('overall_health', 0)}%")
+        response = jsonify(health)
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
     except Exception as e:
         logger.error(f"Health API error: {e}")
-        return jsonify({'error': str(e)}), 500
+        error_response = jsonify({'error': str(e), 'status': 'error'})
+        error_response.headers['Content-Type'] = 'application/json'
+        return error_response, 500
 
 @app.route('/api/unified/scanner')
 def api_unified_scanner():
