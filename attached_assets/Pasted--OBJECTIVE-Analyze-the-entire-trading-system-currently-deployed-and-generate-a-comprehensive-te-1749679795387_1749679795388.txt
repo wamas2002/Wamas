@@ -1,0 +1,50 @@
+🧠 OBJECTIVE:
+Analyze the entire trading system currently deployed and generate a **comprehensive technical report** that explains how it works, without changing any functionality or deleting any components.
+
+✅ TASK:
+Conduct a full internal audit of the system and produce a report that includes:
+
+1. 🔁 **Workflow Overview**  
+   - Describe how the system works step-by-step from:
+     - Market data intake (e.g., OKX, Binance)
+     - AI model predictions
+     - Risk evaluation
+     - Trade execution
+     - Portfolio tracking
+
+2. 🧰 **Technology Stack & Architecture**
+   - Identify and explain all frameworks, libraries, and languages used:
+     - Backend (e.g., Python, FastAPI, Flask)
+     - Frontend (React, HTML, JS, TradingView widgets)
+     - WebSockets and API integrations (e.g., OKX API)
+     - Databases (PostgreSQL, Redis, etc.)
+
+3. 🤖 **AI & Machine Learning Models**
+   - List all AI models in use (LSTM, Prophet, GradientBoost, Ensemble, etc.)
+   - Describe the training pipeline, input features, and how models are selected dynamically
+   - Highlight performance tracking (accuracy %, confidence score)
+
+4. 📈 **Trading Strategy Engine**
+   - Document the strategies used (Grid, Scalping, Mean Reversion, etc.)
+   - Show how the Strategy Selector assigns strategies based on market conditions
+   - Mention dynamic switching and real-time optimization
+
+5. 🛡️ **Risk Management Framework**
+   - Explain how position sizing is done (Kelly Criterion, volatility-based, etc.)
+   - Include SL/TP logic, max risk per trade, and portfolio diversification logic
+
+6. 🖥️ **User Interface Overview**
+   - Describe how the UI is structured across ports (e.g., :3000, :5000)
+   - Mention TradingView chart integrations, dashboards, and monitoring tools
+   - Show how live OKX data is visualized and how users interact with the system
+
+7. 🔄 **Live Data Flow**
+   - Map how real-time data flows through the system
+   - Show which modules consume which data
+   - Confirm live feeds vs. historical data vs. backtesting components
+
+✅ OUTPUT:
+- A plain text or Markdown `.md` report file
+- Clearly structured with headings and bullet points
+- DO NOT make any backend modifications, deletions, or restarts — report only
+- Save report to: `/reports/system_overview.md`

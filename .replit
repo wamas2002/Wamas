@@ -48,6 +48,10 @@ args = "ML Optimizer"
 task = "workflow.run"
 args = "Dynamic Optimizer"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Risk Appetite Animation"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -123,6 +127,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python dynamic_optimization_dashboard.py"
+
+[[workflows.workflow]]
+name = "Risk Appetite Animation"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run personalized_risk_appetite_animation.py --server.port 5003 --server.address 0.0.0.0"
+waitForPort = 5003
 
 [[ports]]
 localPort = 5000
