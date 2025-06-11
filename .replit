@@ -40,6 +40,10 @@ args = "Simple Trading Monitor"
 task = "workflow.run"
 args = "Enhanced Trading AI"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "ML Optimizer"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -99,6 +103,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python enhanced_trading_system.py"
+
+[[workflows.workflow]]
+name = "ML Optimizer"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python advanced_ml_optimizer.py"
 
 [[ports]]
 localPort = 5000
