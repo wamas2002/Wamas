@@ -79,6 +79,15 @@ task = "shell.exec"
 args = "streamlit run simple_trading_dashboard.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
+[[workflows.workflow]]
+name = "Fixed Advanced Monitor 5002"
+author = 23429574
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
+
 [[ports]]
 localPort = 5000
 externalPort = 80

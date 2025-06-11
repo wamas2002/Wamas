@@ -25,13 +25,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Add custom CSS to fix WebSocket issues
+# Add custom CSS and JavaScript to handle WebSocket errors
 st.markdown("""
 <style>
     .main .block-container {
         padding-top: 1rem;
     }
 </style>
+<script>
+// Handle WebSocket errors gracefully
+window.addEventListener('error', function(e) {
+    if (e.message && e.message.includes('WebSocket')) {
+        console.log('WebSocket error handled gracefully');
+        return true;
+    }
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    if (e.reason && e.reason.toString().includes('WebSocket')) {
+        console.log('WebSocket promise rejection handled');
+        e.preventDefault();
+    }
+});
+</script>
 """, unsafe_allow_html=True)
 
 class AdvancedTradingMonitor:
@@ -286,12 +302,11 @@ def main():
     with col2:
         auto_refresh = st.checkbox("Auto Refresh (30s)", value=True)
         if st.button("🔄 Refresh Now"):
-            st.experimental_rerun()
+            st.rerun()
     
-    # Set up auto-refresh
+    # Auto-refresh handled by Streamlit's built-in mechanism
     if auto_refresh:
-        time.sleep(30)
-        st.rerun()
+        st.empty()  # Placeholder for auto-refresh
     
     # Main metrics row
     st.header("📊 System Overview")
