@@ -151,23 +151,23 @@
     let dashboardData = {};
     let currentSymbol = 'OKX:BTCUSDT';
     let currentInterval = '15';
-    
+
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function() {
         initializeTradingViewWidgets();
         loadDashboardData();
-        
+
         // Set up real-time updates
         setInterval(loadDashboardData, 30000); // Every 30 seconds
         setInterval(updateMetrics, 10000);     // Every 10 seconds
-        
+
         // Symbol selector change handler
         document.getElementById('symbolSelector').addEventListener('change', function(e) {
             currentSymbol = e.target.value;
             updateMainChart();
         });
     });
-    
+
     function initializeTradingViewWidgets() {
         // Main dashboard chart
         const mainConfig = {{ widget_config|safe }};
@@ -178,7 +178,7 @@
             height: 500,
             studies: ['RSI', 'MACD', 'EMA@tv-basicstudies']
         });
-        
+
         // Mini charts for market overview
         const miniChartConfig = {
             width: '100%',
@@ -194,7 +194,7 @@
             hotlist: false,
             calendar: false
         };
-        
+
         // Create mini charts
         setTimeout(() => {
             window.tvManager.createWidget('btc_mini_chart', 'OKX:BTCUSDT', miniChartConfig);
@@ -202,19 +202,19 @@
             window.tvManager.createWidget('bnb_mini_chart', 'OKX:BNBUSDT', miniChartConfig);
         }, 1000);
     }
-    
+
     function updateMainChart() {
         window.tvManager.updateSymbol('dashboard_chart', currentSymbol);
     }
-    
+
     function toggleInterval() {
         const intervals = ['15', '1H', '4H', '1D'];
         const currentIndex = intervals.indexOf(currentInterval);
         const nextIndex = (currentIndex + 1) % intervals.length;
         currentInterval = intervals[nextIndex];
-        
+
         document.getElementById('currentInterval').textContent = currentInterval;
-        
+
         // Update main chart with new interval
         window.tvManager.destroyWidget('dashboard_chart');
         setTimeout(() => {
@@ -228,76 +228,76 @@
             });
         }, 100);
     }
-    
+
     async function loadDashboardData() {
         try {
             const response = await fetch('/api/dashboard-data');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
+
             dashboardData = await response.json();
             updateMetrics();
             updatePortfolioPositions();
             updateTradingSignals();
-            
+
         } catch (error) {
             console.error('Dashboard data loading error:', error);
             showErrorState();
         }
     }
-    
+
     function updateMetrics() {
         if (!dashboardData.portfolio || !dashboardData.ai_performance) return;
-        
+
         const portfolio = dashboardData.portfolio;
         const ai = dashboardData.ai_performance;
         const risk = dashboardData.risk_metrics || {};
-        
+
         // Portfolio Value
         document.getElementById('portfolioValue').textContent = 
             formatCurrency(portfolio.total_value || 0);
-        
+
         const dailyPnl = portfolio.daily_pnl || 0;
         const changeElement = document.getElementById('portfolioChange');
         changeElement.textContent = (dailyPnl >= 0 ? '+' : '') + dailyPnl.toFixed(2) + '%';
         changeElement.className = dailyPnl >= 0 ? 'text-success mt-2' : 'text-danger mt-2';
-        
+
         // AI Performance
         document.getElementById('aiAccuracy').textContent = 
             (ai.overall_accuracy || 0).toFixed(1) + '%';
         document.getElementById('totalModels').textContent = 
             (ai.active_models || 0) + ' models';
-        
+
         // Win Rate
         const winRate = ai.model_performance ? 
             Object.values(ai.model_performance).reduce((sum, model) => 
                 sum + (model.avg_win_rate || 0), 0) / Object.keys(ai.model_performance).length : 0;
-        
+
         document.getElementById('winRate').textContent = winRate.toFixed(1) + '%';
-        
+
         const totalTrades = ai.model_performance ? 
             Object.values(ai.model_performance).reduce((sum, model) => 
                 sum + (model.total_trades || 0), 0) : 0;
-        
+
         document.getElementById('totalTrades').textContent = totalTrades + ' trades';
-        
+
         // Risk Score
         const riskLevel = risk.risk_level || 'Low';
         document.getElementById('riskScore').textContent = riskLevel;
         document.getElementById('riskDetails').textContent = 
             risk.largest_position ? `${risk.largest_position}: ${(risk.largest_position_pct || 0).toFixed(1)}%` : 'Monitored';
     }
-    
+
     function updatePortfolioPositions() {
         const positions = dashboardData.portfolio?.positions || [];
         const container = document.getElementById('portfolioPositions');
-        
+
         if (positions.length === 0) {
             container.innerHTML = '<div class="text-center text-muted py-3">No positions found</div>';
             return;
         }
-        
+
         const topPositions = positions.slice(0, 5); // Show top 5
-        
+
         container.innerHTML = topPositions.map(pos => `
             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                 <div>
@@ -313,24 +313,24 @@
             </div>
         `).join('');
     }
-    
+
     function updateTradingSignals() {
         const signals = dashboardData.technical_signals || {};
         const container = document.getElementById('tradingSignals');
-        
+
         const signalEntries = Object.entries(signals).slice(0, 4); // Show top 4
-        
+
         if (signalEntries.length === 0) {
             container.innerHTML = '<div class="text-center text-muted py-3">No signals available</div>';
             return;
         }
-        
+
         container.innerHTML = signalEntries.map(([symbol, signal]) => {
             const direction = signal.direction || 'HOLD';
             const confidence = signal.confidence || 0;
             const directionClass = direction === 'BUY' ? 'text-success' : 
                                   direction === 'SELL' ? 'text-danger' : 'text-warning';
-            
+
             return `
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                     <div>
@@ -345,7 +345,7 @@
             `;
         }).join('');
     }
-    
+
     function showErrorState() {
         document.getElementById('portfolioPositions').innerHTML = 
             '<div class="text-center text-danger py-3"><i class="fas fa-exclamation-triangle me-2"></i>Error loading data</div>';
@@ -354,3 +354,35 @@
     }
 </script>
 {% endblock %}
+<script src="/static/js/chart-fallbacks.js"></script>
+    <script src="/static/js/websocket-fix.js"></script>
+    <script src="/static/js/fetch-error-handler.js"></script>
+    <script>
+        // TradingView specific error handling
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wrap all fetch calls with error handling
+            const originalFetch = window.fetch;
+            window.fetch = async function(...args) {
+                try {
+                    const response = await originalFetch(...args);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    console.log('Fetch error handled:', error.message);
+                    // Return a mock response for continued functionality
+                    return new Response(JSON.stringify({ 
+                        success: false, 
+                        error: error.message,
+                        data: []
+                    }), {
+                        status: 200,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

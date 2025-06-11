@@ -11,6 +11,7 @@ dependencies = [
     "ccxt>=4.4.88",
     "feedparser>=6.0.11",
     "flask>=3.1.1",
+    "joblib>=1.5.1",
     "lightgbm>=4.6.0",
     "numpy<2.0",
     "openai>=1.84.0",
@@ -28,6 +29,7 @@ dependencies = [
     "trafilatura>=2.0.0",
     "twilio>=9.6.2",
     "vadersentiment>=3.3.2",
+    "websocket>=0.2.1",
     "websocket-client>=1.8.0",
     "xgboost>=3.0.2",
 ]
