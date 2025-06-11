@@ -22,19 +22,7 @@ args = "install_packages"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Complete Trading Platform"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Live Trading System"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Advanced Monitor Dashboard"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Simple Trading Monitor"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -50,7 +38,7 @@ args = "Dynamic Optimizer"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Risk Appetite Animation"
+args = "Unified Trading Platform"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -61,39 +49,12 @@ task = "shell.exec"
 args = "uv add pandas plotly scikit-learn pandas-ta requests websocket-client"
 
 [[workflows.workflow]]
-name = "Complete Trading Platform"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python complete_trading_platform.py"
-waitForPort = 5000
-
-[[workflows.workflow]]
 name = "Live Trading System"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python signal_execution_bridge.py"
-
-[[workflows.workflow]]
-name = "Advanced Monitor Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Simple Trading Monitor"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run simple_trading_dashboard.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
@@ -129,13 +90,13 @@ task = "shell.exec"
 args = "python dynamic_optimization_dashboard.py"
 
 [[workflows.workflow]]
-name = "Risk Appetite Animation"
+name = "Unified Trading Platform"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run personalized_risk_appetite_animation.py --server.port 5003 --server.address 0.0.0.0"
-waitForPort = 5003
+args = "python unified_trading_platform.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
