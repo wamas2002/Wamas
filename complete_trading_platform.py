@@ -806,7 +806,7 @@ def api_signal_explainability(symbol):
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT signal, confidence, timestamp, reasoning, contributing_factors
+            SELECT signal, confidence, timestamp
             FROM ai_signals 
             WHERE symbol = ? 
             ORDER BY timestamp DESC 
