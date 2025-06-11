@@ -130,6 +130,9 @@ class SignalExecutionBridge:
         """Execute trade based on signal"""
         try:
             symbol = signal['symbol']
+            # Format symbol for OKX trading (add /USDT if not present)
+            if not symbol.endswith('/USDT'):
+                symbol = f"{symbol}/USDT"
             action = signal['action'].lower()
             confidence = signal['confidence']
             
@@ -234,7 +237,7 @@ class SignalExecutionBridge:
     def monitor_and_execute(self):
         """Main monitoring loop for signal execution"""
         logger.info("🔄 SIGNAL EXECUTION BRIDGE ACTIVATED")
-        logger.info("Monitoring for AI signals with ≥60% confidence...")
+        logger.info(f"Monitoring for AI signals with ≥{self.execution_threshold}% confidence...")
         
         while self.is_running:
             try:
