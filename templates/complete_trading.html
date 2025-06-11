@@ -2470,26 +2470,119 @@
 
         // AI Explainability Functions
         function refreshModelInsights() {
-            fetch('/api/model-insights', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    symbol: document.getElementById('tradingSymbol').value.replace('OKX:', '')
-                })
-            })
+            fetch('/api/ai/model-insights')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    updateModelInsights(data);
+                    updateDynamicOptimizationInsights(data);
                 }
             })
             .catch(error => {
-                console.log('Model insights update');
-                // Use realistic AI model data when API is unavailable
-                updateModelInsightsWithDefault();
+                console.error('Dynamic optimization insights error:', error);
             });
+        }
+
+        function updateDynamicOptimizationInsights(data) {
+            // Update model with dynamic optimization engine
+            document.getElementById('activeModel').textContent = data.model || 'Dynamic Optimization Engine';
+            document.getElementById('confidenceText').textContent = `${data.confidence.toFixed(1)}%`;
+            document.getElementById('confidenceFill').style.width = `${data.confidence}%`;
+            
+            // Update with live optimization recommendations
+            updateLiveRecommendations(data.live_recommendations || []);
+            updateSystemHealthIndicators(data.system_status || {});
+            updateMarketAnalysisData(data.market_analysis || {});
+        }
+
+        function updateLiveRecommendations(recommendations) {
+            const explanationContainer = document.querySelector('.signal-explanation .explanation-points');
+            if (!explanationContainer) return;
+            
+            explanationContainer.innerHTML = '';
+            
+            if (recommendations.length === 0) {
+                explanationContainer.innerHTML = '<li><i class="fas fa-info-circle point-icon"></i>System operating normally - no optimization needed</li>';
+                return;
+            }
+            
+            recommendations.forEach(rec => {
+                const priorityIcon = rec.priority === 'CRITICAL' ? 'fas fa-exclamation-triangle' : 
+                                   rec.priority === 'HIGH' ? 'fas fa-arrow-up' : 'fas fa-info-circle';
+                const iconColor = rec.priority === 'CRITICAL' ? 'var(--accent-red)' : 
+                                rec.priority === 'HIGH' ? 'var(--accent-orange)' : 'var(--accent-blue)';
+                
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <i class="${priorityIcon} point-icon" style="color: ${iconColor};"></i>
+                    <strong>${rec.priority}:</strong> ${rec.action}
+                    <br><small class="text-muted">${rec.reasoning} (${rec.confidence}% confidence)</small>
+                `;
+                explanationContainer.appendChild(listItem);
+            });
+            
+            // Update recommendation section
+            const recommendationSection = document.querySelector('.signal-explanation .mt-2 small');
+            if (recommendationSection && recommendations.length > 0) {
+                const topRec = recommendations[0];
+                recommendationSection.innerHTML = `
+                    <strong>Next Action:</strong> 
+                    <span class="text-warning">${topRec.type}</span> - ${topRec.timeframe}
+                `;
+            }
+        }
+
+        function updateSystemHealthIndicators(systemStatus) {
+            // Update feature importance bars to show system health metrics
+            const featureContainer = document.querySelector('.feature-importance');
+            if (!featureContainer) return;
+            
+            const healthScore = systemStatus.health_score || 0;
+            const marketRegime = systemStatus.market_regime || 'UNKNOWN';
+            const signalsPerHour = systemStatus.signals_per_hour || 0;
+            
+            featureContainer.innerHTML = `
+                <h6 class="mb-2">System Health Metrics</h6>
+                <div class="feature-item">
+                    <span class="feature-name">Health Score</span>
+                    <div class="feature-bar">
+                        <div class="feature-bar-fill" style="width: ${healthScore}%; background-color: ${healthScore > 70 ? 'var(--accent-green)' : healthScore > 40 ? 'var(--accent-orange)' : 'var(--accent-red)'};"></div>
+                    </div>
+                    <span class="feature-value">${healthScore.toFixed(1)}%</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-name">Market Regime</span>
+                    <div class="feature-bar">
+                        <div class="feature-bar-fill" style="width: 100%; background-color: var(--accent-blue);"></div>
+                    </div>
+                    <span class="feature-value">${marketRegime}</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-name">Signals/Hour</span>
+                    <div class="feature-bar">
+                        <div class="feature-bar-fill" style="width: ${Math.min(signalsPerHour, 100)}%;"></div>
+                    </div>
+                    <span class="feature-value">${signalsPerHour}</span>
+                </div>
+            `;
+        }
+
+        function updateMarketAnalysisData(marketData) {
+            // Update market info section with live data
+            if (marketData.btc_price) {
+                const priceElement = document.getElementById('currentPrice');
+                if (priceElement) {
+                    priceElement.textContent = `$${marketData.btc_price.toLocaleString()}`;
+                }
+            }
+            
+            if (marketData.btc_24h_change !== undefined) {
+                const changeElement = document.getElementById('priceChange');
+                if (changeElement) {
+                    const change = marketData.btc_24h_change;
+                    changeElement.textContent = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+                    changeElement.className = change > 0 ? 'price-change-positive' : 'price-change-negative';
+                }
+            }
         }
 
         function updateModelInsights(data) {
