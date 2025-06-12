@@ -40,6 +40,10 @@ args = "Dynamic Optimizer"
 task = "workflow.run"
 args = "Unified Trading Platform"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "TradingView Dashboard"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -97,6 +101,15 @@ author = "agent"
 task = "shell.exec"
 args = "python unified_trading_platform.py"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "TradingView Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python enhanced_tradingview_dashboard.py"
+waitForPort = 5001
 
 [[ports]]
 localPort = 5000
