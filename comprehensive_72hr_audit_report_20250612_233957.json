@@ -1,0 +1,352 @@
+{
+  "report_metadata": {
+    "report_type": "Comprehensive 72-Hour System Audit",
+    "generated_at": "2025-06-12T23:39:57.165337",
+    "audit_period_start": "2025-06-09T23:39:57.165339",
+    "audit_period_end": "2025-06-12T23:39:57.165341",
+    "version": "1.0"
+  },
+  "executive_summary": {
+    "audit_period": "72 hours",
+    "audit_completion_time": "2025-06-12T23:39:57.165314",
+    "overall_score": 91.0,
+    "overall_status": "EXCELLENT",
+    "sections_audited": 5,
+    "total_issues_identified": 2,
+    "critical_issues": 0,
+    "recommendation": "System is performing exceptionally well. Continue current operations."
+  },
+  "detailed_results": {
+    "system_health": {
+      "timestamp": "2025-06-12T23:39:55.057158",
+      "overall_score": 100,
+      "status": "HEALTHY",
+      "issues": [],
+      "cpu": {
+        "usage_percent": 7.3,
+        "core_count": 8,
+        "frequency_mhz": 3049.9959999999996,
+        "load_average": [
+          1.6162109375,
+          2.2685546875,
+          2.39794921875
+        ]
+      },
+      "memory": {
+        "usage_percent": 34.5,
+        "total_gb": 62.80536651611328,
+        "available_gb": 41.1345329284668,
+        "process_usage_mb": 155.7109375
+      },
+      "disk": {
+        "usage_percent": 61.19167462681398,
+        "total_gb": 49.1245002746582,
+        "free_gb": 16.992095947265625
+      },
+      "network": {
+        "bytes_sent": 4548132,
+        "bytes_recv": 31036142,
+        "packets_sent": 24626,
+        "packets_recv": 24801,
+        "errors_in": 0,
+        "errors_out": 0
+      },
+      "process": {
+        "cpu_percent": 0.0,
+        "memory_mb": 155.7109375,
+        "pid": 2769,
+        "threads": 7
+      }
+    },
+    "database_integrity": {
+      "timestamp": "2025-06-12T23:39:55.057896",
+      "tables": {
+        "live_trades": {
+          "record_count": 3,
+          "recent_activity_24h": 3,
+          "estimated_size_bytes": 6,
+          "columns": 8,
+          "status": "ACTIVE"
+        },
+        "sqlite_sequence": {
+          "record_count": 12,
+          "recent_activity_24h": 0,
+          "estimated_size_bytes": 30,
+          "columns": 2,
+          "status": "INACTIVE"
+        },
+        "ai_signals": {
+          "record_count": 6,
+          "recent_activity_24h": 6,
+          "estimated_size_bytes": 12,
+          "columns": 11,
+          "status": "ACTIVE"
+        },
+        "trading_performance": {
+          "record_count": 13,
+          "recent_activity_24h": 0,
+          "estimated_size_bytes": 34,
+          "columns": 7,
+          "status": "INACTIVE"
+        },
+        "unified_signals": {
+          "record_count": 12,
+          "recent_activity_24h": 12,
+          "estimated_size_bytes": 30,
+          "columns": 12,
+          "status": "ACTIVE"
+        },
+        "portfolio_data": {
+          "record_count": 8,
+          "recent_activity_24h": 8,
+          "estimated_size_bytes": 16,
+          "columns": 9,
+          "status": "ACTIVE"
+        },
+        "stop_losses": {
+          "record_count": 0,
+          "recent_activity_24h": 0,
+          "estimated_size_bytes": 0,
+          "columns": 7,
+          "status": "INACTIVE"
+        },
+        "risk_metrics": {
+          "record_count": 1,
+          "recent_activity_24h": 1,
+          "estimated_size_bytes": 2,
+          "columns": 8,
+          "status": "ACTIVE"
+        },
+        "active_stop_losses": {
+          "record_count": 7,
+          "recent_activity_24h": 7,
+          "estimated_size_bytes": 14,
+          "columns": 11,
+          "status": "ACTIVE"
+        },
+        "position_limits": {
+          "record_count": 8,
+          "recent_activity_24h": 0,
+          "estimated_size_bytes": 16,
+          "columns": 6,
+          "status": "INACTIVE"
+        },
+        "risk_events": {
+          "record_count": 8,
+          "recent_activity_24h": 8,
+          "estimated_size_bytes": 16,
+          "columns": 7,
+          "status": "ACTIVE"
+        },
+        "enhanced_signals": {
+          "record_count": 7,
+          "recent_activity_24h": 7,
+          "estimated_size_bytes": 14,
+          "columns": 32,
+          "status": "ACTIVE"
+        },
+        "signal_performance": {
+          "record_count": 0,
+          "recent_activity_24h": 0,
+          "estimated_size_bytes": 0,
+          "columns": 10,
+          "status": "INACTIVE"
+        },
+        "chart_data": {
+          "record_count": 3000,
+          "recent_activity_24h": 3000,
+          "estimated_size_bytes": 21786,
+          "columns": 10,
+          "status": "ACTIVE"
+        },
+        "technical_indicators": {
+          "record_count": 3000,
+          "recent_activity_24h": 3000,
+          "estimated_size_bytes": 21786,
+          "columns": 13,
+          "status": "ACTIVE"
+        }
+      },
+      "performance": {
+        "connection_time_ms": 1.5974044799804688,
+        "file_size_mb": 0.8828125,
+        "integrity_check": "ok",
+        "journal_mode": "delete",
+        "page_size": 4096,
+        "total_pages": 226
+      },
+      "integrity_score": 100,
+      "issues": [],
+      "status": "EXCELLENT"
+    },
+    "trading_performance": {
+      "timestamp": "2025-06-12T23:39:55.094375",
+      "analysis_period": "72_hours",
+      "signals": {
+        "total_generated": 12,
+        "distribution": {
+          "BUY": 4,
+          "SELL": 0,
+          "HOLD": 8
+        },
+        "frequency_per_hour": 0.17,
+        "average_confidence": 68.2,
+        "high_confidence_count": 0,
+        "high_confidence_percentage": 0.0
+      },
+      "portfolio": {
+        "current_value_usd": 0,
+        "total_pnl": 0,
+        "win_rate_percentage": 0,
+        "roi_72h": 0,
+        "data_points": 8
+      },
+      "performance_score": 65,
+      "issues": [
+        "Low signal frequency: 0.17/hour (target: 0.62/hour)",
+        "Low win rate: 0.0% (target: >40%)"
+      ],
+      "risk_management": {
+        "total_stop_losses_created": 7,
+        "currently_active": 7,
+        "triggered_in_period": 0,
+        "protection_rate": 100.0
+      },
+      "status": "WARNING"
+    },
+    "api_connectivity": {
+      "timestamp": "2025-06-12T23:39:55.102180",
+      "exchange_tests": {
+        "total_tests": 3,
+        "successful_tests": 3,
+        "success_rate_percentage": 100.0,
+        "test_results": [
+          {
+            "test": "fetch_ticker",
+            "success": true,
+            "response_time_ms": 1690.4778480529785,
+            "data_quality": false
+          },
+          {
+            "test": "fetch_ohlcv",
+            "success": true,
+            "response_time_ms": 161.68475151062012,
+            "data_quality": true
+          },
+          {
+            "test": "fetch_balance",
+            "success": true,
+            "response_time_ms": 209.03921127319336,
+            "data_quality": true
+          }
+        ],
+        "average_response_time_ms": 687.1
+      },
+      "connectivity_score": 100,
+      "issues": [],
+      "rate_limiting": {
+        "rate_limit_ms": 103.0,
+        "compliance": "COMPLIANT",
+        "recommendation": "Continue current rate limiting strategy"
+      },
+      "status": "EXCELLENT"
+    },
+    "error_analysis": {
+      "timestamp": "2025-06-12T23:39:57.163929",
+      "error_analysis": {
+        "total_errors": 1,
+        "error_categories": {
+          "database_errors": 0,
+          "api_errors": 1,
+          "calculation_errors": 0,
+          "connectivity_errors": 0,
+          "validation_errors": 0
+        },
+        "recent_errors": [
+          {
+            "category": "api_errors",
+            "error": "okx does not have market symbol INVALID/SYMBOL",
+            "timestamp": "2025-06-12T23:39:57.164565",
+            "severity": "MEDIUM"
+          }
+        ],
+        "critical_errors": 0,
+        "high_severity_errors": 0,
+        "error_trend": "STABLE"
+      },
+      "recovery_mechanisms": {
+        "database_reconnection": {
+          "implemented": true,
+          "effectiveness": "HIGH",
+          "description": "Automatic database reconnection on failure"
+        },
+        "api_rate_limiting": {
+          "implemented": true,
+          "effectiveness": "HIGH",
+          "description": "Built-in rate limiting and retry logic"
+        },
+        "error_logging": {
+          "implemented": true,
+          "effectiveness": "MEDIUM",
+          "description": "Comprehensive error logging system"
+        },
+        "graceful_degradation": {
+          "implemented": true,
+          "effectiveness": "MEDIUM",
+          "description": "System continues with reduced functionality on errors"
+        },
+        "automatic_restart": {
+          "implemented": false,
+          "effectiveness": "N/A",
+          "description": "No automatic restart mechanism configured"
+        }
+      },
+      "stability_score": 90,
+      "issues": [],
+      "status": "GOOD"
+    }
+  },
+  "issues_summary": {
+    "total_issues": 2,
+    "issues_by_category": {
+      "system_health": 0,
+      "database_integrity": 0,
+      "trading_performance": 2,
+      "api_connectivity": 0,
+      "error_analysis": 0
+    },
+    "all_issues": [
+      "trading_performance: Low signal frequency: 0.17/hour (target: 0.62/hour)",
+      "trading_performance: Low win rate: 0.0% (target: >40%)"
+    ]
+  },
+  "recommendations": {
+    "immediate_actions": [],
+    "optimization_opportunities": [
+      "Implement automated restart mechanisms",
+      "Enhance error monitoring and alerting",
+      "Optimize database query performance",
+      "Implement comprehensive logging for all components",
+      "Add real-time system health monitoring"
+    ],
+    "monitoring_suggestions": [
+      "Set up alerts for system resource usage >80%",
+      "Monitor API response times and success rates",
+      "Track trading signal accuracy over time",
+      "Implement database performance monitoring",
+      "Monitor error rates and recovery effectiveness"
+    ]
+  },
+  "performance_trends": {
+    "system_health": {
+      "current_score": 100,
+      "trend": "Data insufficient for trend analysis",
+      "recommendation": "Establish baseline metrics for future comparisons"
+    },
+    "trading_performance": {
+      "current_score": 65,
+      "trend": "Monitor signal frequency and accuracy",
+      "recommendation": "Continue optimizing signal generation algorithms"
+    }
+  }
+}
