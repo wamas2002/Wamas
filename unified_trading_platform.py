@@ -1507,12 +1507,12 @@ def api_open_orders():
     try:
         # Get authentic open orders from OKX
         open_orders = []
-        if unified_platform.okx_exchange:
+        if hasattr(unified_platform, 'exchange') and unified_platform.exchange:
             try:
                 # Fetch open orders for main trading pairs
                 symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT']
                 for symbol in symbols:
-                    orders = unified_platform.okx_exchange.fetch_open_orders(symbol)
+                    orders = unified_platform.exchange.fetch_open_orders(symbol)
                     for order in orders:
                         open_orders.append({
                             'symbol': order['symbol'],
@@ -1535,12 +1535,12 @@ def api_recent_orders():
     """Get recent order history"""
     try:
         recent_orders = []
-        if unified_platform.okx_exchange:
+        if hasattr(unified_platform, 'exchange') and unified_platform.exchange:
             try:
                 # Fetch recent closed orders
                 symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT']
                 for symbol in symbols:
-                    orders = unified_platform.okx_exchange.fetch_closed_orders(symbol, limit=10)
+                    orders = unified_platform.exchange.fetch_closed_orders(symbol, limit=10)
                     for order in orders:
                         recent_orders.append({
                             'symbol': order['symbol'],
