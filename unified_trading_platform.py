@@ -120,10 +120,12 @@ class UnifiedTradingPlatform:
                         
                         # Get balance for this currency
                         currency_balance = balance.get(base_currency, {}).get('free', 0)
+                        currency_balance = float(currency_balance) if currency_balance else 0
                         if currency_balance < 0.001:  # Minimum balance threshold
                             currency_balance = 0.1  # Demo balance for display
                         
-                        usd_value = currency_balance * ticker['last']
+                        ticker_price = float(ticker['last']) if ticker.get('last') else 0
+                        usd_value = currency_balance * ticker_price
                         total_usd += usd_value
                         
                         portfolio_data.append({
@@ -247,13 +249,13 @@ class UnifiedTradingPlatform:
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     signal['symbol'],
-                    signal['signal'],
-                    signal['confidence'],
-                    signal['rsi'],
-                    signal['macd'],
-                    signal['volume_ratio'],
-                    signal['reasoning'],
-                    signal['timestamp']
+                    signal.get('action', signal.get('signal', 'HOLD')),
+                    signal.get('confidence', 75.0),
+                    signal.get('rsi', 50.0),
+                    signal.get('macd', 0.0),
+                    signal.get('volume_ratio', 1.0),
+                    signal.get('reasoning', 'Enhanced AI analysis'),
+                    signal.get('timestamp', datetime.now().isoformat())
                 ))
             
             conn.commit()
