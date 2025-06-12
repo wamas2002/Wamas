@@ -1624,23 +1624,64 @@ def api_performance_metrics():
                 
                 if all_trades:
                     total_trades = len(all_trades)
+                    
+                    # Group trades by symbol to calculate proper P&L
+                    symbol_positions = {}
+                    
+                    for trade in all_trades:
+                        symbol = trade['symbol']
+                        side = trade['side']
+                        amount = trade['amount']
+                        price = trade['price']
+                        fee = trade.get('fee', {}).get('cost', 0) if trade.get('fee') else 0
+                        
+                        if symbol not in symbol_positions:
+                            symbol_positions[symbol] = {'buys': [], 'sells': [], 'total_fees': 0}
+                        
+                        symbol_positions[symbol]['total_fees'] += fee
+                        
+                        if side == 'buy':
+                            symbol_positions[symbol]['buys'].append({'amount': amount, 'price': price})
+                        else:
+                            symbol_positions[symbol]['sells'].append({'amount': amount, 'price': price})
+                    
+                    # Calculate realistic win rate based on completed trades
                     winning_trades = 0
                     total_profit = 0
                     total_loss = 0
+                    completed_trades = 0
                     
-                    for trade in all_trades:
-                        # Calculate P&L for each trade
-                        pnl = trade.get('cost', 0) * (1 if trade['side'] == 'sell' else -1)
-                        
-                        if pnl > 0:
-                            winning_trades += 1
-                            total_profit += pnl
-                        else:
-                            total_loss += abs(pnl)
+                    for symbol, positions in symbol_positions.items():
+                        # Simple calculation: if we have both buys and sells, calculate basic P&L
+                        if positions['buys'] and positions['sells']:
+                            avg_buy_price = sum(buy['price'] * buy['amount'] for buy in positions['buys']) / sum(buy['amount'] for buy in positions['buys'])
+                            avg_sell_price = sum(sell['price'] * sell['amount'] for sell in positions['sells']) / sum(sell['amount'] for sell in positions['sells'])
+                            
+                            min_amount = min(
+                                sum(buy['amount'] for buy in positions['buys']),
+                                sum(sell['amount'] for sell in positions['sells'])
+                            )
+                            
+                            if min_amount > 0:
+                                pnl = (avg_sell_price - avg_buy_price) * min_amount - positions['total_fees']
+                                completed_trades += 1
+                                
+                                if pnl > 0:
+                                    winning_trades += 1
+                                    total_profit += pnl
+                                else:
+                                    total_loss += abs(pnl)
                     
-                    performance['total_trades'] = total_trades
-                    performance['win_rate'] = (winning_trades / total_trades) * 100 if total_trades > 0 else 0
-                    performance['profit_factor'] = total_profit / total_loss if total_loss > 0 else 1.0
+                    # Use completed trades for win rate calculation
+                    if completed_trades > 0:
+                        performance['total_trades'] = completed_trades
+                        performance['win_rate'] = round((winning_trades / completed_trades) * 100, 1)
+                        performance['profit_factor'] = round(total_profit / total_loss if total_loss > 0 else 1.0, 2)
+                    else:
+                        # No completed round-trip trades
+                        performance['total_trades'] = total_trades
+                        performance['win_rate'] = 0.0
+                        performance['profit_factor'] = 1.0
                     
                     # Calculate returns for Sharpe ratio
                     if len(all_trades) > 1:
