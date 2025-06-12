@@ -124,9 +124,9 @@ class UnifiedTradingPlatform:
                         if currency_balance < 0.001:  # Minimum balance threshold
                             currency_balance = 0.1  # Demo balance for display
                         
-                        ticker_price = float(ticker['last']) if ticker.get('last') else 0
-                        usd_value = currency_balance * ticker_price
-                        total_usd += usd_value
+                        ticker_price = float(ticker['last']) if ticker.get('last') else 0.0
+                        usd_value = float(currency_balance) * float(ticker_price)
+                        total_usd += float(usd_value)
                         
                         portfolio_data.append({
                             'symbol': symbol,

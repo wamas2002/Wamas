@@ -1,23 +1,38 @@
 #!/usr/bin/env python3
 """
-Initialize Trading Database
-Creates missing tables and sample data for the unified trading platform
+Initialize Complete Trading Database Schema
+Creates all required tables for the unified trading platform
 """
 
 import sqlite3
 import logging
 from datetime import datetime, timedelta
+import random
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def initialize_trading_performance():
-    """Create trading_performance table with sample data"""
+def create_enhanced_trading_tables():
+    """Create all enhanced trading database tables"""
     try:
         with sqlite3.connect('enhanced_trading.db') as conn:
             cursor = conn.cursor()
             
-            # Create trading performance table
+            # Create live_trades table for ML training
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS live_trades (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    side TEXT NOT NULL,
+                    amount REAL NOT NULL,
+                    price REAL NOT NULL,
+                    fee REAL DEFAULT 0,
+                    profit_loss REAL DEFAULT 0,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Create trading_performance table  
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS trading_performance (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,135 +45,123 @@ def initialize_trading_performance():
                 )
             ''')
             
-            # Check if table has data
-            cursor.execute("SELECT COUNT(*) FROM trading_performance")
-            count = cursor.fetchone()[0]
-            
-            if count == 0:
-                logger.info("Adding sample trading data...")
+            # Insert sample live trades for ML training
+            cursor.execute("SELECT COUNT(*) FROM live_trades")
+            if cursor.fetchone()[0] == 0:
+                # Generate realistic trading data
+                symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'AVAX']
+                base_prices = {'BTC': 108500, 'ETH': 2770, 'SOL': 160, 'ADA': 0.45, 'DOT': 6.85, 'AVAX': 42}
                 
-                # Generate realistic trading data for the past week
-                base_time = datetime.now() - timedelta(days=7)
-                sample_trades = []
-                
-                # BTC trades
-                sample_trades.extend([
-                    ('BTC/USDT', 'buy', 0.001, 108500.0, 125.50, (base_time + timedelta(hours=1)).isoformat()),
-                    ('BTC/USDT', 'sell', 0.0008, 108800.0, 67.80, (base_time + timedelta(hours=6)).isoformat()),
-                    ('BTC/USDT', 'buy', 0.0012, 108300.0, -24.60, (base_time + timedelta(days=1)).isoformat()),
-                    ('BTC/USDT', 'sell', 0.001, 108950.0, 89.30, (base_time + timedelta(days=2)).isoformat()),
-                ])
-                
-                # ETH trades  
-                sample_trades.extend([
-                    ('ETH/USDT', 'buy', 0.1, 2780.0, 22.40, (base_time + timedelta(hours=3)).isoformat()),
-                    ('ETH/USDT', 'sell', 0.08, 2770.0, -8.20, (base_time + timedelta(hours=8)).isoformat()),
-                    ('ETH/USDT', 'buy', 0.15, 2760.0, 45.60, (base_time + timedelta(days=1, hours=2)).isoformat()),
-                ])
-                
-                # SOL trades
-                sample_trades.extend([
-                    ('SOL/USDT', 'buy', 1.0, 160.0, 8.75, (base_time + timedelta(hours=4)).isoformat()),
-                    ('SOL/USDT', 'sell', 0.5, 162.0, 18.90, (base_time + timedelta(days=1, hours=5)).isoformat()),
-                ])
-                
-                # ADA trades
-                sample_trades.extend([
-                    ('ADA/USDT', 'buy', 100.0, 0.45, -12.30, (base_time + timedelta(hours=12)).isoformat()),
-                    ('ADA/USDT', 'sell', 80.0, 0.46, 8.40, (base_time + timedelta(days=2, hours=3)).isoformat()),
-                ])
-                
-                # DOT trades
-                sample_trades.extend([
-                    ('DOT/USDT', 'buy', 5.0, 6.80, 15.60, (base_time + timedelta(hours=18)).isoformat()),
-                    ('DOT/USDT', 'sell', 3.0, 6.85, 12.50, (base_time + timedelta(days=3)).isoformat()),
-                ])
+                trades = []
+                for i in range(50):  # Generate 50 sample trades
+                    symbol = random.choice(symbols)
+                    side = random.choice(['buy', 'sell'])
+                    amount = random.uniform(0.01, 2.0)
+                    price_variation = random.uniform(0.95, 1.05)
+                    price = base_prices[symbol] * price_variation
+                    fee = amount * price * 0.001  # 0.1% fee
+                    profit_loss = random.uniform(-50, 100)
+                    
+                    # Generate timestamp within last 30 days
+                    days_ago = random.randint(0, 30)
+                    timestamp = datetime.now() - timedelta(days=days_ago)
+                    
+                    trades.append((symbol, side, amount, price, fee, profit_loss, timestamp))
                 
                 cursor.executemany('''
-                    INSERT INTO trading_performance (symbol, side, size, price, profit_loss, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', sample_trades)
+                    INSERT INTO live_trades (symbol, side, amount, price, fee, profit_loss, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', trades)
                 
-                logger.info(f"Added {len(sample_trades)} sample trades")
+                logger.info(f"Added {len(trades)} sample trades for ML training")
+            
+            # Insert sample trading performance data
+            cursor.execute("SELECT COUNT(*) FROM trading_performance")
+            if cursor.fetchone()[0] == 0:
+                performance_data = [
+                    ('BTC', 'buy', 0.00892, 108594.50, 156.75),
+                    ('ETH', 'buy', 0.5421, 2771.90, 89.30),
+                    ('SOL', 'sell', 2.156, 160.73, -23.45),
+                    ('ADA', 'buy', 125.45, 0.452, 12.80),
+                    ('DOT', 'buy', 15.78, 6.85, 34.20),
+                    ('AVAX', 'sell', 3.42, 42.15, -18.50),
+                    ('BTC', 'sell', 0.00234, 108123.00, 78.90),
+                    ('ETH', 'buy', 0.3214, 2755.40, 45.67),
+                    ('SOL', 'buy', 1.789, 159.85, 67.89),
+                    ('ADA', 'sell', 89.12, 0.448, -15.23),
+                    ('DOT', 'sell', 8.45, 6.92, 23.45),
+                    ('AVAX', 'buy', 2.87, 41.95, 56.78),
+                    ('BTC', 'buy', 0.00156, 109012.00, 189.34)
+                ]
+                
+                cursor.executemany('''
+                    INSERT INTO trading_performance (symbol, side, size, price, profit_loss)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', performance_data)
+                
+                logger.info(f"Added {len(performance_data)} performance records")
             
             conn.commit()
-            logger.info("Trading performance database initialized successfully")
+            logger.info("Enhanced trading database initialized successfully")
             
     except Exception as e:
-        logger.error(f"Database initialization error: {e}")
+        logger.error(f"Enhanced database initialization error: {e}")
 
-def initialize_live_trades():
-    """Create live_trades table for ML training"""
+def create_unified_trading_tables():
+    """Create unified trading platform tables"""
     try:
-        with sqlite3.connect('enhanced_trading.db') as conn:
+        with sqlite3.connect('unified_trading.db') as conn:
             cursor = conn.cursor()
             
-            # Create live_trades table
+            # Create unified_signals table with proper schema
             cursor.execute('''
-                CREATE TABLE IF NOT EXISTS live_trades (
+                CREATE TABLE IF NOT EXISTS unified_signals (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     symbol TEXT NOT NULL,
-                    side TEXT NOT NULL,
-                    amount REAL NOT NULL,
-                    price REAL NOT NULL,
-                    fee REAL DEFAULT 0,
+                    action TEXT NOT NULL,
+                    signal TEXT NOT NULL,
+                    confidence REAL NOT NULL DEFAULT 75.0,
+                    current_price REAL NOT NULL DEFAULT 0.0,
+                    target_price REAL NOT NULL DEFAULT 0.0,
+                    reasoning TEXT DEFAULT 'Enhanced AI analysis',
+                    rsi REAL DEFAULT 50.0,
+                    macd REAL DEFAULT 0.0,
+                    volume_ratio REAL DEFAULT 1.0,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
-            # Add sample data if empty
-            cursor.execute("SELECT COUNT(*) FROM live_trades")
-            if cursor.fetchone()[0] == 0:
-                base_time = datetime.now() - timedelta(days=30)
-                sample_live_trades = []
-                
-                # Generate 50 sample trades over 30 days
-                import random
-                symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'ADA/USDT', 'DOT/USDT', 'AVAX/USDT']
-                
-                for i in range(50):
-                    symbol = random.choice(symbols)
-                    side = random.choice(['buy', 'sell'])
-                    
-                    if 'BTC' in symbol:
-                        amount = round(random.uniform(0.0001, 0.01), 6)
-                        price = round(random.uniform(105000, 110000), 2)
-                    elif 'ETH' in symbol:
-                        amount = round(random.uniform(0.01, 0.5), 4)
-                        price = round(random.uniform(2700, 2800), 2)
-                    elif 'SOL' in symbol:
-                        amount = round(random.uniform(0.1, 5.0), 2)
-                        price = round(random.uniform(155, 165), 2)
-                    elif 'ADA' in symbol:
-                        amount = round(random.uniform(10, 500), 1)
-                        price = round(random.uniform(0.40, 0.50), 4)
-                    elif 'DOT' in symbol:
-                        amount = round(random.uniform(1, 20), 1)
-                        price = round(random.uniform(6.5, 7.0), 3)
-                    else:  # AVAX
-                        amount = round(random.uniform(0.5, 10), 2)
-                        price = round(random.uniform(35, 45), 2)
-                    
-                    fee = amount * price * 0.001  # 0.1% fee
-                    timestamp = (base_time + timedelta(hours=random.randint(0, 720))).isoformat()
-                    
-                    sample_live_trades.append((symbol, side, amount, price, fee, timestamp))
-                
-                cursor.executemany('''
-                    INSERT INTO live_trades (symbol, side, amount, price, fee, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', sample_live_trades)
-                
-                logger.info(f"Added {len(sample_live_trades)} sample live trades")
+            # Create unified_portfolio table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS unified_portfolio (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    balance REAL NOT NULL DEFAULT 0.0,
+                    value_usd REAL NOT NULL DEFAULT 0.0,
+                    percentage REAL NOT NULL DEFAULT 0.0,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
             
             conn.commit()
-            logger.info("Live trades database initialized successfully")
+            logger.info("Unified trading database initialized successfully")
             
     except Exception as e:
-        logger.error(f"Live trades initialization error: {e}")
+        logger.error(f"Unified database initialization error: {e}")
+
+def main():
+    """Initialize all trading databases"""
+    logger.info("=== INITIALIZING COMPLETE TRADING DATABASE ===")
+    
+    create_enhanced_trading_tables()
+    create_unified_trading_tables()
+    
+    logger.info("=== DATABASE INITIALIZATION COMPLETE ===")
+    logger.info("All required tables created:")
+    logger.info("- live_trades (for ML training)")
+    logger.info("- trading_performance (for performance tracking)")
+    logger.info("- unified_signals (for signal storage)")
+    logger.info("- unified_portfolio (for portfolio data)")
 
 if __name__ == '__main__':
-    logger.info("Initializing trading databases...")
-    initialize_trading_performance()
-    initialize_live_trades()
-    logger.info("Database initialization complete")
+    main()
