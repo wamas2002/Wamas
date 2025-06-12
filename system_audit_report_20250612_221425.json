@@ -1,0 +1,122 @@
+{
+  "overall_score": 37.0,
+  "component_scores": {
+    "signal_generation": 0,
+    "trading_execution": 70,
+    "data_quality": 45,
+    "system_health": 45,
+    "risk_management": 25
+  },
+  "critical_findings": [],
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "category": "Data Infrastructure",
+      "title": "Fix Data Connection Issues",
+      "description": "Ensure OKX API credentials are properly configured and test connectivity",
+      "impact": "System cannot function without reliable data sources"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Signal Quality",
+      "title": "Improve Signal Confidence",
+      "description": "Retrain ML models with recent market data and optimize feature selection",
+      "impact": "Better signals lead to more profitable trades"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Risk Management",
+      "title": "Implement Comprehensive Risk Controls",
+      "description": "Add automated stop losses, position sizing limits, and portfolio rebalancing",
+      "impact": "Protect capital from significant losses"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Trading Activity",
+      "title": "Increase Trading Frequency",
+      "description": "Lower signal confidence thresholds or expand to more trading pairs",
+      "impact": "More opportunities for profit generation"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "System Optimization",
+      "title": "Improve System Performance",
+      "description": "Optimize database queries, implement caching, and add monitoring",
+      "impact": "Better system reliability and faster execution"
+    },
+    {
+      "priority": "LOW",
+      "category": "Monitoring",
+      "title": "Enhanced Performance Tracking",
+      "description": "Implement real-time dashboards and automated performance alerts",
+      "impact": "Better visibility into system performance"
+    },
+    {
+      "priority": "LOW",
+      "category": "Documentation",
+      "title": "Trading Journal Implementation",
+      "description": "Detailed logging of all trades with reasoning and outcomes",
+      "impact": "Improved strategy development and compliance"
+    }
+  ],
+  "performance_metrics": {
+    "signals": {
+      "score": 0,
+      "total_signals_24h": 0,
+      "avg_confidence": 0,
+      "high_confidence_count": 0,
+      "signal_distribution": {},
+      "findings": [
+        "\u2717 Signal analysis error: no such table: unified_signals"
+      ]
+    },
+    "trading": {
+      "score": 70,
+      "total_trades": 2,
+      "win_rate": 50.0,
+      "profit_factor": 83.97082788050616,
+      "avg_trade_duration": 69.58516279429116,
+      "findings": [
+        "\u2713 Good win rate: 50.0%",
+        "\u2713 Excellent profit factor: 83.97",
+        "\u26a0 Limited trading activity: 2 trades",
+        "\u2713 Profitable: $1.12"
+      ]
+    },
+    "data": {
+      "score": 45,
+      "okx_connection": true,
+      "database_health": 33.33333333333333,
+      "data_freshness": 0,
+      "findings": [
+        "\u2713 OKX API credentials properly configured",
+        "\u2713 Live OKX data: BTC/USDT at $106,121.30",
+        "\u26a0 Table unified_signals missing or corrupted",
+        "\u26a0 Table portfolio_data missing or corrupted",
+        "\u26a0 Database health: 33%",
+        "\u26a0 Stale data detected"
+      ]
+    },
+    "system": {
+      "score": 45,
+      "workflow_status": {},
+      "file_integrity": 100.0,
+      "findings": [
+        "\u2713 All critical system files present",
+        "\u2713 Database file healthy (20,480 bytes)",
+        "\u2713 Recent system activity detected"
+      ]
+    },
+    "risk": {
+      "score": 25,
+      "diversification": 8,
+      "position_sizing": "Unknown",
+      "stop_loss_coverage": 0,
+      "findings": [
+        "\u2713 Good diversification: 8 assets",
+        "\u26a0 High concentration risk: 59.0%",
+        "\u26a0 No stop loss system detected"
+      ]
+    }
+  }
+}
