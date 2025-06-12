@@ -487,6 +487,12 @@ def index():
                 <button onclick="showScanner()">
                     <i class="fas fa-search"></i>Market Scanner
                 </button>
+                <button onclick="showOrders()">
+                    <i class="fas fa-list-alt"></i>Orders
+                </button>
+                <button onclick="showTrades()">
+                    <i class="fas fa-chart-bar"></i>Trades & P&L
+                </button>
             </div>
             
             <!-- Dashboard View -->
@@ -625,6 +631,72 @@ def index():
                         </div>
                     </div>
                     <div id="advanced-scanner-results"></div>
+                </div>
+            </div>
+
+            <!-- Orders View -->
+            <div id="orders-view" class="page-view" style="display:none;">
+                <div class="grid">
+                    <div class="card">
+                        <h3><i class="fas fa-clock"></i> Open Orders</h3>
+                        <div id="open-orders">
+                            <div style="text-align: center; color: #ccc; padding: 40px;">Loading open orders...</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-check"></i> Recent Orders</h3>
+                        <div id="recent-orders">
+                            <div style="text-align: center; color: #ccc; padding: 40px;">Loading recent orders...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-history"></i> Order History</h3>
+                    <div style="margin-bottom: 15px;">
+                        <select id="order-filter" style="background: #333; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 5px; margin-right: 10px;">
+                            <option value="all">All Orders</option>
+                            <option value="filled">Filled</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="partial">Partially Filled</option>
+                        </select>
+                        <button onclick="filterOrders()" style="background: #4CAF50; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Filter</button>
+                    </div>
+                    <div id="order-history">
+                        <div style="text-align: center; color: #ccc; padding: 40px;">Loading order history...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trades & P&L View -->
+            <div id="trades-view" class="page-view" style="display:none;">
+                <div class="grid">
+                    <div class="card">
+                        <h3><i class="fas fa-chart-line"></i> P&L Summary</h3>
+                        <div id="pnl-summary">
+                            <div style="text-align: center; color: #ccc; padding: 40px;">Loading P&L data...</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-trophy"></i> Performance Metrics</h3>
+                        <div id="performance-summary">
+                            <div style="text-align: center; color: #ccc; padding: 40px;">Loading performance data...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-exchange-alt"></i> Trade History</h3>
+                    <div style="margin-bottom: 15px;">
+                        <select id="trade-period" style="background: #333; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 5px; margin-right: 10px;">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="all">All Time</option>
+                        </select>
+                        <button onclick="loadTradePeriod()" style="background: #4CAF50; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Load</button>
+                    </div>
+                    <div id="trade-history">
+                        <div style="text-align: center; color: #ccc; padding: 40px;">Loading trade history...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -920,7 +992,7 @@ def index():
             }
             
             function hideAllViews() {
-                const views = ['dashboard-view', 'portfolio-view', 'signals-view', 'monitoring-view', 'scanner-view'];
+                const views = ['dashboard-view', 'portfolio-view', 'signals-view', 'monitoring-view', 'scanner-view', 'orders-view', 'trades-view'];
                 views.forEach(view => {
                     document.getElementById(view).style.display = 'none';
                 });
@@ -964,6 +1036,22 @@ def index():
                 setActiveButton(4);
                 runAdvancedScan();
                 showNotification('Market scanner loaded');
+            }
+            
+            function showOrders() {
+                hideAllViews();
+                document.getElementById('orders-view').style.display = 'block';
+                setActiveButton(5);
+                loadOrdersData();
+                showNotification('Orders view loaded');
+            }
+            
+            function showTrades() {
+                hideAllViews();
+                document.getElementById('trades-view').style.display = 'block';
+                setActiveButton(6);
+                loadTradesData();
+                showNotification('Trades & P&L loaded');
             }
             
             function setActiveButton(index) {
@@ -1108,6 +1196,193 @@ def index():
                     .catch(err => {
                         document.getElementById('advanced-scanner-results').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Scanner temporarily unavailable</div>';
                     });
+            }
+
+            function loadOrdersData() {
+                // Load open orders
+                fetch('/api/unified/orders/open')
+                    .then(response => response.json())
+                    .then(data => {
+                        const openOrdersDiv = document.getElementById('open-orders');
+                        let html = '<table style="width: 100%; border-collapse: collapse; color: #fff;">';
+                        html += '<tr style="border-bottom: 1px solid #555;"><th style="padding: 10px; text-align: left;">Symbol</th><th style="padding: 10px; text-align: right;">Side</th><th style="padding: 10px; text-align: right;">Size</th><th style="padding: 10px; text-align: right;">Price</th><th style="padding: 10px; text-align: right;">Status</th></tr>';
+                        
+                        if (data && data.length > 0) {
+                            data.forEach(order => {
+                                const sideColor = order.side === 'buy' ? '#4CAF50' : '#f44336';
+                                html += `<tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 10px;">${order.symbol}</td>
+                                    <td style="padding: 10px; text-align: right; color: ${sideColor};">${order.side.toUpperCase()}</td>
+                                    <td style="padding: 10px; text-align: right;">${parseFloat(order.size).toFixed(6)}</td>
+                                    <td style="padding: 10px; text-align: right;">$${parseFloat(order.price).toFixed(2)}</td>
+                                    <td style="padding: 10px; text-align: right;">${order.status}</td>
+                                </tr>`;
+                            });
+                        } else {
+                            html += '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #ccc;">No open orders</td></tr>';
+                        }
+                        html += '</table>';
+                        openOrdersDiv.innerHTML = html;
+                    })
+                    .catch(err => {
+                        document.getElementById('open-orders').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Unable to load open orders</div>';
+                    });
+
+                // Load recent orders
+                fetch('/api/unified/orders/recent')
+                    .then(response => response.json())
+                    .then(data => {
+                        const recentOrdersDiv = document.getElementById('recent-orders');
+                        let html = '<div style="max-height: 300px; overflow-y: auto;">';
+                        
+                        if (data && data.length > 0) {
+                            data.slice(0, 10).forEach(order => {
+                                const sideColor = order.side === 'buy' ? '#4CAF50' : '#f44336';
+                                const statusColor = order.status === 'filled' ? '#4CAF50' : order.status === 'cancelled' ? '#f44336' : '#ff9800';
+                                html += `<div style="padding: 10px; margin-bottom: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="color: ${sideColor}; font-weight: bold;">${order.symbol} ${order.side.toUpperCase()}</span>
+                                        <span style="color: ${statusColor}; font-size: 12px;">${order.status.toUpperCase()}</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #ccc;">
+                                        Size: ${parseFloat(order.size).toFixed(6)} | Price: $${parseFloat(order.price).toFixed(2)}
+                                    </div>
+                                </div>`;
+                            });
+                        } else {
+                            html += '<div style="text-align: center; color: #ccc; padding: 40px;">No recent orders</div>';
+                        }
+                        html += '</div>';
+                        recentOrdersDiv.innerHTML = html;
+                    })
+                    .catch(err => {
+                        document.getElementById('recent-orders').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Unable to load recent orders</div>';
+                    });
+            }
+
+            function loadTradesData() {
+                // Load P&L summary
+                fetch('/api/unified/pnl')
+                    .then(response => response.json())
+                    .then(data => {
+                        const pnlDiv = document.getElementById('pnl-summary');
+                        const totalPnl = data.total_pnl || 0;
+                        const pnlColor = totalPnl >= 0 ? '#4CAF50' : '#f44336';
+                        
+                        pnlDiv.innerHTML = `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; text-align: center;">
+                                <div>
+                                    <div style="font-size: 24px; color: ${pnlColor}; font-weight: bold;">
+                                        ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Total P&L</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 24px; color: #4CAF50; font-weight: bold;">
+                                        $${(data.realized_pnl || 0).toFixed(2)}
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Realized P&L</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 24px; color: #ff9800; font-weight: bold;">
+                                        $${(data.unrealized_pnl || 0).toFixed(2)}
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Unrealized P&L</div>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(err => {
+                        document.getElementById('pnl-summary').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Unable to load P&L data</div>';
+                    });
+
+                // Load performance metrics
+                fetch('/api/unified/performance')
+                    .then(response => response.json())
+                    .then(data => {
+                        const perfDiv = document.getElementById('performance-summary');
+                        const winRate = (data.win_rate || 0) * 100;
+                        const winRateColor = winRate >= 60 ? '#4CAF50' : winRate >= 40 ? '#ff9800' : '#f44336';
+                        
+                        perfDiv.innerHTML = `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
+                                <div>
+                                    <div style="font-size: 20px; color: ${winRateColor}; font-weight: bold;">
+                                        ${winRate.toFixed(1)}%
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Win Rate</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; color: #2196F3; font-weight: bold;">
+                                        ${data.total_trades || 0}
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Total Trades</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; color: #9C27B0; font-weight: bold;">
+                                        ${(data.sharpe_ratio || 0).toFixed(2)}
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Sharpe Ratio</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; color: #FF5722; font-weight: bold;">
+                                        ${(data.profit_factor || 0).toFixed(2)}
+                                    </div>
+                                    <div style="color: #ccc; font-size: 14px;">Profit Factor</div>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(err => {
+                        document.getElementById('performance-summary').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Unable to load performance data</div>';
+                    });
+
+                // Load trade history
+                loadTradePeriod();
+            }
+
+            function loadTradePeriod() {
+                const period = document.getElementById('trade-period')?.value || 'week';
+                
+                fetch(`/api/unified/trades?period=${period}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const tradesDiv = document.getElementById('trade-history');
+                        let html = '<table style="width: 100%; border-collapse: collapse; color: #fff;">';
+                        html += '<tr style="border-bottom: 1px solid #555;"><th style="padding: 10px; text-align: left;">Symbol</th><th style="padding: 10px; text-align: right;">Side</th><th style="padding: 10px; text-align: right;">Size</th><th style="padding: 10px; text-align: right;">Price</th><th style="padding: 10px; text-align: right;">P&L</th><th style="padding: 10px; text-align: right;">Date</th></tr>';
+                        
+                        if (data && data.length > 0) {
+                            data.forEach(trade => {
+                                const sideColor = trade.side === 'buy' ? '#4CAF50' : '#f44336';
+                                const pnlColor = trade.pnl >= 0 ? '#4CAF50' : '#f44336';
+                                const date = new Date(trade.timestamp).toLocaleDateString();
+                                
+                                html += `<tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 10px;">${trade.symbol}</td>
+                                    <td style="padding: 10px; text-align: right; color: ${sideColor};">${trade.side.toUpperCase()}</td>
+                                    <td style="padding: 10px; text-align: right;">${parseFloat(trade.size).toFixed(6)}</td>
+                                    <td style="padding: 10px; text-align: right;">$${parseFloat(trade.price).toFixed(2)}</td>
+                                    <td style="padding: 10px; text-align: right; color: ${pnlColor};">
+                                        ${trade.pnl >= 0 ? '+' : ''}$${trade.pnl.toFixed(2)}
+                                    </td>
+                                    <td style="padding: 10px; text-align: right; color: #ccc;">${date}</td>
+                                </tr>`;
+                            });
+                        } else {
+                            html += '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #ccc;">No trades found for selected period</td></tr>';
+                        }
+                        html += '</table>';
+                        tradesDiv.innerHTML = html;
+                    })
+                    .catch(err => {
+                        document.getElementById('trade-history').innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Unable to load trade history</div>';
+                    });
+            }
+
+            function filterOrders() {
+                const filter = document.getElementById('order-filter')?.value || 'all';
+                // Reload order history with filter - this would typically call a filtered endpoint
+                loadOrdersData();
             }
 
             // Enhanced initialization
