@@ -680,7 +680,7 @@ def index():
                         if (data && Array.isArray(data) && data.length > 0) {
                             const labels = data.map(item => item.symbol.replace('/USDT', ''));
                             const values = data.map(item => item.percentage || 0);
-                            const totalValue = data.reduce((sum, item) => sum + (item.usd_value || 0), 0);
+                            const totalValue = data.reduce((sum, item) => sum + (item.value_usd || 0), 0);
                             
                             Plotly.newPlot('portfolio-chart', [{
                                 type: 'pie',
@@ -767,8 +767,8 @@ def index():
                                         </span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-                                        <span><strong>${signal.signal || 'HOLD'}</strong></span>
-                                        <span>$${signal.price ? signal.price.toFixed(2) : 'N/A'}</span>
+                                        <span><strong>${signal.action || signal.signal || 'HOLD'}</strong></span>
+                                        <span>$${(signal.current_price || signal.price || 0).toFixed(2)}</span>
                                     </div>
                                     <div class="signal-details">
                                         RSI: ${signal.rsi ? signal.rsi.toFixed(1) : 'N/A'} | 
@@ -982,11 +982,14 @@ def index():
                         html += '<tr style="border-bottom: 1px solid #555;"><th style="padding: 10px; text-align: left;">Asset</th><th style="padding: 10px; text-align: right;">Balance</th><th style="padding: 10px; text-align: right;">Value (USD)</th><th style="padding: 10px; text-align: right;">Allocation</th></tr>';
                         
                         data.forEach(item => {
+                            const balance = parseFloat(item.balance || 0);
+                            const valueUsd = parseFloat(item.value_usd || 0);
+                            const percentage = parseFloat(item.percentage || 0);
                             html += `<tr style="border-bottom: 1px solid #333;">
-                                <td style="padding: 10px;">${item.symbol}</td>
-                                <td style="padding: 10px; text-align: right;">${item.balance.toFixed(6)}</td>
-                                <td style="padding: 10px; text-align: right;">$${item.value_usd.toFixed(2)}</td>
-                                <td style="padding: 10px; text-align: right;">${item.percentage.toFixed(1)}%</td>
+                                <td style="padding: 10px;">${item.symbol || 'N/A'}</td>
+                                <td style="padding: 10px; text-align: right;">${balance.toFixed(6)}</td>
+                                <td style="padding: 10px; text-align: right;">$${valueUsd.toFixed(2)}</td>
+                                <td style="padding: 10px; text-align: right;">${percentage.toFixed(1)}%</td>
                             </tr>`;
                         });
                         html += '</table>';
@@ -1003,15 +1006,20 @@ def index():
                         let html = '';
                         
                         data.forEach(signal => {
-                            const confidenceClass = signal.confidence >= 75 ? 'signal-buy' : 'signal-hold';
+                            const confidence = parseFloat(signal.confidence || 0);
+                            const currentPrice = parseFloat(signal.current_price || signal.price || 0);
+                            const targetPrice = parseFloat(signal.target_price || currentPrice * 1.05);
+                            const action = signal.action || signal.signal || 'HOLD';
+                            const confidenceClass = confidence >= 75 ? 'signal-buy' : 'signal-hold';
+                            
                             html += `<div class="signal-item ${confidenceClass}" style="margin-bottom: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <h4 style="margin: 0; color: #fff;">${signal.symbol}</h4>
-                                    <span style="background: ${signal.confidence >= 75 ? '#4CAF50' : '#ff9800'}; padding: 5px 10px; border-radius: 15px; font-size: 12px;">${signal.confidence.toFixed(1)}%</span>
+                                    <h4 style="margin: 0; color: #fff;">${signal.symbol || 'N/A'}</h4>
+                                    <span style="background: ${confidence >= 75 ? '#4CAF50' : '#ff9800'}; padding: 5px 10px; border-radius: 15px; font-size: 12px;">${confidence.toFixed(1)}%</span>
                                 </div>
-                                <p style="margin: 5px 0; color: #ccc;">Action: ${signal.action}</p>
-                                <p style="margin: 5px 0; color: #ccc;">Price: $${signal.current_price.toFixed(2)} → Target: $${signal.target_price.toFixed(2)}</p>
-                                <p style="margin: 5px 0; color: #aaa; font-size: 14px;">${signal.reasoning || 'AI analysis'}</p>
+                                <p style="margin: 5px 0; color: #ccc;">Action: ${action}</p>
+                                <p style="margin: 5px 0; color: #ccc;">Price: $${currentPrice.toFixed(2)} → Target: $${targetPrice.toFixed(2)}</p>
+                                <p style="margin: 5px 0; color: #aaa; font-size: 14px;">${signal.reasoning || 'Enhanced AI analysis'}</p>
                             </div>`;
                         });
                         
