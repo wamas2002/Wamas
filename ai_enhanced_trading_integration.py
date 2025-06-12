@@ -32,11 +32,53 @@ class AIEnhancedTradingIntegration:
         self.momentum_model = GradientBoostingClassifier(n_estimators=50, random_state=42)
         self.scaler = StandardScaler()
         
-        # Enhanced trading pairs for scanning
+        # Comprehensive 100 cryptocurrency trading pairs for AI analysis
         self.trading_pairs = [
-            'BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'ADA/USDT', 'DOT/USDT',
-            'AVAX/USDT', 'LINK/USDT', 'ATOM/USDT', 'NEAR/USDT', 'MATIC/USDT',
-            'UNI/USDT', 'AAVE/USDT', 'LTC/USDT', 'XRP/USDT', 'BNB/USDT'
+            # Major cryptocurrencies
+            'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT',
+            'SOL/USDT', 'DOGE/USDT', 'TRX/USDT', 'TON/USDT', 'LINK/USDT',
+            'MATIC/USDT', 'LTC/USDT', 'DOT/USDT', 'AVAX/USDT', 'UNI/USDT',
+            
+            # DeFi tokens
+            'AAVE/USDT', 'MKR/USDT', 'COMP/USDT', 'SUSHI/USDT', 'CRV/USDT',
+            'YFI/USDT', 'SNX/USDT', '1INCH/USDT', 'BAL/USDT', 'REN/USDT',
+            
+            # Layer 1 blockchains
+            'ATOM/USDT', 'ALGO/USDT', 'XLM/USDT', 'VET/USDT', 'FIL/USDT',
+            'EOS/USDT', 'TEZOS/USDT', 'IOTA/USDT', 'NEO/USDT', 'WAVES/USDT',
+            
+            # Smart contract platforms
+            'NEAR/USDT', 'FTM/USDT', 'ONE/USDT', 'LUNA/USDT', 'EGLD/USDT',
+            'THETA/USDT', 'HBAR/USDT', 'ICP/USDT', 'FLOW/USDT', 'MINA/USDT',
+            
+            # Gaming & NFT tokens
+            'AXS/USDT', 'SAND/USDT', 'MANA/USDT', 'ENJ/USDT', 'CHZ/USDT',
+            'GALA/USDT', 'IMX/USDT', 'APE/USDT', 'LRC/USDT', 'GMT/USDT',
+            
+            # Metaverse & Web3
+            'CRO/USDT', 'HNT/USDT', 'ROSE/USDT', 'AR/USDT', 'STORJ/USDT',
+            'BAT/USDT', 'GRT/USDT', 'OCEAN/USDT', 'FET/USDT', 'RNDR/USDT',
+            
+            # Privacy coins
+            'XMR/USDT', 'ZEC/USDT', 'DASH/USDT', 'DCR/USDT', 'BEAM/USDT',
+            
+            # Exchange tokens
+            'KCS/USDT', 'HT/USDT', 'OKB/USDT', 'FTT/USDT', 'LEO/USDT',
+            
+            # Stablecoins & derivatives
+            'USDC/USDT', 'DAI/USDT', 'TUSD/USDT', 'USDP/USDT', 'FRAX/USDT',
+            
+            # Layer 2 solutions
+            'LRC/USDT', 'OMG/USDT', 'SKL/USDT', 'CTSI/USDT', 'METIS/USDT',
+            
+            # Emerging technologies
+            'QNT/USDT', 'HOLO/USDT', 'ICX/USDT', 'ZIL/USDT', 'QTUM/USDT',
+            'ONT/USDT', 'KAVA/USDT', 'BAND/USDT', 'RSR/USDT', 'RVN/USDT',
+            
+            # Additional promising projects
+            'CELO/USDT', 'ZEN/USDT', 'REP/USDT', 'KNC/USDT', 'LSK/USDT',
+            'SC/USDT', 'DGB/USDT', 'NKN/USDT', 'ANKR/USDT', 'CELR/USDT',
+            'DENT/USDT', 'WAN/USDT', 'HOT/USDT', 'DUSK/USDT', 'ARDR/USDT'
         ]
         
     def initialize_exchange(self):
