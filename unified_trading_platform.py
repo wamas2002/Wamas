@@ -1564,7 +1564,7 @@ def api_recent_orders():
 
 @app.route('/api/unified/pnl')
 def api_pnl_summary():
-    """Get P&L summary from trading performance"""
+    """Get authentic P&L summary from OKX account"""
     try:
         pnl_data = {
             'total_pnl': 0.0,
@@ -1572,26 +1572,38 @@ def api_pnl_summary():
             'unrealized_pnl': 0.0
         }
         
-        # Calculate P&L from portfolio and trading data
-        portfolio = unified_platform.get_portfolio_data()
-        if portfolio:
-            total_value = sum(item.get('value_usd', 0) for item in portfolio)
-            # Assuming initial portfolio value was $10,000 for calculation
-            initial_value = 10000.0
-            pnl_data['total_pnl'] = total_value - initial_value
-            pnl_data['unrealized_pnl'] = pnl_data['total_pnl']  # Most P&L is unrealized in holding positions
-            pnl_data['realized_pnl'] = pnl_data['total_pnl'] * 0.1  # Estimate 10% as realized
+        # Get authentic P&L from OKX account
+        if hasattr(unified_platform, 'exchange') and unified_platform.exchange:
+            try:
+                # Get account P&L information from OKX
+                balance = unified_platform.exchange.fetch_balance()
+                
+                # Calculate unrealized P&L from current positions
+                if 'info' in balance and 'data' in balance['info']:
+                    for account in balance['info']['data']:
+                        if 'unrealizedPnl' in account:
+                            pnl_data['unrealized_pnl'] += float(account['unrealizedPnl'] or 0)
+                        if 'realizedPnl' in account:
+                            pnl_data['realized_pnl'] += float(account['realizedPnl'] or 0)
+                
+                pnl_data['total_pnl'] = pnl_data['realized_pnl'] + pnl_data['unrealized_pnl']
+                
+            except Exception as e:
+                logger.warning(f"Could not fetch OKX P&L data: {e}")
+                # Only return authentic data - no fallback calculations
+                raise Exception("OKX API credentials required for P&L data access")
+        else:
+            raise Exception("OKX exchange connection required for authentic P&L data")
         
         return jsonify(pnl_data)
     except Exception as e:
         logger.error(f"P&L API error: {e}")
-        return jsonify({'total_pnl': 0, 'realized_pnl': 0, 'unrealized_pnl': 0}), 500
+        return jsonify({'error': 'Authentic OKX data required - configure API credentials'}), 401
 
 @app.route('/api/unified/performance')
 def api_performance_metrics():
-    """Get trading performance metrics"""
+    """Get authentic trading performance from OKX account"""
     try:
-        # Get performance data from database or calculate from trades
         performance = {
             'win_rate': 0.0,
             'total_trades': 0,
@@ -1599,39 +1611,51 @@ def api_performance_metrics():
             'profit_factor': 0.0
         }
         
-        # Query trading performance from enhanced trading system
-        try:
-            with sqlite3.connect('enhanced_trading.db') as conn:
-                cursor = conn.cursor()
+        # Get authentic performance data from OKX
+        if hasattr(unified_platform, 'exchange') and unified_platform.exchange:
+            try:
+                # Fetch trading history from OKX
+                symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT']
+                all_trades = []
                 
-                # Get trade statistics
-                cursor.execute("SELECT COUNT(*) FROM trading_performance WHERE profit_loss > 0")
-                winning_trades = cursor.fetchone()[0]
+                for symbol in symbols:
+                    trades = unified_platform.exchange.fetch_my_trades(symbol, limit=100)
+                    all_trades.extend(trades)
                 
-                cursor.execute("SELECT COUNT(*) FROM trading_performance")
-                total_trades = cursor.fetchone()[0]
-                
-                if total_trades > 0:
-                    performance['win_rate'] = winning_trades / total_trades
+                if all_trades:
+                    total_trades = len(all_trades)
+                    winning_trades = 0
+                    total_profit = 0
+                    total_loss = 0
+                    
+                    for trade in all_trades:
+                        # Calculate P&L for each trade
+                        pnl = trade.get('cost', 0) * (1 if trade['side'] == 'sell' else -1)
+                        
+                        if pnl > 0:
+                            winning_trades += 1
+                            total_profit += pnl
+                        else:
+                            total_loss += abs(pnl)
+                    
                     performance['total_trades'] = total_trades
+                    performance['win_rate'] = (winning_trades / total_trades) * 100 if total_trades > 0 else 0
+                    performance['profit_factor'] = total_profit / total_loss if total_loss > 0 else 1.0
                     
-                    # Calculate profit factor
-                    cursor.execute("SELECT SUM(profit_loss) FROM trading_performance WHERE profit_loss > 0")
-                    gross_profit = cursor.fetchone()[0] or 0
+                    # Calculate returns for Sharpe ratio
+                    if len(all_trades) > 1:
+                        returns = [trade.get('cost', 0) for trade in all_trades]
+                        avg_return = sum(returns) / len(returns)
+                        std_dev = (sum((r - avg_return) ** 2 for r in returns) / len(returns)) ** 0.5
+                        performance['sharpe_ratio'] = avg_return / std_dev if std_dev > 0 else 0
+                else:
+                    raise Exception("No trading history found in OKX account")
                     
-                    cursor.execute("SELECT SUM(ABS(profit_loss)) FROM trading_performance WHERE profit_loss < 0")
-                    gross_loss = cursor.fetchone()[0] or 1  # Avoid division by zero
-                    
-                    performance['profit_factor'] = gross_profit / gross_loss if gross_loss > 0 else 1.0
-                    
-                    # Estimate Sharpe ratio (simplified calculation)
-                    cursor.execute("SELECT AVG(profit_loss), COUNT(*) FROM trading_performance")
-                    avg_return, count = cursor.fetchone()
-                    if avg_return and count > 1:
-                        performance['sharpe_ratio'] = avg_return * (count ** 0.5) / 100  # Simplified Sharpe
-                
-        except Exception as db_error:
-            logger.warning(f"Could not fetch performance from database: {db_error}")
+            except Exception as e:
+                logger.warning(f"Could not fetch OKX trading performance: {e}")
+                raise Exception("OKX API credentials required for authentic trading performance data")
+        else:
+            raise Exception("OKX exchange connection required for authentic performance metrics")
         
         return jsonify(performance)
     except Exception as e:
@@ -1640,7 +1664,7 @@ def api_performance_metrics():
 
 @app.route('/api/unified/trades')
 def api_trade_history():
-    """Get trade history for specified period"""
+    """Get authentic trade history from OKX account"""
     try:
         period = request.args.get('period', 'week')
         trades = []
@@ -1649,42 +1673,44 @@ def api_trade_history():
         from datetime import datetime, timedelta
         now = datetime.now()
         if period == 'today':
-            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            since = int((now.replace(hour=0, minute=0, second=0, microsecond=0)).timestamp() * 1000)
         elif period == 'week':
-            start_date = now - timedelta(days=7)
+            since = int((now - timedelta(days=7)).timestamp() * 1000)
         elif period == 'month':
-            start_date = now - timedelta(days=30)
+            since = int((now - timedelta(days=30)).timestamp() * 1000)
         else:  # all
-            start_date = now - timedelta(days=365)
+            since = int((now - timedelta(days=365)).timestamp() * 1000)
         
-        # Fetch trades from database
-        try:
-            with sqlite3.connect('enhanced_trading.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT symbol, side, size, price, profit_loss, timestamp 
-                    FROM trading_performance 
-                    WHERE timestamp >= ? 
-                    ORDER BY timestamp DESC 
-                    LIMIT 50
-                """, (start_date.isoformat(),))
+        # Fetch authentic trades from OKX
+        if hasattr(unified_platform, 'exchange') and unified_platform.exchange:
+            try:
+                symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT']
                 
-                for row in cursor.fetchall():
-                    trades.append({
-                        'symbol': row[0],
-                        'side': row[1],
-                        'size': row[2],
-                        'price': row[3],
-                        'pnl': row[4],
-                        'timestamp': row[5]
-                    })
-        except Exception as db_error:
-            logger.warning(f"Could not fetch trades from database: {db_error}")
+                for symbol in symbols:
+                    okx_trades = unified_platform.exchange.fetch_my_trades(symbol, since=since, limit=50)
+                    
+                    for trade in okx_trades:
+                        trades.append({
+                            'symbol': trade['symbol'],
+                            'side': trade['side'],
+                            'size': trade['amount'],
+                            'price': trade['price'],
+                            'pnl': trade.get('fee', {}).get('cost', 0) * -1,  # Fee as negative impact
+                            'timestamp': trade['datetime']
+                        })
+                        
+            except Exception as e:
+                logger.warning(f"Could not fetch OKX trade history: {e}")
+                raise Exception("OKX API credentials required for authentic trade history")
+        else:
+            raise Exception("OKX exchange connection required for authentic trade data")
         
+        # Sort trades by timestamp
+        trades.sort(key=lambda x: x['timestamp'], reverse=True)
         return jsonify(trades)
     except Exception as e:
         logger.error(f"Trade history API error: {e}")
-        return jsonify([]), 500
+        return jsonify({'error': 'Authentic OKX data required - configure API credentials'}), 401
 
 if __name__ == '__main__':
     logger.info("Starting Unified AI Trading Platform on port 5000")
