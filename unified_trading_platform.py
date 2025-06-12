@@ -82,6 +82,10 @@ class UnifiedTradingPlatform:
                     bb_position REAL,
                     volume_ratio REAL,
                     reasoning TEXT,
+                    ai_score REAL DEFAULT 0,
+                    scan_type TEXT DEFAULT 'standard',
+                    pattern_detected TEXT DEFAULT 'none',
+                    risk_reward_ratio REAL DEFAULT 0,
                     timestamp TEXT NOT NULL
                 )
             ''')

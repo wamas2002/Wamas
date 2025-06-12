@@ -44,6 +44,14 @@ args = "Unified Trading Platform"
 task = "workflow.run"
 args = "TradingView Dashboard"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Advanced Market Scanner"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "AI Enhanced Trading"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -110,6 +118,22 @@ author = "agent"
 task = "shell.exec"
 args = "python enhanced_tradingview_dashboard.py"
 waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Advanced Market Scanner"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python advanced_market_scanner.py"
+
+[[workflows.workflow]]
+name = "AI Enhanced Trading"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python ai_enhanced_trading_integration.py"
 
 [[ports]]
 localPort = 5000
