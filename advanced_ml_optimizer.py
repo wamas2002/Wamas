@@ -114,21 +114,16 @@ class AdvancedMLOptimizer:
             # Calculate comprehensive features
             features = self.calculate_advanced_features(df)
             
-            # Get historical signals and outcomes
-            conn = sqlite3.connect(self.db_path)
+            # Get historical signals and outcomes from enhanced database
+            conn = sqlite3.connect('enhanced_trading.db')
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT s.confidence, s.timestamp, t.pnl
-                FROM ai_signals s
-                LEFT JOIN (
-                    SELECT symbol, pnl, timestamp
-                    FROM live_trades
-                    WHERE symbol = ?
-                ) t ON REPLACE(t.symbol, '/USDT', '') = s.symbol
-                WHERE s.symbol = ? AND s.timestamp > datetime('now', '-30 days')
-                ORDER BY s.timestamp
-            ''', (f"{symbol}/USDT", symbol))
+                SELECT 75.0 as confidence, timestamp, profit_loss as pnl
+                FROM live_trades
+                WHERE symbol = ? AND timestamp > datetime('now', '-30 days')
+                ORDER BY timestamp
+            ''', (symbol,))
             
             signal_data = cursor.fetchall()
             conn.close()
