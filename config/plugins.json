@@ -31,7 +31,7 @@
       "module": "ai.model_evaluator",
       "class": "AIModelEvaluator",
       "config": {
-        "evaluation_interval_hours": 12,
+        "evaluation_interval_hours": 100,
         "min_improvement_threshold": 5.0,
         "available_models": ["random_forest", "gradient_boosting"]
       },

@@ -126,7 +126,7 @@ class AIModelEvaluator:
                     'active_model': 'random_forest',
                     'last_switch': datetime.now().isoformat(),
                     'last_evaluation': None,
-                    'evaluation_interval_hours': 12,
+                    'evaluation_interval_hours': 100,
                     'min_improvement_threshold': 5.0  # 5% Sharpe ratio improvement
                 }
                 self.save_active_model_config(default_config)
@@ -152,7 +152,7 @@ class AIModelEvaluator:
                 return True
             
             last_eval_time = datetime.fromisoformat(last_eval)
-            interval_hours = self.active_model_config.get('evaluation_interval_hours', 12)
+            interval_hours = self.active_model_config.get('evaluation_interval_hours', 100)
             
             return datetime.now() - last_eval_time >= timedelta(hours=interval_hours)
             
@@ -490,7 +490,7 @@ class AIModelEvaluator:
                 logger.info("Model evaluation not due yet")
                 return
             
-            logger.info("Starting 12-hour model evaluation cycle")
+            logger.info("Starting 100-hour model evaluation cycle")
             
             # Evaluate all models
             performances = self.evaluate_all_models()
