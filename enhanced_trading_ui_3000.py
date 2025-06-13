@@ -17,14 +17,38 @@ import plotly.utils
 from typing import Dict, List, Optional
 import pandas_ta as ta
 
-# Import plugins
+# Import plugins with error handling
 import sys
+import os
 sys.path.append('plugins')
 sys.path.append('ai')
 
-from signal_attribution_engine import attribution_engine
-from volatility_risk_controller import volatility_risk_controller
-from model_evaluator import model_evaluator
+# Initialize plugin components
+attribution_engine = None
+volatility_risk_controller = None
+model_evaluator = None
+
+# Try to import plugins safely
+try:
+    if os.path.exists('plugins/signal_attribution_engine.py'):
+        from plugins.signal_attribution_engine import SignalAttributionEngine
+        attribution_engine = SignalAttributionEngine()
+except Exception as e:
+    logger.warning(f"Signal attribution engine not available: {e}")
+
+try:
+    if os.path.exists('plugins/volatility_risk_controller.py'):
+        from plugins.volatility_risk_controller import VolatilityRiskController
+        volatility_risk_controller = VolatilityRiskController()
+except Exception as e:
+    logger.warning(f"Volatility risk controller not available: {e}")
+
+try:
+    if os.path.exists('ai/model_evaluator.py'):
+        from ai.model_evaluator import AIModelEvaluator
+        model_evaluator = AIModelEvaluator()
+except Exception as e:
+    logger.warning(f"Model evaluator not available: {e}")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
