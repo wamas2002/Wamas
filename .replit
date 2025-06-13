@@ -52,6 +52,10 @@ args = "Advanced Market Scanner"
 task = "workflow.run"
 args = "AI Enhanced Trading"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Autonomous Trading Engine"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -134,6 +138,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python ai_enhanced_trading_integration.py"
+
+[[workflows.workflow]]
+name = "Autonomous Trading Engine"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python autonomous_trading_engine.py"
 
 [[ports]]
 localPort = 5000
