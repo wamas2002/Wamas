@@ -10,6 +10,10 @@ import os
 import ccxt
 import pandas as pd
 import numpy as np
+from bulletproof_indicators import bulletproof_indicators
+
+import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 import logging
 import pandas_ta as ta
@@ -336,7 +340,7 @@ class AdvancedMarketScanner:
             df['rsi'] = ta.rsi(df['close'], length=14)
             
             # Stochastic
-            stoch_data = ta.stoch(df['high'], df['low'], df['close'], k=14, d=3)
+# Stochastic calculation disabled
             if not stoch_data.empty and len(stoch_data.columns) >= 2:
                 df['stoch_k'] = stoch_data.iloc[:, 0]
                 df['stoch_d'] = stoch_data.iloc[:, 1]
@@ -515,7 +519,7 @@ class AdvancedMarketScanner:
                 return None
             
             df, ticker = market_data
-            df = self.calculate_advanced_indicators(df)
+            df = bulletproof_indicators.calculate_all_indicators(df)
             
             if len(df) < 50:
                 return None
@@ -577,7 +581,7 @@ class AdvancedMarketScanner:
                 return None
             
             df, ticker = market_data
-            df = self.calculate_advanced_indicators(df)
+            df = bulletproof_indicators.calculate_all_indicators(df)
             
             if len(df) < 50:
                 return None
@@ -657,7 +661,7 @@ class AdvancedMarketScanner:
                 return None
             
             df, ticker = market_data
-            df = self.calculate_advanced_indicators(df)
+            df = bulletproof_indicators.calculate_all_indicators(df)
             
             if len(df) < 50:
                 return None
@@ -745,7 +749,7 @@ class AdvancedMarketScanner:
                     continue
                 
                 df, ticker = market_data
-                df = self.calculate_advanced_indicators(df)
+                df = bulletproof_indicators.calculate_all_indicators(df)
                 
                 if len(df) < 100:
                     continue

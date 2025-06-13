@@ -6,10 +6,6 @@ Automatically detects OKX-available pairs and performs comprehensive analysis
 import ccxt
 import pandas as pd
 import numpy as np
-from bulletproof_indicators import bulletproof_indicators
-
-import pandas as pd
-import numpy as np
 import pandas_ta as ta
 import sqlite3
 import logging
@@ -141,7 +137,7 @@ class OptimizedMarketScanner:
             df.set_index('timestamp', inplace=True)
             
             # Calculate technical indicators
-            df = df = bulletproof_indicators.calculate_all_indicators(df)
+            df = self.calculate_indicators(df)
             
             return df
             
