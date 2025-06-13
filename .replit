@@ -26,14 +26,6 @@ args = "Live Trading System"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Enhanced Trading AI"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "ML Optimizer"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Dynamic Optimizer"
 
 [[workflows.workflow.tasks]]
@@ -46,10 +38,6 @@ args = "TradingView Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "AI Enhanced Trading"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Advanced Futures Trading"
 
 [[workflows.workflow.tasks]]
@@ -58,15 +46,15 @@ args = "Enhanced Modern UI"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Optimized Strategies"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Advanced Analytics UI"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Pure Local Trading Engine"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Direct Auto Trading"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -92,22 +80,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
-
-[[workflows.workflow]]
-name = "Enhanced Trading AI"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python enhanced_trading_system.py"
-
-[[workflows.workflow]]
-name = "ML Optimizer"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python advanced_ml_optimizer.py"
 
 [[workflows.workflow]]
 name = "Dynamic Optimizer"
@@ -136,14 +108,6 @@ args = "python enhanced_tradingview_dashboard.py"
 waitForPort = 5001
 
 [[workflows.workflow]]
-name = "AI Enhanced Trading"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python ai_enhanced_trading_integration.py"
-
-[[workflows.workflow]]
 name = "Advanced Futures Trading"
 author = "agent"
 
@@ -161,14 +125,6 @@ args = "python enhanced_modern_trading_ui.py"
 waitForPort = 5002
 
 [[workflows.workflow]]
-name = "Optimized Strategies"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python optimized_trading_strategies.py"
-
-[[workflows.workflow]]
 name = "Advanced Analytics UI"
 author = "agent"
 
@@ -184,6 +140,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python pure_local_trading_engine.py"
+
+[[workflows.workflow]]
+name = "Direct Auto Trading"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python direct_execution_fix.py"
 
 [[ports]]
 localPort = 3000
