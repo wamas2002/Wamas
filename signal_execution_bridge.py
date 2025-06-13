@@ -27,9 +27,10 @@ class SignalExecutionBridge:
         self.is_running = False
         self.last_execution_time = {}
         self.rate_limit_delay = 0.2  # 200ms between API calls (5 req/sec max)
-        self.execution_threshold = 75.0  # 75% confidence minimum (CRITICAL FIX)
+        self.execution_threshold = 75.0  # 75% confidence minimum - LIVE TRADING ENABLED
         self.max_position_size_pct = 0.035  # 3.5% per trade (optimized)
-        self.min_trade_amount = 5   # Minimum $5 USDT to enable execution
+        self.min_trade_amount = 5
+        self.auto_execute = True  # Enable automatic execution   # Minimum $5 USDT to enable execution
         
         self.initialize_exchange()
         
@@ -60,12 +61,12 @@ class SignalExecutionBridge:
         """Get unprocessed signals from the last 60 seconds"""
         signals = []
         
-        # Check multiple databases for signals
+        # Check multiple databases for signals - prioritize Pure Local Trading Engine
         databases = [
             ('pure_local_trading.db', 'local_signals'),
             ('enhanced_trading.db', 'ai_signals'),
             ('enhanced_trading.db', 'unified_signals'),
-            ('autonomous_trading.db', 'signals')
+            ('trading_platform.db', 'ai_signals')
         ]
         
         cutoff_time = (datetime.now() - timedelta(seconds=300)).isoformat()  # 5 minutes window
@@ -88,8 +89,8 @@ class SignalExecutionBridge:
                 cursor.execute(f"PRAGMA table_info({table_name})")
                 columns = [row[1] for row in cursor.fetchall()]
                 
-                # Build query based on available columns
-                signal_col = 'signal' if 'signal' in columns else 'action' if 'action' in columns else 'side'
+                # Build query based on available columns - handle Pure Local Trading Engine format
+                signal_col = 'signal_type' if 'signal_type' in columns else 'signal' if 'signal' in columns else 'action' if 'action' in columns else 'side'
                 confidence_col = 'confidence' if 'confidence' in columns else 'score'
                 
                 if signal_col not in columns or confidence_col not in columns:
