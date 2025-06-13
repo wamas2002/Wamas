@@ -125,7 +125,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python advanced_market_scanner.py"
+args = "python optimized_market_scanner.py"
 
 [[workflows.workflow]]
 name = "AI Enhanced Trading"

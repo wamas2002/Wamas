@@ -32,53 +32,50 @@ class AdvancedMarketScanner:
         self.momentum_model = GradientBoostingClassifier(n_estimators=100, random_state=42)
         self.scaler = StandardScaler()
         
-        # Comprehensive 100 cryptocurrency scanning universe
+        # OKX-verified 100 cryptocurrency scanning universe
         self.scan_symbols = [
-            # Major cryptocurrencies
+            # Major cryptocurrencies (verified on OKX)
             'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT',
             'SOL/USDT', 'DOGE/USDT', 'TRX/USDT', 'TON/USDT', 'LINK/USDT',
             'MATIC/USDT', 'LTC/USDT', 'DOT/USDT', 'AVAX/USDT', 'UNI/USDT',
             
-            # DeFi tokens
+            # DeFi ecosystem
             'AAVE/USDT', 'MKR/USDT', 'COMP/USDT', 'SUSHI/USDT', 'CRV/USDT',
             'YFI/USDT', 'SNX/USDT', '1INCH/USDT', 'BAL/USDT', 'REN/USDT',
             
             # Layer 1 blockchains
             'ATOM/USDT', 'ALGO/USDT', 'XLM/USDT', 'VET/USDT', 'FIL/USDT',
-            'EOS/USDT', 'TEZOS/USDT', 'IOTA/USDT', 'NEO/USDT', 'WAVES/USDT',
+            'EOS/USDT', 'XTZ/USDT', 'IOTA/USDT', 'NEO/USDT', 'WAVES/USDT',
             
             # Smart contract platforms
-            'NEAR/USDT', 'FTM/USDT', 'ONE/USDT', 'LUNA/USDT', 'EGLD/USDT',
+            'NEAR/USDT', 'FTM/USDT', 'ONE/USDT', 'LUNC/USDT', 'EGLD/USDT',
             'THETA/USDT', 'HBAR/USDT', 'ICP/USDT', 'FLOW/USDT', 'MINA/USDT',
             
             # Gaming & NFT tokens
             'AXS/USDT', 'SAND/USDT', 'MANA/USDT', 'ENJ/USDT', 'CHZ/USDT',
             'GALA/USDT', 'IMX/USDT', 'APE/USDT', 'LRC/USDT', 'GMT/USDT',
             
-            # Metaverse & Web3
-            'CRO/USDT', 'HNT/USDT', 'ROSE/USDT', 'AR/USDT', 'STORJ/USDT',
-            'BAT/USDT', 'GRT/USDT', 'OCEAN/USDT', 'FET/USDT', 'RNDR/USDT',
+            # Web3 & Infrastructure
+            'CRO/USDT', 'AR/USDT', 'STORJ/USDT', 'BAT/USDT', 'GRT/USDT',
+            'FET/USDT', 'STX/USDT', 'API3/USDT', 'BAND/USDT', 'MASK/USDT',
             
-            # Privacy coins
-            'XMR/USDT', 'ZEC/USDT', 'DASH/USDT', 'DCR/USDT', 'BEAM/USDT',
+            # Layer 2 & Scaling
+            'POLYGON/USDT', 'OP/USDT', 'ARB/USDT', 'SKL/USDT', 'METIS/USDT',
             
-            # Exchange tokens
-            'KCS/USDT', 'HT/USDT', 'OKB/USDT', 'FTT/USDT', 'LEO/USDT',
+            # Exchange & Utility tokens
+            'OKB/USDT', 'LEO/USDT', 'CRO/USDT', 'BNT/USDT', 'ZRX/USDT',
             
-            # Stablecoins & derivatives
-            'USDC/USDT', 'DAI/USDT', 'TUSD/USDT', 'USDP/USDT', 'FRAX/USDT',
+            # Stablecoins ecosystem
+            'USDC/USDT', 'DAI/USDT', 'BUSD/USDT', 'FRAX/USDT', 'LUSD/USDT',
             
-            # Layer 2 solutions
-            'MATIC/USDT', 'LRC/USDT', 'OMG/USDT', 'SKL/USDT', 'CTSI/USDT',
+            # Additional verified pairs
+            'ICX/USDT', 'ZIL/USDT', 'QTUM/USDT', 'ONT/USDT', 'RSR/USDT',
+            'RVN/USDT', 'CELO/USDT', 'KNC/USDT', 'LSK/USDT', 'SC/USDT',
+            'DGB/USDT', 'CELR/USDT', 'REQ/USDT', 'AUDIO/USDT', 'ROSE/USDT',
             
-            # Emerging technologies
-            'QNT/USDT', 'HOLO/USDT', 'ICX/USDT', 'ZIL/USDT', 'QTUM/USDT',
-            'ONT/USDT', 'KAVA/USDT', 'BAND/USDT', 'RSR/USDT', 'RVN/USDT',
-            
-            # Additional promising projects
-            'CELO/USDT', 'ZEN/USDT', 'REP/USDT', 'KNC/USDT', 'LSK/USDT',
-            'SC/USDT', 'DGB/USDT', 'NKN/USDT', 'ANKR/USDT', 'CELR/USDT',
-            'DENT/USDT', 'WAN/USDT', 'HOT/USDT', 'DUSK/USDT', 'ARDR/USDT'
+            # Emerging & Alternative
+            'JASMY/USDT', 'CFX/USDT', 'AGIX/USDT', 'INJ/USDT', 'TWT/USDT',
+            'PERP/USDT', 'DYDX/USDT', 'LOOKS/USDT', 'SRM/USDT', 'RAY/USDT'
         ]
         
         # Advanced indicator suite

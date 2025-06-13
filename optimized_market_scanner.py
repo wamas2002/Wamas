@@ -1,0 +1,513 @@
+"""
+Optimized AI Market Scanner
+Automatically detects OKX-available pairs and performs comprehensive analysis
+"""
+
+import ccxt
+import pandas as pd
+import numpy as np
+import pandas_ta as ta
+import sqlite3
+import logging
+from datetime import datetime, timedelta
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.preprocessing import StandardScaler
+import json
+import os
+import time
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class OptimizedMarketScanner:
+    def __init__(self):
+        """Initialize Optimized Market Scanner"""
+        self.exchange = None
+        self.available_symbols = []
+        self.target_symbols = []
+        
+        # AI Models
+        self.trend_model = RandomForestClassifier(n_estimators=100, random_state=42)
+        self.momentum_model = GradientBoostingClassifier(n_estimators=100, random_state=42)
+        self.scaler = StandardScaler()
+        
+    def initialize_exchange(self):
+        """Initialize OKX exchange and get available symbols"""
+        try:
+            self.exchange = ccxt.okx({
+                'apiKey': os.environ.get('OKX_API_KEY'),
+                'secret': os.environ.get('OKX_SECRET_KEY'),
+                'password': os.environ.get('OKX_PASSPHRASE'),
+                'sandbox': False,
+                'enableRateLimit': True,
+            })
+            
+            # Load markets to get available symbols
+            markets = self.exchange.load_markets()
+            self.available_symbols = [symbol for symbol in markets.keys() if symbol.endswith('/USDT')]
+            
+            # Filter to top 100 most liquid pairs
+            self.filter_top_symbols()
+            
+            logger.info(f"Connected to OKX with {len(self.target_symbols)} verified trading pairs")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Exchange initialization failed: {e}")
+            return False
+    
+    def filter_top_symbols(self):
+        """Filter to top 100 most liquid USDT pairs"""
+        try:
+            # Get 24h ticker data for volume filtering
+            tickers = self.exchange.fetch_tickers()
+            
+            # Filter USDT pairs and sort by 24h volume
+            usdt_pairs = []
+            for symbol in self.available_symbols:
+                if symbol in tickers:
+                    ticker = tickers[symbol]
+                    if ticker.get('quoteVolume', 0) > 100000:  # Min $100k daily volume
+                        usdt_pairs.append({
+                            'symbol': symbol,
+                            'volume': ticker.get('quoteVolume', 0)
+                        })
+            
+            # Sort by volume and take top 100
+            usdt_pairs.sort(key=lambda x: x['volume'], reverse=True)
+            self.target_symbols = [pair['symbol'] for pair in usdt_pairs[:100]]
+            
+            logger.info(f"Selected top {len(self.target_symbols)} liquid trading pairs")
+            
+        except Exception as e:
+            logger.error(f"Symbol filtering failed: {e}")
+            # Fallback to major pairs if filtering fails
+            self.target_symbols = [
+                'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT',
+                'SOL/USDT', 'DOGE/USDT', 'TRX/USDT', 'LTC/USDT', 'DOT/USDT'
+            ]
+    
+    def setup_database(self):
+        """Setup optimized scanner database"""
+        try:
+            with sqlite3.connect('enhanced_trading.db') as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS optimized_scan_results (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        symbol TEXT NOT NULL,
+                        scan_type TEXT NOT NULL,
+                        timeframe TEXT NOT NULL,
+                        current_price REAL,
+                        signal TEXT,
+                        confidence REAL,
+                        ai_score REAL,
+                        volume_score REAL,
+                        technical_score REAL,
+                        target_price REAL,
+                        stop_loss REAL,
+                        risk_reward REAL,
+                        pattern TEXT,
+                        market_regime TEXT,
+                        timestamp TEXT,
+                        UNIQUE(symbol, scan_type, timeframe, timestamp)
+                    )
+                ''')
+                
+                conn.commit()
+                logger.info("Optimized scanner database initialized")
+                
+        except Exception as e:
+            logger.error(f"Database setup failed: {e}")
+    
+    def get_market_data(self, symbol, timeframe='1h', limit=200):
+        """Get comprehensive market data with error handling"""
+        try:
+            # Fetch OHLCV data
+            ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+            
+            if not ohlcv or len(ohlcv) < 50:
+                return None
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+            df.set_index('timestamp', inplace=True)
+            
+            # Calculate technical indicators
+            df = self.calculate_indicators(df)
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Market data fetch failed for {symbol}: {e}")
+            return None
+    
+    def calculate_indicators(self, df):
+        """Calculate comprehensive technical indicators"""
+        try:
+            # Trend indicators
+            df['ema_9'] = ta.ema(df['close'], length=9)
+            df['ema_21'] = ta.ema(df['close'], length=21)
+            df['ema_50'] = ta.ema(df['close'], length=50)
+            
+            # Momentum indicators
+            df['rsi'] = ta.rsi(df['close'], length=14)
+            macd = ta.macd(df['close'])
+            if macd is not None and not macd.empty:
+                df['macd'] = macd.iloc[:, 0]
+                df['macd_signal'] = macd.iloc[:, 1]
+            
+            # Volatility indicators
+            bb = ta.bbands(df['close'], length=20)
+            if bb is not None and not bb.empty:
+                df['bb_upper'] = bb.iloc[:, 0]
+                df['bb_middle'] = bb.iloc[:, 1]
+                df['bb_lower'] = bb.iloc[:, 2]
+            
+            # Volume indicators
+            df['volume_sma'] = ta.sma(df['volume'], length=20)
+            df['volume_ratio'] = df['volume'] / df['volume_sma']
+            
+            # Additional momentum indicators
+            df['stoch'] = ta.stoch(df['high'], df['low'], df['close'])
+            df['williams_r'] = ta.willr(df['high'], df['low'], df['close'])
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Indicator calculation failed: {e}")
+            return df
+    
+    def analyze_signal(self, df, symbol):
+        """Analyze trading signal with AI enhancement"""
+        try:
+            if len(df) < 50:
+                return None
+            
+            latest = df.iloc[-1]
+            prev = df.iloc[-2]
+            
+            # Technical analysis
+            technical_score = 0
+            signal = 'HOLD'
+            
+            # RSI analysis
+            rsi = latest.get('rsi', 50)
+            if rsi < 30:
+                technical_score += 20
+                signal = 'BUY'
+            elif rsi > 70:
+                technical_score += 20
+                signal = 'SELL'
+            
+            # EMA trend analysis
+            ema_9 = latest.get('ema_9', latest['close'])
+            ema_21 = latest.get('ema_21', latest['close'])
+            ema_50 = latest.get('ema_50', latest['close'])
+            
+            if ema_9 > ema_21 > ema_50:
+                technical_score += 25
+                if signal != 'SELL':
+                    signal = 'BUY'
+            elif ema_9 < ema_21 < ema_50:
+                technical_score += 25
+                if signal != 'BUY':
+                    signal = 'SELL'
+            
+            # Volume confirmation
+            volume_ratio = latest.get('volume_ratio', 1)
+            if volume_ratio > 1.5:
+                technical_score += 15
+            
+            # MACD analysis
+            macd = latest.get('macd', 0)
+            macd_signal = latest.get('macd_signal', 0)
+            if macd > macd_signal and signal == 'BUY':
+                technical_score += 10
+            elif macd < macd_signal and signal == 'SELL':
+                technical_score += 10
+            
+            # Calculate confidence
+            confidence = min(100, technical_score)
+            
+            # AI enhancement
+            ai_score = self.get_ai_prediction(df)
+            
+            # Combined scoring
+            final_score = (confidence * 0.7) + (ai_score * 0.3)
+            
+            # Risk management
+            target_price, stop_loss, risk_reward = self.calculate_risk_levels(latest, signal)
+            
+            return {
+                'symbol': symbol,
+                'signal': signal,
+                'confidence': round(final_score, 2),
+                'technical_score': round(confidence, 2),
+                'ai_score': round(ai_score, 2),
+                'current_price': latest['close'],
+                'target_price': target_price,
+                'stop_loss': stop_loss,
+                'risk_reward': risk_reward,
+                'volume_ratio': volume_ratio,
+                'rsi': rsi,
+                'pattern': self.detect_pattern(df),
+                'market_regime': self.assess_market_regime(df)
+            }
+            
+        except Exception as e:
+            logger.error(f"Signal analysis failed for {symbol}: {e}")
+            return None
+    
+    def get_ai_prediction(self, df):
+        """Get AI-based prediction score"""
+        try:
+            if len(df) < 20:
+                return 50
+            
+            # Prepare features
+            features = []
+            for i in range(-5, 0):  # Last 5 candles
+                candle = df.iloc[i]
+                features.extend([
+                    candle.get('rsi', 50),
+                    candle.get('ema_9', candle['close']) / candle['close'],
+                    candle.get('ema_21', candle['close']) / candle['close'],
+                    candle.get('volume_ratio', 1),
+                    (candle['high'] - candle['low']) / candle['close']  # volatility
+                ])
+            
+            # Simple momentum-based scoring
+            momentum_score = 0
+            
+            # Price momentum
+            price_change = (df['close'].iloc[-1] - df['close'].iloc[-5]) / df['close'].iloc[-5]
+            momentum_score += min(50, max(-50, price_change * 1000))
+            
+            # Volume momentum
+            volume_trend = df['volume_ratio'].tail(3).mean()
+            momentum_score += min(25, volume_trend * 10)
+            
+            # Trend consistency
+            ema_trend = 0
+            if df['ema_9'].iloc[-1] > df['ema_21'].iloc[-1]:
+                ema_trend += 1
+            if df['ema_21'].iloc[-1] > df['ema_50'].iloc[-1]:
+                ema_trend += 1
+            
+            momentum_score += ema_trend * 12.5
+            
+            return max(0, min(100, momentum_score + 50))
+            
+        except Exception as e:
+            logger.error(f"AI prediction failed: {e}")
+            return 50
+    
+    def detect_pattern(self, df):
+        """Detect chart patterns"""
+        try:
+            if len(df) < 10:
+                return 'INSUFFICIENT_DATA'
+            
+            # Simple pattern detection
+            highs = df['high'].tail(5)
+            lows = df['low'].tail(5)
+            
+            # Breakout pattern
+            if df['high'].iloc[-1] > highs.max() * 0.999:
+                return 'BREAKOUT_HIGH'
+            elif df['low'].iloc[-1] < lows.min() * 1.001:
+                return 'BREAKDOWN_LOW'
+            
+            # Trend continuation
+            if all(df['ema_9'].tail(3) > df['ema_21'].tail(3)):
+                return 'UPTREND_CONTINUATION'
+            elif all(df['ema_9'].tail(3) < df['ema_21'].tail(3)):
+                return 'DOWNTREND_CONTINUATION'
+            
+            return 'CONSOLIDATION'
+            
+        except Exception as e:
+            logger.error(f"Pattern detection failed: {e}")
+            return 'UNKNOWN'
+    
+    def assess_market_regime(self, df):
+        """Assess current market regime"""
+        try:
+            if len(df) < 20:
+                return 'UNKNOWN'
+            
+            # Volatility assessment
+            volatility = df['close'].pct_change().tail(10).std()
+            
+            # Trend assessment
+            ema_9 = df['ema_9'].iloc[-1]
+            ema_50 = df['ema_50'].iloc[-1]
+            
+            if volatility > 0.05:
+                regime = 'HIGH_VOLATILITY'
+            elif abs(ema_9 - ema_50) / ema_50 > 0.05:
+                regime = 'TRENDING'
+            else:
+                regime = 'RANGING'
+            
+            return regime
+            
+        except Exception as e:
+            logger.error(f"Market regime assessment failed: {e}")
+            return 'UNKNOWN'
+    
+    def calculate_risk_levels(self, latest_data, signal):
+        """Calculate target price, stop loss, and risk/reward ratio"""
+        try:
+            current_price = latest_data['close']
+            atr = abs(latest_data['high'] - latest_data['low'])
+            
+            if signal == 'BUY':
+                target_price = current_price * 1.03  # 3% target
+                stop_loss = current_price * 0.98     # 2% stop
+            elif signal == 'SELL':
+                target_price = current_price * 0.97  # 3% target
+                stop_loss = current_price * 1.02     # 2% stop
+            else:
+                return current_price, current_price, 0
+            
+            # Calculate risk/reward ratio
+            if signal == 'BUY':
+                risk = current_price - stop_loss
+                reward = target_price - current_price
+            else:
+                risk = stop_loss - current_price
+                reward = current_price - target_price
+            
+            risk_reward = reward / risk if risk > 0 else 0
+            
+            return round(target_price, 6), round(stop_loss, 6), round(risk_reward, 2)
+            
+        except Exception as e:
+            logger.error(f"Risk calculation failed: {e}")
+            return latest_data['close'], latest_data['close'], 0
+    
+    def save_result(self, result):
+        """Save scan result to database"""
+        try:
+            with sqlite3.connect('enhanced_trading.db') as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    INSERT OR REPLACE INTO optimized_scan_results (
+                        symbol, scan_type, timeframe, current_price, signal, confidence,
+                        ai_score, volume_score, technical_score, target_price, stop_loss,
+                        risk_reward, pattern, market_regime, timestamp
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    result['symbol'], 'comprehensive', '1h', result['current_price'],
+                    result['signal'], result['confidence'], result['ai_score'],
+                    result.get('volume_ratio', 1), result['technical_score'],
+                    result['target_price'], result['stop_loss'], result['risk_reward'],
+                    result['pattern'], result['market_regime'], datetime.now().isoformat()
+                ))
+                
+                conn.commit()
+                
+        except Exception as e:
+            logger.error(f"Result save failed: {e}")
+    
+    def run_comprehensive_scan(self):
+        """Run comprehensive market scan on all available pairs"""
+        if not self.exchange or not self.target_symbols:
+            logger.error("Exchange not initialized or no symbols available")
+            return []
+        
+        logger.info(f"Running optimized market scan on {len(self.target_symbols)} verified pairs...")
+        
+        scan_results = []
+        successful_scans = 0
+        
+        for symbol in self.target_symbols:
+            try:
+                # Get market data
+                df = self.get_market_data(symbol, '1h', 200)
+                if df is None or len(df) < 50:
+                    continue
+                
+                # Analyze signal
+                result = self.analyze_signal(df, symbol)
+                if result is None:
+                    continue
+                
+                # Filter high-confidence signals
+                if result['confidence'] >= 60:
+                    scan_results.append(result)
+                    self.save_result(result)
+                    logger.info(f"Signal found: {symbol} {result['signal']} (confidence: {result['confidence']}%)")
+                
+                successful_scans += 1
+                
+                # Rate limiting
+                time.sleep(0.1)
+                
+            except Exception as e:
+                logger.error(f"Scan failed for {symbol}: {e}")
+                continue
+        
+        # Sort by confidence
+        scan_results.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        logger.info(f"Optimized scan complete: {len(scan_results)} signals from {successful_scans} successful scans")
+        
+        # Save summary
+        self.save_scan_summary(scan_results, successful_scans)
+        
+        return scan_results
+    
+    def save_scan_summary(self, results, total_scanned):
+        """Save scan summary to file"""
+        try:
+            summary = {
+                'timestamp': datetime.now().isoformat(),
+                'total_pairs_scanned': total_scanned,
+                'signals_found': len(results),
+                'success_rate': f"{(len(results)/total_scanned)*100:.1f}%" if total_scanned > 0 else "0%",
+                'top_signals': results[:10]  # Top 10 signals
+            }
+            
+            with open('optimized_scan_summary.json', 'w') as f:
+                json.dump(summary, f, indent=2, default=str)
+                
+        except Exception as e:
+            logger.error(f"Summary save failed: {e}")
+
+def main():
+    """Main scanner function"""
+    try:
+        scanner = OptimizedMarketScanner()
+        
+        # Initialize exchange
+        if not scanner.initialize_exchange():
+            logger.error("Failed to initialize exchange")
+            return
+        
+        # Setup database
+        scanner.setup_database()
+        
+        # Run comprehensive scan
+        results = scanner.run_comprehensive_scan()
+        
+        print(f"\nOptimized Market Scanner Results:")
+        print(f"================================")
+        print(f"Signals found: {len(results)}")
+        
+        for result in results[:5]:  # Show top 5
+            print(f"\n{result['symbol']}: {result['signal']} "
+                  f"(Confidence: {result['confidence']}%, "
+                  f"AI Score: {result['ai_score']}%)")
+        
+    except Exception as e:
+        logger.error(f"Scanner execution failed: {e}")
+
+if __name__ == "__main__":
+    main()
