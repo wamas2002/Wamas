@@ -198,6 +198,10 @@ args = "python enhanced_trading_ui_3000.py"
 waitForPort = 3000
 
 [[ports]]
+localPort = 3000
+externalPort = 3003
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
