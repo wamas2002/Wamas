@@ -68,6 +68,10 @@ args = "Enhanced Modern UI"
 task = "workflow.run"
 args = "Optimized Strategies"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Advanced Analytics UI"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -183,6 +187,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python optimized_trading_strategies.py"
+
+[[workflows.workflow]]
+name = "Advanced Analytics UI"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python enhanced_trading_ui_3000.py"
+waitForPort = 3000
 
 [[ports]]
 localPort = 5000

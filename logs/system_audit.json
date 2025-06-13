@@ -1,0 +1,112 @@
+[
+  {
+    "event_id": "SYS_001",
+    "timestamp": "2025-06-13T01:05:00Z",
+    "event_type": "SYSTEM_UPGRADE",
+    "component": "ENHANCED_ANALYTICS",
+    "severity": "INFO",
+    "description": "Advanced AI trading system upgraded with signal attribution, model evaluation, and volatility-adjusted risk controls",
+    "details": {
+      "plugins_added": [
+        "signal_attribution_engine",
+        "volatility_risk_controller", 
+        "model_evaluator"
+      ],
+      "ui_enhanced": "port_3000_analytics_dashboard",
+      "features": [
+        "signal_source_tracking",
+        "atr_based_risk_management",
+        "automated_model_switching"
+      ]
+    },
+    "user": "system",
+    "impact": "HIGH"
+  },
+  {
+    "event_id": "RISK_001", 
+    "timestamp": "2025-06-13T01:05:30Z",
+    "event_type": "RISK_CONTROL_ACTIVATED",
+    "component": "VOLATILITY_RISK_CONTROLLER",
+    "severity": "INFO",
+    "description": "ATR-based dynamic risk controls activated with 2% max drawdown per trade",
+    "details": {
+      "max_drawdown_per_trade": 2.0,
+      "base_position_size": 0.1,
+      "atr_lookback_period": 14,
+      "volatility_thresholds": {
+        "low": 1.0,
+        "high": 4.0
+      }
+    },
+    "user": "system",
+    "impact": "MEDIUM"
+  },
+  {
+    "event_id": "AI_001",
+    "timestamp": "2025-06-13T01:06:00Z", 
+    "event_type": "MODEL_EVALUATION_SCHEDULED",
+    "component": "AI_MODEL_EVALUATOR",
+    "severity": "INFO",
+    "description": "AI model evaluation system configured for 12-hour evaluation cycles with 5% Sharpe ratio improvement threshold",
+    "details": {
+      "evaluation_interval": "12_hours",
+      "improvement_threshold": 5.0,
+      "available_models": [
+        "random_forest",
+        "gradient_boosting"
+      ],
+      "current_active_model": "random_forest"
+    },
+    "user": "system",
+    "impact": "MEDIUM"
+  },
+  {
+    "event_id": "ATTR_001",
+    "timestamp": "2025-06-13T01:06:30Z",
+    "event_type": "SIGNAL_ATTRIBUTION_ENABLED",
+    "component": "SIGNAL_ATTRIBUTION_ENGINE",
+    "severity": "INFO", 
+    "description": "Signal attribution system activated to track origin of trading signals",
+    "details": {
+      "log_file": "logs/signal_explanation.json",
+      "max_entries": 1000,
+      "tracking_sources": [
+        "GPT_ENHANCED",
+        "ML_MODEL", 
+        "TECHNICAL_ANALYSIS",
+        "MOMENTUM_STRATEGY",
+        "FUTURES_ENGINE"
+      ]
+    },
+    "user": "system",
+    "impact": "LOW"
+  },
+  {
+    "event_id": "UI_001",
+    "timestamp": "2025-06-13T01:07:00Z",
+    "event_type": "INTERFACE_DEPLOYED",
+    "component": "ENHANCED_ANALYTICS_UI",
+    "severity": "INFO",
+    "description": "Advanced analytics interface deployed on port 3000 with real-time signal attribution and risk monitoring",
+    "details": {
+      "port": 3000,
+      "features": [
+        "signal_attribution_analytics",
+        "model_performance_comparison", 
+        "volatility_risk_monitoring",
+        "system_audit_logs",
+        "enhanced_portfolio_analytics"
+      ],
+      "tabs": [
+        "Signal Overview",
+        "Attribution",
+        "AI Models", 
+        "Risk Analytics",
+        "Audit Logs",
+        "Portfolio+"
+      ]
+    },
+    "user": "system",
+    "impact": "HIGH"
+  }
+]

@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Trading Analytics - Port 3000</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Enhanced Sidebar */
+        .sidebar {
+            background: rgba(15, 15, 35, 0.98);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo i {
+            font-size: 2.2rem;
+            color: #6366f1;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            list-style: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-item {
+            margin-bottom: 0.8rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            border-radius: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff;
+            background: rgba(99, 102, 241, 0.25);
+            transform: translateX(8px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover::before, .nav-link.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-link i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #ffffff;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.8), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 40px rgba(99, 102, 241, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .card-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .refresh-btn {
+            background: rgba(99, 102, 241, 0.25);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: #6366f1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(99, 102, 241, 0.4);
+            transform: scale(1.05);
+            color: #ffffff;
+        }
+
+        /* Enhanced Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.08);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        /* Signal Attribution Badges */
+        .attribution-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .attr-gpt { background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .attr-ml { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .attr-technical { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .attr-momentum { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+
+        /* Risk Level Indicators */
+        .risk-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .risk-low { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .risk-medium { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .risk-high { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* Volatility Indicators */
+        .volatility-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .vol-low { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .vol-medium { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+        .vol-high { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+        /* Confidence Bars */
+        .confidence-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .confidence-high { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .confidence-medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .confidence-low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+        .confidence-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Charts */
+        .chart-container {
+            height: 350px;
+            margin-top: 1.5rem;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Model Evaluation Cards */
+        .model-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .model-card.active {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .model-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .model-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+        }
+
+        /* Loading states */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            border-radius: 15px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .tab-navigation {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.6);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Enhanced Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>AI Analytics</h1>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#overview" class="nav-link active" data-tab="overview">
+                        <i class="fas fa-chart-line"></i>
+                        Signal Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#attribution" class="nav-link" data-tab="attribution">
+                        <i class="fas fa-search-location"></i>
+                        Signal Attribution
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#models" class="nav-link" data-tab="models">
+                        <i class="fas fa-robot"></i>
+                        AI Models
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#risk" class="nav-link" data-tab="risk">
+                        <i class="fas fa-shield-alt"></i>
+                        Risk Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#audit" class="nav-link" data-tab="audit">
+                        <i class="fas fa-clipboard-list"></i>
+                        Audit Logs
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#portfolio" class="nav-link" data-tab="portfolio">
+                        <i class="fas fa-wallet"></i>
+                        Portfolio Plus
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1 class="header-title">AI Trading Analytics</h1>
+                    <p class="header-subtitle">Advanced signal attribution, model evaluation & risk management</p>
+                </div>
+                <div class="header-actions">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span>AI Systems Online</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="overview">Signal Overview</button>
+                <button class="tab-btn" data-tab="attribution">Attribution</button>
+                <button class="tab-btn" data-tab="models">AI Models</button>
+                <button class="tab-btn" data-tab="risk">Risk Analytics</button>
+                <button class="tab-btn" data-tab="audit">Audit Logs</button>
+                <button class="tab-btn" data-tab="portfolio">Portfolio+</button>
+            </div>
+
+            <!-- Tab Content: Signal Overview -->
+            <div id="overview-tab" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-signal"></i>
+                                </div>
+                                Live Trading Signals
+                            </div>
+                            <button class="refresh-btn" onclick="refreshSignals()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="signals-container">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading enhanced signals...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                Signal Distribution
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="signal-distribution-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Signal Attribution -->
+            <div id="attribution-tab" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-search-location"></i>
+                                </div>
+                                Source Performance
+                            </div>
+                        </div>
+                        <div id="attribution-performance">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading attribution data...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                Recent Signal Origins
+                            </div>
+                        </div>
+                        <div id="recent-attributions">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading recent signals...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: AI Models -->
+            <div id="models-tab" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                Model Performance
+                            </div>
+                            <button class="action-btn" onclick="triggerModelEvaluation()">
+                                <i class="fas fa-play"></i> Run Evaluation
+                            </button>
+                        </div>
+                        <div id="model-performance">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading model data...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                Performance Comparison
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="model-comparison-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Risk Analytics -->
+            <div id="risk-tab" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                Volatility Monitor
+                            </div>
+                        </div>
+                        <div id="volatility-monitor">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading volatility data...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                Risk Adjustments
+                            </div>
+                        </div>
+                        <div id="risk-adjustments">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading risk data...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Audit Logs -->
+            <div id="audit-tab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            System Audit Trail
+                        </div>
+                        <button class="refresh-btn" onclick="refreshAuditLogs()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="audit-logs">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading audit logs...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Enhanced Portfolio -->
+            <div id="portfolio-tab" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                Portfolio with Risk Analytics
+                            </div>
+                        </div>
+                        <div id="enhanced-portfolio">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Loading enhanced portfolio...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                Allocation Analysis
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div id="portfolio-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global state
+        let refreshInterval;
+        let currentData = {
+            signals: [],
+            attribution: {},
+            models: {},
+            risk: {},
+            portfolio: {}
+        };
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupTabNavigation();
+            startAutoRefresh();
+        });
+
+        function initializeApp() {
+            refreshSignals();
+            refreshAttribution();
+            refreshModelData();
+            refreshRiskAnalytics();
+            refreshPortfolio();
+            refreshAuditLogs();
+        }
+
+        function setupTabNavigation() {
+            // Tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+
+            // Sidebar navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                    
+                    // Update sidebar active state
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Show selected tab content
+            const targetTab = document.getElementById(`${tabName}-tab`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+
+            // Update tab button states
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === tabName) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                refreshSignals();
+                refreshAttribution();
+                refreshModelData();
+                refreshRiskAnalytics();
+                refreshPortfolio();
+            }, 30000); // Refresh every 30 seconds
+        }
+
+        // API Functions
+        async function refreshSignals() {
+            try {
+                const response = await fetch('/api/signals');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.signals = data.signals;
+                    updateSignalsDisplay(data);
+                    updateSignalDistributionChart(data);
+                }
+            } catch (error) {
+                console.error('Signals refresh error:', error);
+                showError('signals-container', 'Failed to load signals data');
+            }
+        }
+
+        async function refreshAttribution() {
+            try {
+                const response = await fetch('/api/signal-attribution');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.attribution = data.attribution;
+                    updateAttributionDisplay(data.attribution);
+                }
+            } catch (error) {
+                console.error('Attribution refresh error:', error);
+                showError('attribution-performance', 'Failed to load attribution data');
+            }
+        }
+
+        async function refreshModelData() {
+            try {
+                const response = await fetch('/api/model-evaluation');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.models = data.models;
+                    updateModelDisplay(data.models);
+                    updateModelComparisonChart(data.models);
+                }
+            } catch (error) {
+                console.error('Model data refresh error:', error);
+                showError('model-performance', 'Failed to load model data');
+            }
+        }
+
+        async function refreshRiskAnalytics() {
+            try {
+                const response = await fetch('/api/risk-analytics');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.risk = data.risk;
+                    updateRiskDisplay(data.risk);
+                }
+            } catch (error) {
+                console.error('Risk analytics refresh error:', error);
+                showError('volatility-monitor', 'Failed to load risk data');
+            }
+        }
+
+        async function refreshPortfolio() {
+            try {
+                const response = await fetch('/api/portfolio-enhanced');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.portfolio = data.portfolio_data;
+                    updateEnhancedPortfolioDisplay(data.portfolio_data);
+                    updatePortfolioChart(data.portfolio_data);
+                }
+            } catch (error) {
+                console.error('Portfolio refresh error:', error);
+                showError('enhanced-portfolio', 'Failed to load portfolio data');
+            }
+        }
+
+        async function refreshAuditLogs() {
+            try {
+                const response = await fetch('/api/audit-logs');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    updateAuditLogsDisplay(data.audit_logs);
+                }
+            } catch (error) {
+                console.error('Audit logs refresh error:', error);
+                showError('audit-logs', 'Failed to load audit logs');
+            }
+        }
+
+        async function triggerModelEvaluation() {
+            try {
+                const button = document.querySelector('.action-btn');
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Evaluating...';
+                button.disabled = true;
+                
+                const response = await fetch('/api/trigger-model-evaluation', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    setTimeout(() => {
+                        refreshModelData();
+                    }, 2000);
+                }
+                
+                button.innerHTML = '<i class="fas fa-play"></i> Run Evaluation';
+                button.disabled = false;
+                
+            } catch (error) {
+                console.error('Model evaluation trigger error:', error);
+            }
+        }
+
+        // Display Functions
+        function updateSignalsDisplay(data) {
+            const container = document.getElementById('signals-container');
+            const signals = data.signals.slice(0, 10);
+            
+            if (signals.length === 0) {
+                container.innerHTML = '<div class="loading">No active signals</div>';
+                return;
+            }
+
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Signal</th>
+                            <th>Confidence</th>
+                            <th>Source</th>
+                            <th>Risk Level</th>
+                            <th>Volatility</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${signals.map(signal => `
+                            <tr>
+                                <td><strong>${signal.symbol}</strong></td>
+                                <td><span class="signal-badge signal-${signal.signal.toLowerCase()}">${signal.signal}</span></td>
+                                <td>
+                                    <div>${signal.confidence.toFixed(1)}%</div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill confidence-${getConfidenceClass(signal.confidence)}" 
+                                             style="width: ${signal.confidence}%"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="attribution-badge attr-${getAttributionClass(signal.attribution_id || 'unknown')}">
+                                        ${getSignalSource(signal)}
+                                    </span>
+                                </td>
+                                <td><span class="risk-badge risk-${(signal.risk_level || 'medium').toLowerCase()}">${signal.risk_level || 'MEDIUM'}</span></td>
+                                <td>
+                                    <span class="volatility-indicator vol-${(signal.volatility_regime || 'medium').toLowerCase()}">
+                                        ${signal.volatility_regime || 'MEDIUM'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        function updateAttributionDisplay(attribution) {
+            const container = document.getElementById('attribution-performance');
+            const sourcePerf = attribution.source_performance || {};
+            
+            if (Object.keys(sourcePerf).length === 0) {
+                container.innerHTML = '<div class="loading">No attribution data available</div>';
+                return;
+            }
+
+            const perfHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Signal Source</th>
+                            <th>Total Signals</th>
+                            <th>Win Rate</th>
+                            <th>Avg P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(sourcePerf).map(([source, data]) => `
+                            <tr>
+                                <td><span class="attribution-badge attr-${getAttributionClass(source)}">${source}</span></td>
+                                <td>${data.total_signals}</td>
+                                <td>${data.win_rate.toFixed(1)}%</td>
+                                <td class="${data.avg_profit_loss >= 0 ? 'positive' : 'negative'}">
+                                    ${data.avg_profit_loss >= 0 ? '+' : ''}${data.avg_profit_loss.toFixed(3)}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = perfHTML;
+        }
+
+        function updateModelDisplay(models) {
+            const container = document.getElementById('model-performance');
+            const activeModel = models.active_model || 'unknown';
+            const performanceHistory = models.performance_history || [];
+            
+            if (performanceHistory.length === 0) {
+                container.innerHTML = '<div class="loading">No model performance data available</div>';
+                return;
+            }
+
+            const modelsHTML = performanceHistory.slice(0, 5).map(model => `
+                <div class="model-card ${model.model_name === activeModel ? 'active' : ''}">
+                    <div class="model-name">
+                        ${model.model_name.toUpperCase().replace('_', ' ')}
+                        ${model.model_name === activeModel ? ' (ACTIVE)' : ''}
+                    </div>
+                    <div class="model-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">${model.sharpe_ratio.toFixed(2)}</div>
+                            <div class="metric-label">Sharpe Ratio</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${model.win_rate.toFixed(1)}%</div>
+                            <div class="metric-label">Win Rate</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${model.total_trades}</div>
+                            <div class="metric-label">Total Trades</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = modelsHTML;
+        }
+
+        function updateRiskDisplay(risk) {
+            const volContainer = document.getElementById('volatility-monitor');
+            const riskContainer = document.getElementById('risk-adjustments');
+            
+            const riskStats = risk.risk_stats || {};
+            const recentVol = riskStats.recent_volatility || [];
+            
+            if (recentVol.length === 0) {
+                volContainer.innerHTML = '<div class="loading">No volatility data available</div>';
+                return;
+            }
+
+            const volHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>ATR %</th>
+                            <th>Regime</th>
+                            <th>Last Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${recentVol.slice(0, 10).map(vol => `
+                            <tr>
+                                <td><strong>${vol.symbol}</strong></td>
+                                <td>${vol.atr_percent.toFixed(2)}%</td>
+                                <td>
+                                    <span class="volatility-indicator vol-${vol.volatility_regime.toLowerCase()}">
+                                        ${vol.volatility_regime}
+                                    </span>
+                                </td>
+                                <td>${formatTime(vol.timestamp)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            volContainer.innerHTML = volHTML;
+            
+            // Risk metrics summary
+            const riskMetrics = risk.risk_metrics || {};
+            const summaryHTML = `
+                <div class="risk-summary">
+                    <div class="metric-item">
+                        <div class="metric-value">${riskMetrics.total_adjustments || 0}</div>
+                        <div class="metric-label">Total Risk Adjustments</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${(riskMetrics.avg_risk_reduction || 0).toFixed(1)}%</div>
+                        <div class="metric-label">Avg Risk Reduction</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${(riskMetrics.avg_atr_percent || 0).toFixed(2)}%</div>
+                        <div class="metric-label">Avg Volatility</div>
+                    </div>
+                </div>
+            `;
+            
+            riskContainer.innerHTML = summaryHTML;
+        }
+
+        function updateEnhancedPortfolioDisplay(portfolioData) {
+            const container = document.getElementById('enhanced-portfolio');
+            const portfolio = portfolioData.portfolio || [];
+            
+            if (portfolio.length === 0) {
+                container.innerHTML = '<div class="loading">No portfolio data available</div>';
+                return;
+            }
+
+            const portfolioHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Balance</th>
+                            <th>Value (USD)</th>
+                            <th>Allocation</th>
+                            <th>24h Change</th>
+                            <th>Volatility</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${portfolio.map(asset => `
+                            <tr>
+                                <td><strong>${asset.asset}</strong></td>
+                                <td>${asset.balance.toFixed(6)}</td>
+                                <td>$${asset.value_usd.toLocaleString()}</td>
+                                <td>${asset.allocation_pct.toFixed(1)}%</td>
+                                <td class="${asset.change_24h >= 0 ? 'positive' : 'negative'}">
+                                    ${asset.change_24h >= 0 ? '+' : ''}${asset.change_24h.toFixed(2)}%
+                                </td>
+                                <td>
+                                    <span class="volatility-indicator vol-${(asset.volatility_regime || 'unknown').toLowerCase()}">
+                                        ${asset.volatility_regime || 'UNKNOWN'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = portfolioHTML;
+        }
+
+        function updateAuditLogsDisplay(auditLogs) {
+            const container = document.getElementById('audit-logs');
+            
+            if (auditLogs.length === 0) {
+                container.innerHTML = '<div class="loading">No audit logs available</div>';
+                return;
+            }
+
+            const logsHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Event</th>
+                            <th>Details</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${auditLogs.slice(0, 20).map(log => `
+                            <tr>
+                                <td><span class="attribution-badge attr-${log.log_type.toLowerCase()}">${log.log_type}</span></td>
+                                <td>${log.event_type || log.from_model || 'Unknown'}</td>
+                                <td>${log.description || log.reason || 'No details'}</td>
+                                <td>${formatTime(log.timestamp)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = logsHTML;
+        }
+
+        // Chart Functions
+        function updateSignalDistributionChart(data) {
+            const ctx = document.getElementById('signal-distribution-chart').getContext('2d');
+            
+            const futuresCount = data.futures_count || 0;
+            const spotCount = data.spot_count || 0;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Futures Signals', 'Spot Signals'],
+                    datasets: [{
+                        data: [futuresCount, spotCount],
+                        backgroundColor: ['#6366f1', '#8b5cf6'],
+                        borderWidth: 2,
+                        borderColor: '#1a1a2e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateModelComparisonChart(models) {
+            const ctx = document.getElementById('model-comparison-chart').getContext('2d');
+            const performanceHistory = models.performance_history || [];
+            
+            if (performanceHistory.length === 0) return;
+            
+            const modelNames = [...new Set(performanceHistory.map(p => p.model_name))];
+            const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b'];
+            
+            const datasets = modelNames.map((name, index) => {
+                const modelData = performanceHistory.filter(p => p.model_name === name);
+                return {
+                    label: name.toUpperCase().replace('_', ' '),
+                    data: modelData.map(d => d.sharpe_ratio),
+                    backgroundColor: colors[index % colors.length],
+                    borderColor: colors[index % colors.length],
+                    borderWidth: 2
+                };
+            });
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: modelNames.map(name => name.toUpperCase().replace('_', ' ')),
+                    datasets: [{
+                        label: 'Sharpe Ratio',
+                        data: modelNames.map(name => {
+                            const latest = performanceHistory.filter(p => p.model_name === name)[0];
+                            return latest ? latest.sharpe_ratio : 0;
+                        }),
+                        backgroundColor: colors,
+                        borderColor: colors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePortfolioChart(portfolioData) {
+            const portfolio = portfolioData.portfolio || [];
+            
+            if (portfolio.length === 0) return;
+            
+            const labels = portfolio.map(item => item.asset);
+            const values = portfolio.map(item => item.value_usd);
+            const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+
+            const data = [{
+                type: 'pie',
+                labels: labels,
+                values: values,
+                hole: 0.4,
+                marker: {
+                    colors: colors,
+                    line: {
+                        color: '#1a1a2e',
+                        width: 3
+                    }
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside',
+                font: {
+                    color: '#ffffff',
+                    size: 12
+                }
+            }];
+
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#ffffff' },
+                margin: { t: 40, l: 40, r: 40, b: 40 },
+                showlegend: false
+            };
+
+            Plotly.newPlot('portfolio-chart', data, layout, {responsive: true});
+        }
+
+        // Utility Functions
+        function getConfidenceClass(confidence) {
+            if (confidence >= 70) return 'high';
+            if (confidence >= 50) return 'medium';
+            return 'low';
+        }
+
+        function getAttributionClass(source) {
+            if (source.includes('GPT') || source.includes('gpt')) return 'gpt';
+            if (source.includes('ML') || source.includes('model')) return 'ml';
+            if (source.includes('TECHNICAL')) return 'technical';
+            if (source.includes('MOMENTUM')) return 'momentum';
+            return 'technical';
+        }
+
+        function getSignalSource(signal) {
+            if (signal.entry_reasons && signal.entry_reasons.includes('GPT')) return 'GPT Enhanced';
+            if (signal.ai_score > 70) return 'ML Model';
+            if (signal.technical_score > 70) return 'Technical';
+            return 'Hybrid';
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString();
+        }
+
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="loading" style="color: #ef4444;">${message}</div>`;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

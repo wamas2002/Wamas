@@ -1,0 +1,72 @@
+{
+  "objective": "Upgrade the existing AI crypto trading system with advanced analytics, self-improving AI, and modular components without altering the core trading logic or database schema. All visual components must use the modern UI at port :3000.",
+  "constraints": [
+    "DO NOT modify existing AI models or strategy engine",
+    "All enhancements must be modular and injectable via plugins",
+    "Preserve real-time OKX trading and monitoring",
+    "Apply all changes to Flask UI on port :3000 only"
+  ],
+  "tasks": [
+    {
+      "name": "Signal Attribution Engine",
+      "description": "Log signal origin (RSI, GPT, LSTM, etc.) for each trade",
+      "output": "logs/signal_explanation.json",
+      "ui_component": "Add to trade history table under column 'Signal Source'"
+    },
+    {
+      "name": "AI Model Evaluation & Auto-Switching",
+      "description": "Evaluate inactive models every 12h and switch if better",
+      "condition": "Only switch if Sharpe Ratio improves ≥ 5%",
+      "config_file": "ai/active_model.json"
+    },
+    {
+      "name": "Volatility-Adjusted Risk Control",
+      "description": "Use ATR to auto-adjust stop-loss and trade size",
+      "logic": "Higher volatility → lower exposure, max drawdown per trade ≤ 2%"
+    },
+    {
+      "name": "Strategy Lifecycle Manager",
+      "description": "Move underperforming strategies to deprecated folder, promote successful ones",
+      "promotion_criteria": {
+        "SharpeRatio": ">= 0.9",
+        "WinRate": ">= 60%"
+      },
+      "folders": ["strategies/experimental", "strategies/deprecated"]
+    },
+    {
+      "name": "Sentiment & News Aggregation",
+      "description": "Pull market news and use GPT to adjust confidence score ±10 points",
+      "sources": ["Twitter", "Reddit", "Cointelegraph"],
+      "storage": "sentiment/news_cache.json"
+    },
+    {
+      "name": "Reinforcement Learning Agent",
+      "description": "Self-learning reward engine based on trade outcomes",
+      "module": "ai/rl_agent.py",
+      "log_file": "logs/rl_training.json"
+    },
+    {
+      "name": "System Audit Log",
+      "description": "Log major decisions, model changes, risk events",
+      "log_file": "logs/system_audit.json"
+    },
+    {
+      "name": "Security & Infra Enhancements",
+      "steps": [
+        "JWT Auth on Flask UI (:3000)",
+        "Optional: PostgreSQL/MongoDB migration",
+        "Telegram webhook alerts on trade/stop events"
+      ]
+    },
+    {
+      "name": "Plugin Loader",
+      "description": "Auto-register new plugins from plugins/ directory",
+      "config": "config/plugins.json"
+    }
+  ],
+  "ui_integration": {
+    "target_port": 3000,
+    "add_tabs": ["Signal Attribution", "RL Agent", "Sentiment Scan", "Audit Logs"],
+    "chart_overlays": ["Signal Origin Markers", "Volatility Zones"]
+  }
+}

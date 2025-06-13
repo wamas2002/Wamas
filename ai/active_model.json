@@ -1,0 +1,7 @@
+{
+  "active_model": "random_forest",
+  "last_switch": "2025-06-13T01:05:18.490093",
+  "last_evaluation": null,
+  "evaluation_interval_hours": 12,
+  "min_improvement_threshold": 5.0
+}

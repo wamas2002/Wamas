@@ -1,0 +1,8 @@
+{
+  "max_drawdown_per_trade": 2.0,
+  "base_position_size": 0.1,
+  "volatility_threshold_low": 1.0,
+  "volatility_threshold_high": 4.0,
+  "atr_lookback": 14,
+  "last_updated": "2025-06-13T01:05:17.873617"
+}

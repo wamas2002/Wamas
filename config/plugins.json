@@ -1,0 +1,93 @@
+{
+  "plugins": {
+    "signal_attribution_engine": {
+      "enabled": true,
+      "module": "plugins.signal_attribution_engine",
+      "class": "SignalAttributionEngine",
+      "config": {
+        "log_file": "logs/signal_explanation.json",
+        "max_log_entries": 1000,
+        "auto_cleanup_days": 30
+      },
+      "dependencies": ["sqlite3", "json", "datetime"],
+      "description": "Tracks and logs the origin of each trading signal for performance analysis"
+    },
+    "volatility_risk_controller": {
+      "enabled": true,
+      "module": "plugins.volatility_risk_controller",
+      "class": "VolatilityRiskController",
+      "config": {
+        "max_drawdown_per_trade": 2.0,
+        "base_position_size": 0.1,
+        "volatility_threshold_low": 1.0,
+        "volatility_threshold_high": 4.0,
+        "atr_lookback": 14
+      },
+      "dependencies": ["pandas_ta", "ccxt", "numpy"],
+      "description": "Uses ATR to auto-adjust stop-loss and trade size with max drawdown per trade ≤ 2%"
+    },
+    "model_evaluator": {
+      "enabled": true,
+      "module": "ai.model_evaluator",
+      "class": "AIModelEvaluator",
+      "config": {
+        "evaluation_interval_hours": 12,
+        "min_improvement_threshold": 5.0,
+        "available_models": ["random_forest", "gradient_boosting"]
+      },
+      "dependencies": ["sklearn", "pandas", "numpy"],
+      "description": "Evaluates inactive models every 12h and switches if Sharpe Ratio improves ≥ 5%"
+    },
+    "sentiment_aggregator": {
+      "enabled": false,
+      "module": "plugins.sentiment_aggregator",
+      "class": "SentimentAggregator",
+      "config": {
+        "sources": ["Twitter", "Reddit", "Cointelegraph"],
+        "storage": "sentiment/news_cache.json",
+        "confidence_adjustment_range": 10
+      },
+      "dependencies": ["requests", "textblob", "feedparser"],
+      "description": "Pulls market news and uses GPT to adjust confidence score ±10 points"
+    },
+    "reinforcement_learning_agent": {
+      "enabled": false,
+      "module": "ai.rl_agent",
+      "class": "ReinforcementLearningAgent",
+      "config": {
+        "learning_rate": 0.001,
+        "reward_function": "profit_based",
+        "training_frequency": "daily"
+      },
+      "dependencies": ["tensorflow", "numpy"],
+      "description": "Self-learning reward engine based on trade outcomes"
+    },
+    "strategy_lifecycle_manager": {
+      "enabled": true,
+      "module": "plugins.strategy_lifecycle_manager",
+      "class": "StrategyLifecycleManager",
+      "config": {
+        "promotion_criteria": {
+          "SharpeRatio": 0.9,
+          "WinRate": 60.0
+        },
+        "folders": ["strategies/experimental", "strategies/deprecated"]
+      },
+      "dependencies": ["shutil", "json"],
+      "description": "Moves underperforming strategies to deprecated folder, promotes successful ones"
+    }
+  },
+  "plugin_loader": {
+    "auto_discovery": true,
+    "plugin_directory": "plugins/",
+    "config_reload_interval": 3600,
+    "error_handling": "continue",
+    "logging_level": "INFO"
+  },
+  "system_config": {
+    "version": "1.0.0",
+    "last_updated": "2025-06-13T01:05:00Z",
+    "environment": "production",
+    "audit_logging": true
+  }
+}
