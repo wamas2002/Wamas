@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView Enhanced Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .signals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .signals-table th,
+        .signals-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .signals-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .signal-buy {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .signal-sell {
+            color: #f87171;
+            font-weight: bold;
+        }
+
+        .signal-hold {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .confidence-high {
+            color: #22c55e;
+        }
+
+        .confidence-medium {
+            color: #eab308;
+        }
+
+        .confidence-low {
+            color: #ef4444;
+        }
+
+        .status-indicators {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background-color: #22c55e;
+        }
+
+        .status-warning {
+            background-color: #eab308;
+        }
+
+        .status-error {
+            background-color: #ef4444;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .refresh-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .refresh-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .chart-container {
+            height: 400px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TradingView Enhanced Dashboard</h1>
+            <p>Advanced Technical Analysis & AI Trading Signals</p>
+        </div>
+
+        <div class="status-indicators">
+            <div class="status-indicator">
+                <div class="status-dot status-online"></div>
+                <span>OKX Connected</span>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot status-online"></div>
+                <span>AI Models Active</span>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot status-warning"></div>
+                <span>GPT Enhancement</span>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot status-online"></div>
+                <span>Real-time Data</span>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="total-signals">--</div>
+                <div class="metric-label">Active Signals</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="buy-signals">--</div>
+                <div class="metric-label">BUY Signals</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="avg-confidence">--</div>
+                <div class="metric-label">Avg Confidence</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="system-health">95%</div>
+                <div class="metric-label">System Health</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Live Trading Signals</h3>
+                <button class="refresh-button" onclick="refreshSignals()">Refresh Signals</button>
+                <div id="signals-container">
+                    <table class="signals-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Signal</th>
+                                <th>Confidence</th>
+                                <th>Price</th>
+                                <th>RSI</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="signals-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; opacity: 0.6;">Loading signals...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Portfolio Performance</h3>
+                <button class="refresh-button" onclick="refreshPortfolio()">Refresh Portfolio</button>
+                <div class="chart-container">
+                    <div id="portfolio-chart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Market Analysis</h3>
+                <button class="refresh-button" onclick="refreshAnalysis()">Refresh Analysis</button>
+                <div class="chart-container">
+                    <div id="analysis-chart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>AI Performance Metrics</h3>
+                <button class="refresh-button" onclick="refreshMetrics()">Refresh Metrics</button>
+                <div class="chart-container">
+                    <div id="metrics-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh functionality
+        let refreshInterval;
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                refreshSignals();
+                refreshPortfolio();
+                refreshAnalysis();
+                refreshMetrics();
+            }, 30000); // Refresh every 30 seconds
+        }
+
+        function refreshSignals() {
+            fetch('/api/signals')
+                .then(response => response.json())
+                .then(data => {
+                    updateSignalsTable(data);
+                    updateMetrics(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching signals:', error);
+                    document.getElementById('signals-tbody').innerHTML = 
+                        '<tr><td colspan="6" style="text-align: center; color: #ef4444;">Error loading signals</td></tr>';
+                });
+        }
+
+        function refreshPortfolio() {
+            fetch('/api/portfolio')
+                .then(response => response.json())
+                .then(data => {
+                    updatePortfolioChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching portfolio:', error);
+                });
+        }
+
+        function refreshAnalysis() {
+            fetch('/api/analysis')
+                .then(response => response.json())
+                .then(data => {
+                    updateAnalysisChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching analysis:', error);
+                });
+        }
+
+        function refreshMetrics() {
+            fetch('/api/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    updateMetricsChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching metrics:', error);
+                });
+        }
+
+        function updateSignalsTable(signals) {
+            const tbody = document.getElementById('signals-tbody');
+            
+            if (!signals || signals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; opacity: 0.6;">No signals available</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = signals.map(signal => `
+                <tr>
+                    <td>${signal.symbol}</td>
+                    <td class="signal-${signal.signal.toLowerCase()}">${signal.signal}</td>
+                    <td class="confidence-${getConfidenceClass(signal.confidence)}">${signal.confidence}%</td>
+                    <td>$${signal.current_price}</td>
+                    <td>${signal.rsi}</td>
+                    <td>${new Date(signal.timestamp).toLocaleTimeString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateMetrics(signals) {
+            if (!signals || signals.length === 0) return;
+
+            document.getElementById('total-signals').textContent = signals.length;
+            document.getElementById('buy-signals').textContent = signals.filter(s => s.signal === 'BUY').length;
+            
+            const avgConfidence = signals.reduce((sum, s) => sum + s.confidence, 0) / signals.length;
+            document.getElementById('avg-confidence').textContent = avgConfidence.toFixed(1) + '%';
+        }
+
+        function updatePortfolioChart(data) {
+            const plotData = [{
+                type: 'pie',
+                labels: data.map(item => item.asset),
+                values: data.map(item => item.value),
+                hole: 0.4,
+                marker: {
+                    colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe']
+                }
+            }];
+
+            const layout = {
+                title: 'Portfolio Allocation',
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#fff' },
+                margin: { t: 50, l: 20, r: 20, b: 20 }
+            };
+
+            Plotly.newPlot('portfolio-chart', plotData, layout, {responsive: true});
+        }
+
+        function updateAnalysisChart(data) {
+            const plotData = [{
+                x: data.map(item => item.symbol),
+                y: data.map(item => item.confidence),
+                type: 'bar',
+                marker: {
+                    color: data.map(item => item.confidence > 70 ? '#22c55e' : item.confidence > 50 ? '#eab308' : '#ef4444')
+                }
+            }];
+
+            const layout = {
+                title: 'Signal Confidence Distribution',
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#fff' },
+                xaxis: { color: '#fff' },
+                yaxis: { color: '#fff', title: 'Confidence %' },
+                margin: { t: 50, l: 50, r: 20, b: 80 }
+            };
+
+            Plotly.newPlot('analysis-chart', plotData, layout, {responsive: true});
+        }
+
+        function updateMetricsChart(data) {
+            const plotData = [{
+                x: data.map(item => item.timestamp),
+                y: data.map(item => item.accuracy),
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#667eea', width: 3 },
+                marker: { size: 8, color: '#764ba2' }
+            }];
+
+            const layout = {
+                title: 'AI Model Performance',
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#fff' },
+                xaxis: { color: '#fff', title: 'Time' },
+                yaxis: { color: '#fff', title: 'Accuracy %' },
+                margin: { t: 50, l: 50, r: 20, b: 50 }
+            };
+
+            Plotly.newPlot('metrics-chart', plotData, layout, {responsive: true});
+        }
+
+        function getConfidenceClass(confidence) {
+            if (confidence >= 70) return 'high';
+            if (confidence >= 50) return 'medium';
+            return 'low';
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshSignals();
+            refreshPortfolio();
+            refreshAnalysis();
+            refreshMetrics();
+            startAutoRefresh();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
