@@ -58,47 +58,78 @@ class SignalExecutionBridge:
             
     def get_fresh_signals(self) -> List[Dict]:
         """Get unprocessed signals from the last 60 seconds"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Get signals from last 60 seconds that haven't been processed
-            cutoff_time = (datetime.now() - timedelta(seconds=60)).isoformat()
-            
-            cursor.execute('''
-                SELECT symbol, signal, confidence, timestamp, reasoning
-                FROM ai_signals 
-                WHERE timestamp > ? 
-                AND confidence >= ?
-                AND (signal = 'BUY' OR signal = 'SELL')
-                ORDER BY timestamp DESC
-            ''', (cutoff_time, self.execution_threshold))
-            
-            signals = []
-            for row in cursor.fetchall():
-                signal = {
-                    'symbol': row[0],
-                    'action': row[1],  # signal from database
-                    'confidence': float(row[2])/100 if float(row[2]) > 1 else float(row[2]),  # Convert percentage to decimal
-                    'timestamp': row[3],
-                    'reasoning': row[4]
-                }
+        signals = []
+        
+        # Check multiple databases for signals
+        databases = [
+            ('pure_local_trading.db', 'local_signals'),
+            ('enhanced_trading.db', 'ai_signals'),
+            ('enhanced_trading.db', 'unified_signals'),
+            ('autonomous_trading.db', 'signals')
+        ]
+        
+        cutoff_time = (datetime.now() - timedelta(seconds=300)).isoformat()  # 5 minutes window
+        
+        for db_path, table_name in databases:
+            if not os.path.exists(db_path):
+                continue
                 
-                # Check if we haven't processed this symbol recently
-                symbol_key = f"{signal['symbol']}_{signal['action']}"
-                if symbol_key not in self.last_execution_time:
-                    signals.append(signal)
-                else:
-                    last_time = datetime.fromisoformat(self.last_execution_time[symbol_key])
-                    if (datetime.now() - last_time).seconds > 300:  # 5 minute cooldown
+            try:
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                
+                # Check if table exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+                if not cursor.fetchone():
+                    conn.close()
+                    continue
+                
+                # Get column names
+                cursor.execute(f"PRAGMA table_info({table_name})")
+                columns = [row[1] for row in cursor.fetchall()]
+                
+                # Build query based on available columns
+                signal_col = 'signal' if 'signal' in columns else 'action' if 'action' in columns else 'side'
+                confidence_col = 'confidence' if 'confidence' in columns else 'score'
+                
+                if signal_col not in columns or confidence_col not in columns:
+                    conn.close()
+                    continue
+                
+                cursor.execute(f'''
+                    SELECT symbol, {signal_col}, {confidence_col}, timestamp
+                    FROM {table_name} 
+                    WHERE timestamp > ? 
+                    AND {confidence_col} >= ?
+                    AND ({signal_col} = 'BUY' OR {signal_col} = 'buy')
+                    ORDER BY timestamp DESC LIMIT 20
+                ''', (cutoff_time, self.execution_threshold))
+                
+                for row in cursor.fetchall():
+                    signal = {
+                        'symbol': row[0],
+                        'action': row[1],
+                        'confidence': float(row[2])/100 if float(row[2]) > 1 else float(row[2]),
+                        'timestamp': row[3],
+                        'reasoning': f'From {table_name} in {db_path}'
+                    }
+                    
+                    # Check if we haven't processed this symbol recently
+                    symbol_key = f"{signal['symbol']}_{signal['action']}"
+                    if symbol_key not in self.last_execution_time:
                         signals.append(signal)
-            
-            conn.close()
-            return signals
-            
-        except Exception as e:
-            logger.error(f"Error fetching fresh signals: {e}")
-            return []
+                    else:
+                        last_time = datetime.fromisoformat(self.last_execution_time[symbol_key])
+                        if (datetime.now() - last_time).seconds > 300:  # 5 minute cooldown
+                            signals.append(signal)
+                
+                conn.close()
+                
+            except Exception as e:
+                logger.error(f"Error processing {db_path}/{table_name}: {e}")
+                continue
+        
+
     
     def calculate_position_size(self, symbol: str, confidence: float = 0.6) -> float:
         """Calculate position size based on 1% risk and confidence"""
