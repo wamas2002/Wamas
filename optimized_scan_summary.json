@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-06-13T00:09:22.936081",
+  "timestamp": "2025-06-13T00:18:31.227967",
   "total_pairs_scanned": 100,
-  "signals_found": 1,
-  "success_rate": "1.0%",
+  "signals_found": 3,
+  "success_rate": "3.0%",
   "top_signals": [
     {
       "symbol": "ORBS/USDT",
@@ -10,14 +10,44 @@
       "confidence": 65.0,
       "technical_score": 50,
       "ai_score": 100,
-      "current_price": 0.02139,
-      "target_price": 0.022032,
-      "stop_loss": 0.020962,
+      "current_price": 0.02158,
+      "target_price": 0.022227,
+      "stop_loss": 0.021148,
       "risk_reward": 1.5,
-      "volume_ratio": 1.925375911675733,
-      "rsi": 63.593162083982016,
+      "volume_ratio": 4.001454867202692,
+      "rsi": 65.20320134159363,
       "pattern": "BREAKOUT_HIGH",
       "market_regime": "RANGING"
+    },
+    {
+      "symbol": "XAUT/USDT",
+      "signal": "BUY",
+      "confidence": 63.0,
+      "technical_score": 50,
+      "ai_score": 93.35,
+      "current_price": 3405.0,
+      "target_price": 3507.15,
+      "stop_loss": 3336.9,
+      "risk_reward": 1.5,
+      "volume_ratio": 2.4086222546521374,
+      "rsi": 69.18261710143378,
+      "pattern": "BREAKOUT_HIGH",
+      "market_regime": "RANGING"
+    },
+    {
+      "symbol": "TRB/USDT",
+      "signal": "BUY",
+      "confidence": 60.62,
+      "technical_score": 60,
+      "ai_score": 62.06,
+      "current_price": 41.47,
+      "target_price": 42.7141,
+      "stop_loss": 40.6406,
+      "risk_reward": 1.5,
+      "volume_ratio": 2.2193334278041292,
+      "rsi": 28.060487932990295,
+      "pattern": "BREAKDOWN_LOW",
+      "market_regime": "TRENDING"
     }
   ]
 }

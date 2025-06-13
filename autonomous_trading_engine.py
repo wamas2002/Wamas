@@ -17,6 +17,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
 import threading
 from decimal import Decimal, ROUND_DOWN
+from gpt_enhanced_trading_analyzer import GPTEnhancedTradingAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +38,10 @@ class AutonomousTradingEngine:
         self.trend_model = RandomForestClassifier(n_estimators=100, random_state=42)
         self.momentum_model = GradientBoostingClassifier(n_estimators=100, random_state=42)
         self.scaler = StandardScaler()
+        
+        # GPT Enhancement
+        self.gpt_analyzer = None
+        self.gpt_enhancement_enabled = True
         
         # Active positions tracking
         self.active_positions = {}
@@ -289,8 +294,30 @@ class AutonomousTradingEngine:
             ai_score = self.calculate_ai_score(df)
             
             # Combined confidence
-            confidence = (technical_score * 0.6) + (ai_score * 0.4)
-            confidence = min(100, confidence)
+            base_confidence = (technical_score * 0.6) + (ai_score * 0.4)
+            base_confidence = min(100, base_confidence)
+            
+            # GPT Enhancement
+            if self.gpt_enhancement_enabled and self.gpt_analyzer and signal != 'HOLD':
+                try:
+                    gpt_analysis = self.gpt_analyzer.analyze_signal_with_gpt(
+                        symbol=symbol,
+                        technical_confidence=base_confidence,
+                        ai_score=ai_score,
+                        signal_type=signal
+                    )
+                    
+                    confidence = gpt_analysis['enhanced_confidence']
+                    entry_reasons.append(f"GPT_{gpt_analysis['risk_level'].upper()}")
+                    
+                    logger.info(f"🧠 GPT Enhanced {symbol}: {base_confidence:.1f}% → {confidence:.1f}% "
+                              f"({gpt_analysis['confidence_adjustment']:+.1f} pts, Risk: {gpt_analysis['risk_level']})")
+                    
+                except Exception as e:
+                    logger.warning(f"GPT enhancement failed for {symbol}: {e}")
+                    confidence = base_confidence
+            else:
+                confidence = base_confidence
             
             # Risk management calculations
             current_price = latest['close']
@@ -681,6 +708,14 @@ def main():
         
         # Setup database
         engine.setup_database()
+        
+        # Initialize GPT enhancement
+        try:
+            engine.gpt_analyzer = GPTEnhancedTradingAnalyzer()
+            logger.info("🧠 GPT-enhanced analysis enabled")
+        except Exception as e:
+            logger.warning(f"GPT enhancement disabled: {e}")
+            engine.gpt_enhancement_enabled = False
         
         # Start autonomous trading
         engine.run_autonomous_trading()
