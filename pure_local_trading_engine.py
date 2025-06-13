@@ -21,8 +21,8 @@ class PureLocalTradingEngine:
         self.exchange = None
         self.min_confidence = 70.0
         self.max_position_size = 0.25  # 25% max position
-        self.stop_loss_pct = 8.0
-        self.take_profit_pct = 15.0
+        self.stop_loss_pct = 12.0
+        self.take_profit_pct = 20.0
         self.scan_interval = 300  # 5 minutes
         
         # Valid symbols only

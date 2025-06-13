@@ -27,8 +27,8 @@ class SignalExecutionBridge:
         self.is_running = False
         self.last_execution_time = {}
         self.rate_limit_delay = 0.2  # 200ms between API calls (5 req/sec max)
-        self.execution_threshold = 75.0  # 75% confidence minimum - LIVE TRADING ENABLED
-        self.max_position_size_pct = 0.035  # 3.5% per trade (optimized)
+        self.execution_threshold = 70.0  # 75% confidence minimum - LIVE TRADING ENABLED
+        self.max_position_size_pct = 0.05  # 3.5% per trade (optimized)
         self.min_trade_amount = 5
         self.auto_execute = True  # Enable automatic execution   # Minimum $5 USDT to enable execution
         

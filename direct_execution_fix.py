@@ -14,8 +14,8 @@ class DirectAutoTrader:
     
     def __init__(self):
         self.exchange = None
-        self.min_confidence = 75.0
-        self.position_size_pct = 0.03  # 3% per trade
+        self.min_confidence = 70.0
+        self.position_size_pct = 0.05  # 3% per trade
         self.min_trade_usd = 5.0
         self.executed_signals = set()
         
