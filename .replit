@@ -54,10 +54,6 @@ args = "AI Enhanced Trading"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Autonomous Trading Engine"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Advanced Futures Trading"
 
 [[workflows.workflow.tasks]]
@@ -71,6 +67,10 @@ args = "Optimized Strategies"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Advanced Analytics UI"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Pure Local Trading Engine"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -156,14 +156,6 @@ task = "shell.exec"
 args = "python ai_enhanced_trading_integration.py"
 
 [[workflows.workflow]]
-name = "Autonomous Trading Engine"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python autonomous_trading_engine.py"
-
-[[workflows.workflow]]
 name = "Advanced Futures Trading"
 author = "agent"
 
@@ -196,6 +188,14 @@ author = "agent"
 task = "shell.exec"
 args = "python enhanced_trading_ui_3000.py"
 waitForPort = 3000
+
+[[workflows.workflow]]
+name = "Pure Local Trading Engine"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python pure_local_trading_engine.py"
 
 [[ports]]
 localPort = 3000

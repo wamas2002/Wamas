@@ -17,7 +17,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
 import threading
 from decimal import Decimal, ROUND_DOWN
-from gpt_enhanced_trading_analyzer import GPTEnhancedTradingAnalyzer
+# GPT disabled
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
