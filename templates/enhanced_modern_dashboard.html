@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Futures & Spot Trading Platform</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1.5rem;
+            position: relative;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: #6366f1;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            list-style: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff;
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateX(4px);
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #6366f1;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover::before, .nav-link.active::before {
+            transform: scaleY(1);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .refresh-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #6366f1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            animation: rotate 8s linear infinite;
+            z-index: 0;
+        }
+
+        .metric-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .metric-change.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .metric-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .data-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Signal badges */
+        .signal-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .signal-long {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .signal-short {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .signal-buy {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .signal-sell {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .signal-hold {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .signal-type {
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.625rem;
+            font-weight: 600;
+        }
+
+        .type-futures {
+            background: rgba(147, 51, 234, 0.2);
+            color: #9333ea;
+        }
+
+        .type-spot {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        /* Confidence bars */
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .confidence-high { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .confidence-medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .confidence-low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+        /* Charts */
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Loading states */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>TradePro AI</h1>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#portfolio" class="nav-link" data-section="portfolio">
+                        <i class="fas fa-wallet"></i>
+                        Portfolio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#signals" class="nav-link" data-section="signals">
+                        <i class="fas fa-signal"></i>
+                        Trading Signals
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#futures" class="nav-link" data-section="futures">
+                        <i class="fas fa-rocket"></i>
+                        Futures Trading
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#analytics" class="nav-link" data-section="analytics">
+                        <i class="fas fa-chart-bar"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#optimization" class="nav-link" data-section="optimization">
+                        <i class="fas fa-cogs"></i>
+                        Optimization
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1 class="header-title">Trading Dashboard</h1>
+                    <p class="header-subtitle">Advanced AI-powered futures and spot trading platform</p>
+                </div>
+                <div class="header-actions">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span>System Online</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Metrics Overview -->
+            <div class="metrics-grid" id="metrics-overview">
+                <div class="metric-card">
+                    <div class="metric-value" id="portfolio-value">$--</div>
+                    <div class="metric-label">Portfolio Value</div>
+                    <div class="metric-change" id="portfolio-change">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="active-signals">--</div>
+                    <div class="metric-label">Active Signals</div>
+                    <div class="metric-change positive" id="signals-change">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="win-rate">--%</div>
+                    <div class="metric-label">Win Rate</div>
+                    <div class="metric-change" id="win-rate-change">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="profit-factor">--</div>
+                    <div class="metric-label">Profit Factor</div>
+                    <div class="metric-change" id="profit-change">--</div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-grid">
+                <!-- Portfolio Overview -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">
+                                <i class="fas fa-pie-chart"></i>
+                            </div>
+                            Portfolio Overview
+                        </div>
+                        <button class="refresh-btn" onclick="refreshPortfolio()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <div id="portfolio-chart"></div>
+                    </div>
+                </div>
+
+                <!-- Trading Signals -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">
+                                <i class="fas fa-signal"></i>
+                            </div>
+                            Live Trading Signals
+                        </div>
+                        <button class="refresh-btn" onclick="refreshSignals()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="signals-container">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading signals...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Overview -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            Market Overview
+                        </div>
+                        <button class="refresh-btn" onclick="refreshMarket()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="market-container">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading market data...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Analytics -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            Performance Analytics
+                        </div>
+                        <button class="refresh-btn" onclick="refreshAnalytics()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <div id="performance-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global state
+        let refreshInterval;
+        let currentData = {
+            portfolio: [],
+            signals: [],
+            market: {},
+            analytics: {}
+        };
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            startAutoRefresh();
+        });
+
+        function initializeDashboard() {
+            refreshPortfolio();
+            refreshSignals();
+            refreshMarket();
+            refreshAnalytics();
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                refreshPortfolio();
+                refreshSignals();
+                refreshMarket();
+                refreshAnalytics();
+            }, 30000); // Refresh every 30 seconds
+        }
+
+        // Portfolio functions
+        async function refreshPortfolio() {
+            try {
+                const response = await fetch('/api/enhanced/portfolio');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.portfolio = data.portfolio;
+                    updatePortfolioDisplay(data);
+                    updatePortfolioChart(data.portfolio);
+                    updateMetrics(data.metrics);
+                }
+            } catch (error) {
+                console.error('Portfolio refresh error:', error);
+                showError('portfolio-chart', 'Failed to load portfolio data');
+            }
+        }
+
+        function updatePortfolioDisplay(data) {
+            const metrics = data.metrics;
+            
+            document.getElementById('portfolio-value').textContent = 
+                '$' + (metrics.total_value || 0).toLocaleString(undefined, {maximumFractionDigits: 2});
+            
+            const changeElement = document.getElementById('portfolio-change');
+            const change24h = metrics.change_24h_pct || 0;
+            changeElement.textContent = (change24h >= 0 ? '+' : '') + change24h.toFixed(2) + '%';
+            changeElement.className = 'metric-change ' + (change24h >= 0 ? 'positive' : 'negative');
+        }
+
+        function updatePortfolioChart(portfolio) {
+            const labels = portfolio.map(item => item.asset);
+            const values = portfolio.map(item => item.value_usd);
+            const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+
+            const data = [{
+                type: 'pie',
+                labels: labels,
+                values: values,
+                hole: 0.4,
+                marker: {
+                    colors: colors,
+                    line: {
+                        color: '#1a1a2e',
+                        width: 2
+                    }
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside',
+                font: {
+                    color: '#ffffff',
+                    size: 12
+                }
+            }];
+
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#ffffff' },
+                margin: { t: 20, l: 20, r: 20, b: 20 },
+                showlegend: false
+            };
+
+            Plotly.newPlot('portfolio-chart', data, layout, {responsive: true});
+        }
+
+        // Signals functions
+        async function refreshSignals() {
+            try {
+                const response = await fetch('/api/enhanced/signals');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.signals = data.signals;
+                    updateSignalsDisplay(data);
+                    updateSignalsMetrics(data);
+                }
+            } catch (error) {
+                console.error('Signals refresh error:', error);
+                showError('signals-container', 'Failed to load signals data');
+            }
+        }
+
+        function updateSignalsDisplay(data) {
+            const container = document.getElementById('signals-container');
+            const signals = data.signals.slice(0, 10); // Show top 10 signals
+            
+            if (signals.length === 0) {
+                container.innerHTML = '<div class="loading">No active signals</div>';
+                return;
+            }
+
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Signal</th>
+                            <th>Confidence</th>
+                            <th>Price</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${signals.map(signal => `
+                            <tr>
+                                <td><strong>${signal.symbol}</strong></td>
+                                <td><span class="signal-type type-${signal.signal_type.toLowerCase()}">${signal.signal_type}</span></td>
+                                <td><span class="signal-badge signal-${signal.side.toLowerCase()}">${signal.side}</span></td>
+                                <td>
+                                    <div>${signal.confidence.toFixed(1)}%</div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill confidence-${getConfidenceClass(signal.confidence)}" 
+                                             style="width: ${signal.confidence}%"></div>
+                                    </div>
+                                </td>
+                                <td>$${signal.current_price.toFixed(4)}</td>
+                                <td>${formatTime(signal.timestamp)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        function updateSignalsMetrics(data) {
+            document.getElementById('active-signals').textContent = data.total_count || 0;
+            
+            const futuresCount = data.futures_count || 0;
+            const spotCount = data.spot_count || 0;
+            document.getElementById('signals-change').textContent = 
+                `${futuresCount} Futures, ${spotCount} Spot`;
+        }
+
+        // Market functions
+        async function refreshMarket() {
+            try {
+                const response = await fetch('/api/enhanced/market');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.market = data.market;
+                    updateMarketDisplay(data.market);
+                }
+            } catch (error) {
+                console.error('Market refresh error:', error);
+                showError('market-container', 'Failed to load market data');
+            }
+        }
+
+        function updateMarketDisplay(market) {
+            const container = document.getElementById('market-container');
+            const marketData = market.market_data || [];
+            
+            if (marketData.length === 0) {
+                container.innerHTML = '<div class="loading">No market data available</div>';
+                return;
+            }
+
+            const tableHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <span class="signal-badge ${getSentimentClass(market.sentiment)}">${market.sentiment}</span>
+                    <span style="margin-left: 1rem; color: rgba(255,255,255,0.7);">
+                        Avg Change: ${(market.avg_change_24h || 0).toFixed(2)}%
+                    </span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Price</th>
+                            <th>24h Change</th>
+                            <th>Volume</th>
+                            <th>High/Low</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${marketData.map(item => `
+                            <tr>
+                                <td><strong>${item.symbol}</strong></td>
+                                <td>$${item.price.toFixed(4)}</td>
+                                <td class="${item.change_24h >= 0 ? 'positive' : 'negative'}">
+                                    ${(item.change_24h >= 0 ? '+' : '')}${item.change_24h.toFixed(2)}%
+                                </td>
+                                <td>$${formatVolume(item.volume_24h)}</td>
+                                <td>
+                                    <div style="font-size: 0.8em; color: rgba(255,255,255,0.7);">
+                                        H: $${item.high_24h.toFixed(4)}<br>
+                                        L: $${item.low_24h.toFixed(4)}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        // Analytics functions
+        async function refreshAnalytics() {
+            try {
+                const response = await fetch('/api/enhanced/analytics');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentData.analytics = data.performance;
+                    updateAnalyticsDisplay(data.performance);
+                    updateAnalyticsMetrics(data.performance);
+                }
+            } catch (error) {
+                console.error('Analytics refresh error:', error);
+                showError('performance-chart', 'Failed to load analytics data');
+            }
+        }
+
+        function updateAnalyticsDisplay(performance) {
+            // Create performance metrics chart
+            const metrics = [
+                { name: 'Win Rate', value: performance.win_rate || 0, max: 100 },
+                { name: 'Profit Factor', value: performance.profit_factor || 0, max: 3 },
+                { name: 'Sharpe Ratio', value: performance.sharpe_ratio || 0, max: 2 }
+            ];
+
+            const data = [{
+                type: 'bar',
+                x: metrics.map(m => m.name),
+                y: metrics.map(m => m.value),
+                marker: {
+                    color: ['#22c55e', '#6366f1', '#f59e0b'],
+                    line: { color: '#1a1a2e', width: 1 }
+                }
+            }];
+
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#ffffff' },
+                margin: { t: 20, l: 40, r: 20, b: 40 },
+                xaxis: { color: '#ffffff' },
+                yaxis: { color: '#ffffff' }
+            };
+
+            Plotly.newPlot('performance-chart', data, layout, {responsive: true});
+        }
+
+        function updateAnalyticsMetrics(performance) {
+            document.getElementById('win-rate').textContent = 
+                (performance.win_rate || 0).toFixed(1) + '%';
+            document.getElementById('profit-factor').textContent = 
+                (performance.profit_factor || 0).toFixed(2);
+        }
+
+        // Utility functions
+        function getConfidenceClass(confidence) {
+            if (confidence >= 70) return 'high';
+            if (confidence >= 50) return 'medium';
+            return 'low';
+        }
+
+        function getSentimentClass(sentiment) {
+            switch(sentiment) {
+                case 'BULLISH': return 'signal-buy';
+                case 'BEARISH': return 'signal-sell';
+                default: return 'signal-hold';
+            }
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString();
+        }
+
+        function formatVolume(volume) {
+            if (volume >= 1e9) return (volume / 1e9).toFixed(2) + 'B';
+            if (volume >= 1e6) return (volume / 1e6).toFixed(2) + 'M';
+            if (volume >= 1e3) return (volume / 1e3).toFixed(2) + 'K';
+            return volume.toFixed(2);
+        }
+
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="loading" style="color: #ef4444;">${message}</div>`;
+        }
+
+        function updateMetrics(metrics) {
+            // Update any additional metrics from portfolio data
+            if (metrics) {
+                const winRateChange = document.getElementById('win-rate-change');
+                winRateChange.textContent = metrics.risk_level || 'UNKNOWN';
+                winRateChange.className = 'metric-change ' + 
+                    (metrics.risk_level === 'LOW' ? 'positive' : 'negative');
+            }
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active state
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Handle section switching logic here if needed
+                const section = this.dataset.section;
+                console.log('Switched to section:', section);
+            });
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
