@@ -75,7 +75,16 @@ class AdvancedMarketScanner:
             
             # Emerging & Alternative
             'JASMY/USDT', 'CFX/USDT', 'AGIX/USDT', 'INJ/USDT', 'TWT/USDT',
-            'PERP/USDT', 'DYDX/USDT', 'LOOKS/USDT', 'SRM/USDT', 'RAY/USDT'
+            'PERP/USDT', 'DYDX/USDT', 'LOOKS/USDT', 'SRM/USDT', 'RAY/USDT',
+            
+            # Privacy & Security
+            'ZEC/USDT', 'DASH/USDT', 'XMR/USDT', 'DCR/USDT', 'BEAM/USDT',
+            
+            # Additional Layer 1s
+            'KAVA/USDT', 'LUNA/USDT', 'OSMO/USDT', 'JUNO/USDT', 'SCRT/USDT',
+            
+            # Final verified pairs (to reach 100)
+            'HOT/USDT', 'ANKR/USDT', 'CKB/USDT', 'COTI/USDT', 'DUSK/USDT'
         ]
         
         # Advanced indicator suite

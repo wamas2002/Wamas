@@ -33,10 +33,35 @@ class AdvancedFuturesEngine:
         self.stop_loss_pct = 0.06  # 6% stop loss
         self.take_profit_pct = 0.12  # 12% take profit
         self.symbols = [
-            'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 
-            'SOL/USDT:USDT', 'ADA/USDT:USDT', 'XRP/USDT:USDT',
-            'DOT/USDT:USDT', 'AVAX/USDT:USDT', 'LINK/USDT:USDT',
-            'UNI/USDT:USDT', 'ATOM/USDT:USDT', 'NEAR/USDT:USDT'
+            # Top Tier Futures (1-20)
+            'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'XRP/USDT:USDT', 'ADA/USDT:USDT',
+            'SOL/USDT:USDT', 'DOGE/USDT:USDT', 'LINK/USDT:USDT', 'LTC/USDT:USDT', 'DOT/USDT:USDT',
+            'AVAX/USDT:USDT', 'UNI/USDT:USDT', 'ATOM/USDT:USDT', 'NEAR/USDT:USDT', 'MATIC/USDT:USDT',
+            'TRX/USDT:USDT', 'ICP/USDT:USDT', 'ALGO/USDT:USDT', 'VET/USDT:USDT', 'HBAR/USDT:USDT',
+            
+            # High Volume Futures (21-40)
+            'XLM/USDT:USDT', 'SAND/USDT:USDT', 'MANA/USDT:USDT', 'THETA/USDT:USDT', 'AXS/USDT:USDT',
+            'FIL/USDT:USDT', 'ETC/USDT:USDT', 'EGLD/USDT:USDT', 'KLAY/USDT:USDT', 'FLOW/USDT:USDT',
+            'ENJ/USDT:USDT', 'CHZ/USDT:USDT', 'CRV/USDT:USDT', 'AAVE/USDT:USDT', 'MKR/USDT:USDT',
+            'SNX/USDT:USDT', 'COMP/USDT:USDT', 'YFI/USDT:USDT', 'SUSHI/USDT:USDT', '1INCH/USDT:USDT',
+            
+            # DeFi Futures (41-60)
+            'CAKE/USDT:USDT', 'BAL/USDT:USDT', 'UMA/USDT:USDT', 'REN/USDT:USDT', 'KNC/USDT:USDT',
+            'ZRX/USDT:USDT', 'LRC/USDT:USDT', 'BNT/USDT:USDT', 'ANT/USDT:USDT', 'MLN/USDT:USDT',
+            'OXT/USDT:USDT', 'NMR/USDT:USDT', 'REP/USDT:USDT', 'STORJ/USDT:USDT', 'GRT/USDT:USDT',
+            'BAT/USDT:USDT', 'ZEC/USDT:USDT', 'DASH/USDT:USDT', 'XMR/USDT:USDT', 'DCR/USDT:USDT',
+            
+            # Layer 1 & 2 Futures (61-80)
+            'QTUM/USDT:USDT', 'ICX/USDT:USDT', 'ZIL/USDT:USDT', 'ONT/USDT:USDT', 'WAVES/USDT:USDT',
+            'LSK/USDT:USDT', 'ARK/USDT:USDT', 'STRAT/USDT:USDT', 'WAN/USDT:USDT', 'NULS/USDT:USDT',
+            'NANO/USDT:USDT', 'RVN/USDT:USDT', 'DGB/USDT:USDT', 'SC/USDT:USDT', 'BCH/USDT:USDT',
+            'BSV/USDT:USDT', 'BTG/USDT:USDT', 'ZEN/USDT:USDT', 'BEAM/USDT:USDT', 'GRIN/USDT:USDT',
+            
+            # Emerging Futures (81-100)
+            'HOT/USDT:USDT', 'IOST/USDT:USDT', 'ANKR/USDT:USDT', 'CELR/USDT:USDT', 'CKB/USDT:USDT',
+            'COTI/USDT:USDT', 'DUSK/USDT:USDT', 'FTM/USDT:USDT', 'HARMONY/USDT:USDT', 'IOTX/USDT:USDT',
+            'KAVA/USDT:USDT', 'BAND/USDT:USDT', 'RSR/USDT:USDT', 'OCEAN/USDT:USDT', 'FET/USDT:USDT',
+            'CTSI/USDT:USDT', 'ROSE/USDT:USDT', 'CELO/USDT:USDT', 'SKL/USDT:USDT', 'AUDIO/USDT:USDT'
         ]
         self.models = {}
         self.scalers = {}

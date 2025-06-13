@@ -47,11 +47,37 @@ class AutonomousTradingEngine:
         self.active_positions = {}
         self.trade_history = []
         
-        # Trading pairs (top liquid pairs)
+        # Trading pairs (top 100 liquid pairs)
         self.trading_pairs = [
+            # Top Tier (1-20)
             'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT',
             'SOL/USDT', 'DOGE/USDT', 'LINK/USDT', 'LTC/USDT', 'DOT/USDT',
-            'AVAX/USDT', 'UNI/USDT', 'ATOM/USDT', 'NEAR/USDT', 'FTM/USDT'
+            'AVAX/USDT', 'UNI/USDT', 'ATOM/USDT', 'NEAR/USDT', 'MATIC/USDT',
+            'TRX/USDT', 'ICP/USDT', 'ALGO/USDT', 'VET/USDT', 'HBAR/USDT',
+            
+            # High Volume (21-40)
+            'XLM/USDT', 'SAND/USDT', 'MANA/USDT', 'THETA/USDT', 'AXS/USDT',
+            'FIL/USDT', 'ETC/USDT', 'EGLD/USDT', 'KLAY/USDT', 'FLOW/USDT',
+            'ENJ/USDT', 'CHZ/USDT', 'CRV/USDT', 'AAVE/USDT', 'MKR/USDT',
+            'SNX/USDT', 'COMP/USDT', 'YFI/USDT', 'SUSHI/USDT', '1INCH/USDT',
+            
+            # Popular DeFi (41-60)
+            'CAKE/USDT', 'BAL/USDT', 'UMA/USDT', 'REN/USDT', 'KNC/USDT',
+            'ZRX/USDT', 'LRC/USDT', 'BNT/USDT', 'ANT/USDT', 'MLN/USDT',
+            'OXT/USDT', 'NMR/USDT', 'REP/USDT', 'STORJ/USDT', 'GRT/USDT',
+            'BAT/USDT', 'ZEC/USDT', 'DASH/USDT', 'XMR/USDT', 'DCR/USDT',
+            
+            # Layer 1 & 2 (61-80)
+            'QTUM/USDT', 'ICX/USDT', 'ZIL/USDT', 'ONT/USDT', 'WAVES/USDT',
+            'LSK/USDT', 'ARK/USDT', 'STRAT/USDT', 'WAN/USDT', 'NULS/USDT',
+            'NANO/USDT', 'RVN/USDT', 'DGB/USDT', 'SC/USDT', 'BCH/USDT',
+            'BSV/USDT', 'BTG/USDT', 'ZEN/USDT', 'BEAM/USDT', 'GRIN/USDT',
+            
+            # Emerging & Gaming (81-100)
+            'HOT/USDT', 'IOST/USDT', 'ANKR/USDT', 'CELR/USDT', 'CKB/USDT',
+            'COTI/USDT', 'DUSK/USDT', 'FTM/USDT', 'HARMONY/USDT', 'IOTX/USDT',
+            'KAVA/USDT', 'BAND/USDT', 'RSR/USDT', 'OCEAN/USDT', 'FET/USDT',
+            'CTSI/USDT', 'ROSE/USDT', 'CELO/USDT', 'SKL/USDT', 'AUDIO/USDT'
         ]
         
     def initialize_exchange(self):
