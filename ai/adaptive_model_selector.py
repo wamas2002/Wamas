@@ -40,7 +40,7 @@ class AdaptiveModelSelector:
         self.trade_reason_logger = trade_reason_logger
         self.performance_data = {}  # symbol -> {model -> ModelPerformance}
         self.active_models = {}     # symbol -> active_model_name
-        self.evaluation_interval = 6 * 3600  # 6 hours in seconds
+        self.evaluation_interval = 4 * 3600  # 4 hours in seconds
         self.min_trades_threshold = 5  # Minimum trades required for model evaluation
         self.performance_window = 24 * 3600  # 24 hours lookback window
         self.is_running = False
@@ -78,7 +78,7 @@ class AdaptiveModelSelector:
         logger.info(f"Initialized performance tracking for {len(symbols)} symbols and {len(self.available_models)} models")
     
     def start_evaluation_cycle(self):
-        """Start the 6-hour evaluation cycle"""
+        """Start the 4-hour evaluation cycle"""
         if self.is_running:
             logger.warning("Evaluation cycle already running")
             return
@@ -96,7 +96,7 @@ class AdaptiveModelSelector:
         logger.info("Stopped adaptive model selector evaluation cycle")
     
     def _evaluation_loop(self):
-        """Main evaluation loop that runs every 6 hours"""
+        """Main evaluation loop that runs every 4 hours"""
         while self.is_running:
             try:
                 self._evaluate_all_models()

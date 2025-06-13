@@ -152,7 +152,7 @@ class AIModelEvaluator:
                 return True
             
             last_eval_time = datetime.fromisoformat(last_eval)
-            interval_hours = self.active_model_config.get('evaluation_interval_hours', 100)
+            interval_hours = self.active_model_config.get('evaluation_interval_hours', 4)
             
             return datetime.now() - last_eval_time >= timedelta(hours=interval_hours)
             
