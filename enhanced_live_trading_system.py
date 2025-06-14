@@ -381,11 +381,17 @@ class EnhancedLiveTradingSystem:
             bb_upper = latest['BBU_20_2.0']
             if pd.notna(bb_lower) and pd.notna(bb_upper):
                 if latest['close'] < bb_lower:
-                    technical_score += 15
+                    buy_score += 15
                     signals_list.append("Below BB lower band")
                 elif latest['close'] < bb_lower * 1.02:
-                    technical_score += 10
+                    buy_score += 10
                     signals_list.append("Near BB lower band")
+                elif latest['close'] > bb_upper:
+                    sell_score += 15
+                    signals_list.append("Above BB upper band")
+                elif latest['close'] > bb_upper * 0.98:
+                    sell_score += 10
+                    signals_list.append("Near BB upper band")
         
         # Volume analysis (weight: 15)
         if pd.notna(latest['volume_ratio']):
