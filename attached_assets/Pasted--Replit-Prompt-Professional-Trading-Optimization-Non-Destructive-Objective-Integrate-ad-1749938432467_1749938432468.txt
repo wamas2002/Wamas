@@ -1,0 +1,58 @@
+# 🚀 Replit Prompt — Professional Trading Optimization (Non-Destructive)
+
+📌 Objective:
+Integrate advanced, capital-efficient trading behaviors into the existing AI-driven trading system **without altering core trading logic, model structure, or backend execution flow**.
+
+---
+
+✅ Implement These Enhancements:
+
+### 🧠 1. High-Probability Signal Enforcement
+- Only execute trades when AI signal confidence ≥ **75%**
+- Integrate confidence filter before trade execution module
+
+### 🧮 2. Dynamic Risk Allocation Layer
+- Create a wrapper around the order sizing logic:
+  - Confidence 75–80% + low ATR → 1.0% of portfolio
+  - Confidence 80–85% + breakout volume → 1.25%
+  - Confidence >85% + strong momentum → 1.5%
+- This must work **without exceeding 1.5% of portfolio per trade**
+
+### 🏁 3. Multi-Tiered Take Profit Strategy
+- Replace fixed take profit logic with:
+  - TP1: Close 30% of the position at +2%
+  - TP2: Close 50% at +4%
+  - TP3: Trail remaining 20% once +6% is reached
+- Use real-time price updates and PnL tracking to trigger each TP level independently
+
+### 🔁 4. Market Regime Detection (Overlay, not Core Change)
+- Non-invasive module that runs ADX + MACD + RSI slope
+- Output “TREND” or “RANGE” state
+- Use this only to activate corresponding strategies already in place:
+  - TREND → favor momentum strategies
+  - RANGE → pause or favor mean reversion logic
+
+### 🧠 5. Psychological Capital Protection Layer
+- Automatically pause new trades for 12 hours if:
+  - 3 consecutive stop-loss hits occur
+  - Portfolio drops >5% in a single day
+- Display visual notification on the dashboard during cooldown period
+
+---
+
+✅ UI Integration:
+- All changes must reflect in the modern UI (`:3000`)
+- Add confidence thresholds and current regime indicator
+- Display take profit tier levels on open positions
+
+---
+
+⚠️ Rules:
+- Do not modify core model logic, backend signal processing, or database schema
+- All enhancements must be modular, override-compatible, and easily disabled
+- Preserve full compatibility with OKX live trading, AI engine, and current workflows
+
+---
+
+🎯 Final Goal:
+Improve trading **profitability, consistency, and protection** without disrupting the system’s integrity or original architecture.
