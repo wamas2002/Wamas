@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unified Trading System</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #2a2a2a; border-radius: 8px; padding: 20px; border-left: 4px solid #00ff88; }
+        .metric { font-size: 24px; font-weight: bold; color: #00ff88; }
+        .label { color: #ccc; margin-bottom: 5px; }
+        .signal { padding: 10px; margin: 5px 0; background: #333; border-radius: 4px; }
+        .buy { border-left: 4px solid #00ff88; }
+        .status-active { color: #00ff88; }
+        .status-inactive { color: #ff4444; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #444; }
+        th { background: #333; }
+        .refresh-btn { background: #00ff88; color: #000; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Unified Trading System</h1>
+            <button class="refresh-btn" onclick="refreshAll()">Refresh All</button>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>System Status</h3>
+                <div id="status-content">Loading...</div>
+            </div>
+            
+            <div class="card">
+                <h3>Performance</h3>
+                <div id="performance-content">Loading...</div>
+            </div>
+            
+            <div class="card">
+                <h3>Recent Signals</h3>
+                <div id="signals-content">Loading...</div>
+            </div>
+            
+            <div class="card">
+                <h3>Recent Trades</h3>
+                <div id="trades-content">Loading...</div>
+            </div>
+            
+            <div class="card">
+                <h3>Portfolio</h3>
+                <div id="portfolio-content">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshAll() {
+            loadStatus();
+            loadPerformance();
+            loadSignals();
+            loadTrades();
+            loadPortfolio();
+        }
+        
+        function loadStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('status-content').innerHTML = `
+                        <div class="label">Exchange Connected:</div>
+                        <div class="metric ${data.exchange_connected ? 'status-active' : 'status-inactive'}">
+                            ${data.exchange_connected ? 'CONNECTED' : 'DISCONNECTED'}
+                        </div>
+                        <div class="label">Trading Active:</div>
+                        <div class="metric ${data.trading_active ? 'status-active' : 'status-inactive'}">
+                            ${data.trading_active ? 'ACTIVE' : 'INACTIVE'}
+                        </div>
+                        <div class="label">Symbols Monitored:</div>
+                        <div class="metric">${data.symbols_monitored}</div>
+                        <div class="label">Min Confidence:</div>
+                        <div class="metric">${data.min_confidence}%</div>
+                        <div class="label">Position Size:</div>
+                        <div class="metric">${data.position_size}</div>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('status-content').innerHTML = 'Error loading status';
+                });
+        }
+        
+        function loadPerformance() {
+            fetch('/api/performance')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('performance-content').innerHTML = `
+                        <div class="label">Total Trades:</div>
+                        <div class="metric">${data.total_trades}</div>
+                        <div class="label">Today's Trades:</div>
+                        <div class="metric">${data.daily_trades}</div>
+                        <div class="label">Avg Confidence:</div>
+                        <div class="metric">${data.avg_confidence}%</div>
+                        <div class="label">System Status:</div>
+                        <div class="metric status-active">${data.system_status}</div>
+                    `;
+                });
+        }
+        
+        function loadSignals() {
+            fetch('/api/signals')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    data.forEach(signal => {
+                        html += `
+                            <div class="signal buy">
+                                <strong>${signal.symbol}</strong> - ${signal.signal}<br>
+                                Confidence: ${signal.confidence.toFixed(1)}%<br>
+                                Price: $${signal.price.toFixed(4)}
+                            </div>
+                        `;
+                    });
+                    document.getElementById('signals-content').innerHTML = html || 'No recent signals';
+                });
+        }
+        
+        function loadTrades() {
+            fetch('/api/trades')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<table><tr><th>Symbol</th><th>Side</th><th>Amount</th><th>Price</th><th>Confidence</th></tr>';
+                    data.forEach(trade => {
+                        html += `
+                            <tr>
+                                <td>${trade.symbol}</td>
+                                <td>${trade.side}</td>
+                                <td>${trade.amount.toFixed(4)}</td>
+                                <td>$${trade.price.toFixed(4)}</td>
+                                <td>${trade.confidence.toFixed(1)}%</td>
+                            </tr>
+                        `;
+                    });
+                    html += '</table>';
+                    document.getElementById('trades-content').innerHTML = html;
+                });
+        }
+        
+        function loadPortfolio() {
+            fetch('/api/portfolio')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '<table><tr><th>Currency</th><th>Total</th><th>Free</th></tr>';
+                    data.forEach(item => {
+                        html += `
+                            <tr>
+                                <td>${item.currency}</td>
+                                <td>${item.total.toFixed(4)}</td>
+                                <td>${item.free.toFixed(4)}</td>
+                            </tr>
+                        `;
+                    });
+                    html += '</table>';
+                    document.getElementById('portfolio-content').innerHTML = html;
+                });
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(refreshAll, 30000);
+        
+        // Initial load
+        refreshAll();
+    </script>
+</body>
+</html>
+    

@@ -30,23 +30,7 @@ args = "Dynamic Optimizer"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Unified Trading Platform"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "TradingView Dashboard"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Advanced Futures Trading"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Enhanced Modern UI"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Advanced Analytics UI"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -55,6 +39,10 @@ args = "Pure Local Trading Engine"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Direct Auto Trading"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Complete Trading System"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -90,48 +78,12 @@ task = "shell.exec"
 args = "python dynamic_optimization_dashboard.py"
 
 [[workflows.workflow]]
-name = "Unified Trading Platform"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python unified_trading_platform.py"
-waitForPort = 5000
-
-[[workflows.workflow]]
-name = "TradingView Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python enhanced_tradingview_dashboard.py"
-waitForPort = 5001
-
-[[workflows.workflow]]
 name = "Advanced Futures Trading"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python advanced_futures_trading_engine.py"
-
-[[workflows.workflow]]
-name = "Enhanced Modern UI"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python enhanced_modern_trading_ui.py"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Advanced Analytics UI"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python enhanced_trading_ui_3000.py"
-waitForPort = 3000
 
 [[workflows.workflow]]
 name = "Pure Local Trading Engine"
@@ -148,6 +100,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python direct_execution_fix.py"
+
+[[workflows.workflow]]
+name = "Complete Trading System"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python unified_trading_system.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000
