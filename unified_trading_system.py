@@ -34,18 +34,70 @@ class UnifiedTradingSystem:
         self.take_profit_pct = 20.0
         self.min_trade_usd = 5.0
         
-        # Crypto symbols to monitor
-        self.symbols = [
-            'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT',
-            'SOL/USDT', 'DOGE/USDT', 'LINK/USDT', 'LTC/USDT', 'DOT/USDT',
-            'AVAX/USDT', 'UNI/USDT', 'ATOM/USDT', 'NEAR/USDT', 'TRX/USDT',
-            'ICP/USDT', 'ALGO/USDT', 'HBAR/USDT', 'XLM/USDT', 'SAND/USDT',
-            'MANA/USDT', 'THETA/USDT', 'AXS/USDT', 'FIL/USDT', 'ETC/USDT',
-            'EGLD/USDT', 'FLOW/USDT', 'ENJ/USDT', 'CHZ/USDT', 'CRV/USDT'
-        ]
+        # Initialize with expanded symbol list (100 symbols under $200)
+        self.symbols = self.get_symbols_under_200_usdt()
         
         self.executed_signals = set()
+        self.live_trading_enabled = True
         self.initialize_system()
+    
+    def get_symbols_under_200_usdt(self) -> List[str]:
+        """Get 100 cryptocurrency symbols with price under $200 USDT"""
+        try:
+            if not self.exchange:
+                # Initialize exchange temporarily for symbol fetching
+                temp_exchange = ccxt.okx({
+                    'apiKey': os.environ.get('OKX_API_KEY'),
+                    'secret': os.environ.get('OKX_SECRET_KEY'),
+                    'password': os.environ.get('OKX_PASSPHRASE'),
+                    'sandbox': False,
+                    'enableRateLimit': True,
+                })
+                markets = temp_exchange.load_markets()
+                tickers = temp_exchange.fetch_tickers()
+            else:
+                markets = self.exchange.load_markets()
+                tickers = self.exchange.fetch_tickers()
+            
+            # Filter USDT pairs with price under $200
+            valid_symbols = []
+            for symbol in markets:
+                if '/USDT' in symbol and symbol in tickers:
+                    ticker = tickers[symbol]
+                    price = ticker['last']
+                    
+                    if price and 0.001 <= price <= 200:  # Price between $0.001 and $200
+                        market = markets[symbol]
+                        if market['active'] and market['spot']:  # Active spot trading
+                            valid_symbols.append(symbol)
+            
+            # Sort by 24h volume (descending) and take top 100
+            valid_symbols.sort(key=lambda s: tickers[s]['quoteVolume'] or 0, reverse=True)
+            selected_symbols = valid_symbols[:100]
+            
+            logger.info(f"Selected {len(selected_symbols)} symbols under $200 for trading")
+            return selected_symbols
+            
+        except Exception as e:
+            logger.error(f"Error fetching symbols: {e}")
+            # Fallback to expanded symbol list
+            return [
+                'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT', 'SOL/USDT', 'DOGE/USDT',
+                'LINK/USDT', 'LTC/USDT', 'DOT/USDT', 'AVAX/USDT', 'UNI/USDT', 'ATOM/USDT', 'NEAR/USDT',
+                'TRX/USDT', 'ICP/USDT', 'ALGO/USDT', 'HBAR/USDT', 'XLM/USDT', 'SAND/USDT', 'MANA/USDT',
+                'THETA/USDT', 'AXS/USDT', 'FIL/USDT', 'ETC/USDT', 'EGLD/USDT', 'FLOW/USDT', 'ENJ/USDT',
+                'CHZ/USDT', 'CRV/USDT', 'MATIC/USDT', 'VET/USDT', 'FTM/USDT', 'ONE/USDT', 'LUNA/USDT',
+                'ZEC/USDT', 'DASH/USDT', 'XMR/USDT', 'NEO/USDT', 'IOTA/USDT', 'ZIL/USDT', 'ONT/USDT',
+                'ICX/USDT', 'QTUM/USDT', 'LSK/USDT', 'NANO/USDT', 'DGB/USDT', 'SC/USDT', 'ZEN/USDT',
+                'DCR/USDT', 'BAT/USDT', 'REP/USDT', 'KNC/USDT', 'ZRX/USDT', 'LRC/USDT', 'REN/USDT',
+                'STORJ/USDT', 'GNT/USDT', 'CVC/USDT', 'GTO/USDT', 'CTR/USDT', 'RCN/USDT', 'RDN/USDT',
+                'MCO/USDT', 'ICN/USDT', 'AMB/USDT', 'BCPT/USDT', 'CND/USDT', 'DLT/USDT', 'GAS/USDT',
+                'POWR/USDT', 'BQX/USDT', 'SNT/USDT', 'BNT/USDT', 'GAS/USDT', 'HSR/USDT', 'OAX/USDT',
+                'DNT/USDT', 'MCO/USDT', 'ICN/USDT', 'WTC/USDT', 'LLT/USDT', 'YOYO/USDT', 'LRC/USDT',
+                'OST/USDT', 'BRD/USDT', 'TNB/USDT', 'FUEL/USDT', 'MAID/USDT', 'AST/USDT', 'BTM/USDT',
+                'BCPT/USDT', 'ARN/USDT', 'GVT/USDT', 'CDT/USDT', 'GXS/USDT', 'POE/USDT', 'QSP/USDT',
+                'BTS/USDT', 'XZC/USDT', 'LSK/USDT', 'TNT/USDT', 'FUEL/USDT', 'MAID/USDT', 'AST/USDT'
+            ]
     
     def initialize_system(self):
         """Initialize complete trading system"""
@@ -149,8 +201,8 @@ class UnifiedTradingSystem:
                     if signal['confidence'] >= self.min_confidence:
                         self.execute_signal(signal)
                 
-                # Wait before next scan
-                time.sleep(30)  # 30 second intervals
+                # Wait before next scan  
+                time.sleep(20)  # 20 second intervals for faster processing
                 
             except Exception as e:
                 logger.error(f"Trading loop error: {e}")

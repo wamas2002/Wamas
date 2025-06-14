@@ -42,7 +42,7 @@ args = "Direct Auto Trading"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Complete Trading System"
+args = "Enhanced Live Trading - 100 Symbols"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -102,12 +102,12 @@ task = "shell.exec"
 args = "python direct_execution_fix.py"
 
 [[workflows.workflow]]
-name = "Complete Trading System"
+name = "Enhanced Live Trading - 100 Symbols"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python unified_trading_system.py"
+args = "python enhanced_live_trading_system.py"
 waitForPort = 5000
 
 [[ports]]
