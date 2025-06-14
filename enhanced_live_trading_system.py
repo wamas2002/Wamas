@@ -33,7 +33,7 @@ class EnhancedLiveTradingSystem:
         self.position_size_pct = 0.05  # 5%
         self.stop_loss_pct = 12.0
         self.take_profit_pct = 20.0
-        self.min_trade_usd = 5.0
+        self.min_trade_usd = 3.0
         self.max_daily_trades = 20
         
         # Symbol tracking
