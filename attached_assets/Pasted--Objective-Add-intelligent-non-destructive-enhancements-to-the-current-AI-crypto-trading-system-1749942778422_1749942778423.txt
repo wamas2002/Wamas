@@ -1,0 +1,59 @@
+# Objective:
+# Add intelligent, non-destructive enhancements to the current AI crypto trading system
+# to improve adaptability, execution efficiency, and overall profitability.
+
+# Scope of Improvements:
+# 1. Confidence Optimization with Online Learning
+# 2. Order Book Awareness Module
+# 3. Smart Execution Strategies (TWAP/Iceberg)
+# 4. Anomaly Detection & Guardrails
+# 5. Regime-Specific SL/TP Strategy
+# 6. Volatility-Based Stop Loss
+# 7. Portfolio Rotation Logic
+# 8. Equity Curve Drawdown Protection
+# 9. Remote Mobile-Controlled Emergency Stop API
+
+# Task List:
+# ✅ Create ai/online_confidence_tuner.py
+#     - Analyze past trade performance and dynamically adjust model signal weightings
+#     - Optional: Q-learning or Bayesian tuning for multi-signal ensembles
+
+# ✅ Create execution/order_book_monitor.py
+#     - Connect to OKX order book depth stream
+#     - Track bid/ask imbalance, spread, spoofing signals
+#     - Filter trades when spread > 0.3% or spoofing suspected
+
+# ✅ Create execution/smart_order_executor.py
+#     - Implement TWAP or Iceberg logic to split large orders
+#     - Automatically choose best execution mode based on liquidity
+
+# ✅ Create monitoring/anomaly_detector.py
+#     - Detect when BUY/SELL ratio exceeds thresholds (e.g., >90% BUYs)
+#     - Detect high drawdown streaks or abnormal volume/volatility spikes
+
+# ✅ Update risk_manager.py
+#     - Implement Regime-Based Stop Loss & Take Profit logic
+#     - Use ADX, ATR, and MACD to adapt risk dynamically
+
+# ✅ Create portfolio/rotation_engine.py
+#     - Rank pairs weekly by average P&L or Sharpe ratio
+#     - Allocate capital toward top 10 performers, deallocate from bottom 10
+
+# ✅ Create portfolio/drawdown_guard.py
+#     - Monitor equity curve drawdown over rolling window
+#     - Trigger soft system pause if >8% drawdown over 10 trades
+
+# ✅ Create api/remote_control.py
+#     - Secure endpoint for emergency STOP from mobile or cloud trigger
+#     - Use API key + webhook for secure remote access
+
+# Notes:
+# - Do NOT modify core ML models (predictor.py, ensemble.py)
+# - All new modules must be optional and modular
+# - Ensure logging of all smart modules to separate DB tables
+# - Maintain system uptime and real-time trading during upgrades
+
+# Deployment:
+# Test each module independently
+# Deploy only after passing dry-run simulation
+# Include unit tests for risk and anomaly modules
