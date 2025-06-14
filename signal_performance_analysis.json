@@ -1,0 +1,10 @@
+{
+  "total_trades": 6,
+  "win_rate": 0.8333333333333334,
+  "average_pnl": 2.7634927214650937,
+  "total_pnl": 16.580956328790563,
+  "max_drawdown": 1.1151584458560568,
+  "sharpe_ratio": 17.98774899558761,
+  "sortino_ratio": NaN,
+  "win_loss_ratio": 3.173739990116302
+}
