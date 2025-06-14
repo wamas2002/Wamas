@@ -52,10 +52,6 @@ args = "Dynamic Trading System"
 task = "workflow.run"
 args = "Professional Trading Optimizer"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "System Health Monitor"
-
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -137,15 +133,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python professional_trading_optimizer.py"
-waitForPort = 5000
-
-[[workflows.workflow]]
-name = "System Health Monitor"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python system_monitor_2day_analysis.py"
+waitForPort = 5001
 
 [[ports]]
 localPort = 3000

@@ -895,7 +895,7 @@ def main():
         trading_system.start_professional_trading()
         
         # Start web interface
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host='0.0.0.0', port=5001, debug=False)
         
     except KeyboardInterrupt:
         logger.info("Shutting down professional trading optimizer...")
