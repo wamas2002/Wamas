@@ -44,6 +44,10 @@ args = "Direct Auto Trading"
 task = "workflow.run"
 args = "Enhanced Live Trading - 100 Symbols"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "48-Hour System Monitor"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -109,6 +113,14 @@ author = "agent"
 task = "shell.exec"
 args = "python enhanced_live_trading_system.py"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "48-Hour System Monitor"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python system_monitor_2day_analysis.py"
 
 [[ports]]
 localPort = 3000
