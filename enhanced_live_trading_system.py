@@ -28,13 +28,13 @@ class EnhancedLiveTradingSystem:
         self.exchange = None
         self.is_running = False
         
-        # Trading parameters (aggressive settings)
+        # Trading parameters (optimized for $597 balance)
         self.min_confidence = 70.0
-        self.position_size_pct = 0.05  # 5%
+        self.position_size_pct = 0.08  # 8% for $47+ trades
         self.stop_loss_pct = 12.0
         self.take_profit_pct = 20.0
-        self.min_trade_usd = 3.0
-        self.max_daily_trades = 20
+        self.min_trade_usd = 10.0
+        self.max_daily_trades = 30
         
         # Symbol tracking
         self.symbols = []
