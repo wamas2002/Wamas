@@ -32,7 +32,7 @@ class EnhancedLiveTradingSystem:
         self.min_confidence = 70.0
         self.position_size_pct = 0.08  # 8% for $47+ trades
         self.stop_loss_pct = 12.0
-        self.take_profit_pct = 20.0
+        self.base_take_profit_pct = 8.0  # Base take profit, adjusted by signal strength
         self.min_trade_usd = 10.0
         self.max_daily_trades = 30
         
@@ -312,15 +312,16 @@ class EnhancedLiveTradingSystem:
         return df
     
     def analyze_live_signal(self, symbol: str, df: pd.DataFrame) -> Optional[Dict]:
-        """Analyze live data to generate trading signal"""
+        """Analyze live data to generate BUY/SELL signals"""
         if len(df) < 50:
             return None
         
         latest = df.iloc[-1]
         prev = df.iloc[-2]
         
-        # Enhanced scoring system
-        technical_score = 0
+        # Enhanced scoring system for both BUY and SELL
+        buy_score = 0
+        sell_score = 0
         volume_score = 0
         momentum_score = 0
         signals_list = []
@@ -329,14 +330,17 @@ class EnhancedLiveTradingSystem:
         rsi = latest['rsi']
         if pd.notna(rsi):
             if rsi < 30:
-                technical_score += 25
+                buy_score += 25
                 signals_list.append("RSI oversold")
             elif rsi < 40:
-                technical_score += 15
+                buy_score += 15
                 signals_list.append("RSI bullish")
             elif rsi > 70:
-                technical_score -= 25
+                sell_score += 25
                 signals_list.append("RSI overbought")
+            elif rsi > 60:
+                sell_score += 10
+                signals_list.append("RSI bearish")
         
         # MACD analysis (weight: 20)
         if 'MACD_12_26_9' in df.columns and 'MACDs_12_26_9' in df.columns:
@@ -344,20 +348,32 @@ class EnhancedLiveTradingSystem:
             macd_signal = latest['MACDs_12_26_9']
             if pd.notna(macd) and pd.notna(macd_signal):
                 if macd > macd_signal and prev['MACD_12_26_9'] <= prev['MACDs_12_26_9']:
-                    technical_score += 20
+                    buy_score += 20
                     signals_list.append("MACD bullish crossover")
                 elif macd > macd_signal:
-                    technical_score += 10
+                    buy_score += 10
                     signals_list.append("MACD bullish")
+                elif macd < macd_signal and prev['MACD_12_26_9'] >= prev['MACDs_12_26_9']:
+                    sell_score += 20
+                    signals_list.append("MACD bearish crossover")
+                elif macd < macd_signal:
+                    sell_score += 10
+                    signals_list.append("MACD bearish")
         
         # EMA trend analysis (weight: 20)
         if all(col in df.columns for col in ['ema_9', 'ema_21', 'ema_50']):
             if latest['close'] > latest['ema_9'] > latest['ema_21'] > latest['ema_50']:
-                technical_score += 20
+                buy_score += 20
                 signals_list.append("Strong uptrend")
             elif latest['close'] > latest['ema_9'] > latest['ema_21']:
-                technical_score += 10
+                buy_score += 10
                 signals_list.append("Uptrend")
+            elif latest['close'] < latest['ema_9'] < latest['ema_21'] < latest['ema_50']:
+                sell_score += 20
+                signals_list.append("Strong downtrend")
+            elif latest['close'] < latest['ema_9'] < latest['ema_21']:
+                sell_score += 10
+                signals_list.append("Downtrend")
         
         # Bollinger Bands analysis (weight: 15)
         if 'BBL_20_2.0' in df.columns and 'BBU_20_2.0' in df.columns:
@@ -391,23 +407,44 @@ class EnhancedLiveTradingSystem:
         if latest['close'] > prev['close']:
             price_action_score += 5
         
-        # Calculate final confidence
-        total_score = technical_score + volume_score + momentum_score + price_action_score
-        confidence = min(max(total_score, 0), 100)
+        # Determine signal type and confidence
+        if buy_score > sell_score and buy_score >= 50:
+            signal_type = 'BUY'
+            confidence = min(max(buy_score + volume_score + momentum_score, 0), 100)
+            # Dynamic take profit based on signal strength
+            take_profit_pct = self.base_take_profit_pct + (confidence - 70) * 0.2  # 8% + boost for high confidence
+            take_profit_pct = max(5, min(take_profit_pct, 15))  # Cap between 5-15%
+            
+        elif sell_score > buy_score and sell_score >= 50:
+            signal_type = 'SELL'
+            confidence = min(max(sell_score + volume_score + momentum_score, 0), 100)
+            take_profit_pct = self.base_take_profit_pct + (confidence - 70) * 0.2
+            take_profit_pct = max(5, min(take_profit_pct, 15))
+        else:
+            return None  # No clear signal
         
         # Only generate signal if confidence meets threshold
         if confidence >= self.min_confidence:
+            if signal_type == 'BUY':
+                target_price = float(latest['close'] * (1 + take_profit_pct / 100))
+                stop_loss = float(latest['close'] * (1 - self.stop_loss_pct / 100))
+            else:  # SELL
+                target_price = float(latest['close'] * (1 - take_profit_pct / 100))
+                stop_loss = float(latest['close'] * (1 + self.stop_loss_pct / 100))
+            
             signal = {
                 'timestamp': datetime.now().isoformat(),
                 'symbol': symbol,
-                'signal_type': 'BUY',
+                'signal_type': signal_type,
                 'confidence': confidence,
                 'price': float(latest['close']),
-                'target_price': float(latest['close'] * (1 + self.take_profit_pct / 100)),
-                'stop_loss': float(latest['close'] * (1 - self.stop_loss_pct / 100)),
+                'target_price': target_price,
+                'stop_loss': stop_loss,
+                'take_profit_pct': take_profit_pct,
                 'volume_24h': float(latest['volume']),
                 'rsi': float(rsi) if pd.notna(rsi) else None,
-                'technical_score': technical_score,
+                'buy_score': buy_score,
+                'sell_score': sell_score,
                 'volume_score': volume_score,
                 'momentum_score': momentum_score,
                 'signals': signals_list
@@ -457,8 +494,26 @@ class EnhancedLiveTradingSystem:
             # Precision adjustment
             quantity = self.exchange.amount_to_precision(symbol, quantity)
             
-            # Execute market buy order
-            order = self.exchange.create_market_buy_order(symbol, float(quantity))
+            # Execute order based on signal type
+            if signal['signal_type'] == 'BUY':
+                order = self.exchange.create_market_buy_order(symbol, float(quantity))
+                side = 'BUY'
+            else:  # SELL signal - check if we have position to sell
+                # Get current holdings
+                balance = self.exchange.fetch_balance()
+                base_currency = symbol.split('/')[0]
+                available_amount = float(balance.get(base_currency, {}).get('free', 0))
+                
+                if available_amount >= min_amount:
+                    # Use available amount or calculated quantity, whichever is smaller
+                    sell_quantity = min(available_amount, float(quantity))
+                    sell_quantity = self.exchange.amount_to_precision(symbol, sell_quantity)
+                    order = self.exchange.create_market_sell_order(symbol, float(sell_quantity))
+                    quantity = sell_quantity
+                    side = 'SELL'
+                else:
+                    logger.warning(f"Insufficient {base_currency} balance for SELL signal: {available_amount}")
+                    return False
             
             # Record execution
             self.executed_signals.add(signal_key)
@@ -466,18 +521,19 @@ class EnhancedLiveTradingSystem:
             trade_record = {
                 'timestamp': datetime.now().isoformat(),
                 'symbol': symbol,
-                'side': 'BUY',
+                'side': side,
                 'amount': float(quantity),
                 'price': current_price,
                 'order_id': order.get('id', ''),
                 'confidence': signal['confidence'],
                 'status': 'EXECUTED',
-                'signal_id': signal.get('id')
+                'signal_id': signal.get('id'),
+                'take_profit_pct': signal.get('take_profit_pct', self.base_take_profit_pct)
             }
             
             self.save_live_trade(trade_record)
             
-            logger.info(f"✅ LIVE TRADE EXECUTED: BUY {quantity} {symbol} @ ${current_price:.6f} ({signal['confidence']:.1f}%)")
+            logger.info(f"✅ LIVE TRADE EXECUTED: {side} {quantity} {symbol} @ ${current_price:.6f} ({signal['confidence']:.1f}%, TP: {signal.get('take_profit_pct', self.base_take_profit_pct):.1f}%)")
             return True
             
         except Exception as e:
