@@ -26,10 +26,6 @@ args = "Live Trading System"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Dynamic Optimizer"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Advanced Futures Trading"
 
 [[workflows.workflow.tasks]]
@@ -56,6 +52,10 @@ args = "Professional Trading Optimizer"
 task = "workflow.run"
 args = "Enhanced AI Trading Dashboard"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Intelligent Trading Control Center"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -80,14 +80,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
-
-[[workflows.workflow]]
-name = "Dynamic Optimizer"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python dynamic_optimization_dashboard.py"
 
 [[workflows.workflow]]
 name = "Advanced Futures Trading"
@@ -147,6 +139,15 @@ author = "agent"
 task = "shell.exec"
 args = "python enhanced_trading_dashboard.py"
 waitForPort = 5002
+
+[[workflows.workflow]]
+name = "Intelligent Trading Control Center"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python intelligent_trading_control_center.py"
+waitForPort = 6000
 
 [[ports]]
 localPort = 3000

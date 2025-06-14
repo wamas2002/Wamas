@@ -10,8 +10,9 @@ import time
 import json
 import logging
 import sqlite3
+import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import os
 import threading
 
