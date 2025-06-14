@@ -1,0 +1,62 @@
+# ✅ Replit Agent Prompt — Smart Non-Destructive Enhancements
+
+🎯 Objective:
+Upgrade the current AI trading system by adding adaptive logic to reduce BUY bias during bear markets, introduce proper SELL signal generation, and implement a feedback-based self-assessment layer — all without altering the existing ML models or core trading loop.
+
+---
+
+📈 PART 1: Market Context-Aware BUY Filtering
+
+• Update `ai/market_regime_detector.py`:
+  - Use a combination of ADX, MACD trend slope, and EMA angle to determine market regime
+  - If market is bearish → reduce confidence score of BUY signals by 20%
+  - If sideways → discard signals with confidence < 75%
+
+• Modify `ai/signal_filter.py`:
+  - Apply a “market context penalty” layer
+  - Block long entries during bear trend unless confidence > 80%
+
+---
+
+📉 PART 2: SELL Signal Generation Module
+
+• Add new file: `ai/sell_signal_generator.py`:
+  - Generate SELL signals using:
+    - Negative MACD cross
+    - RSI < 40
+    - EMA50 downward cross
+  - Add optional trailing stop exit on profitable trades
+
+• Connect SELL signals to the execution engine with identical confidence filtering logic
+
+---
+
+📊 PART 3: Feedback Learning (Performance Self-Awareness)
+
+• Create: `feedback/feedback_logger.py`
+  - Log every executed trade with:
+    - Signal ID, confidence, market regime, result (win/loss), timing
+  - Save to SQLite or CSV format for weekly analysis
+
+• Create: `feedback/feedback_analyzer.py`
+  - Analyze which signals consistently fail/succeed
+  - Derive human-readable rules like:
+    - “Avoid MACD cross signals when volume < average”
+    - “Reduce confidence if RSI is between 45–55 in sideways markets”
+
+---
+
+🧠 PART 4: Dashboard Enhancement (Insight Layer)
+
+• Add a new tab or widget called **"AI Insights"**
+  - Display current detected market regime
+  - Show recent signal accuracy over last 25 trades
+  - Alert if BUY/SELL ratio is skewed (e.g. 90% BUYs)
+  - Visualize system confidence and execution success rate
+
+---
+
+⚠️ Note:
+DO NOT touch existing ML models (Random Forest, Gradient Boosting, etc.)
+DO NOT modify execution flow or database schema
+Only use modular wrappers and new files in `ai/`, `feedback/`, and `dashboard/`

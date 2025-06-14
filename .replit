@@ -52,6 +52,10 @@ args = "Dynamic Trading System"
 task = "workflow.run"
 args = "Professional Trading Optimizer"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Enhanced AI Trading Dashboard"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -134,6 +138,15 @@ author = "agent"
 task = "shell.exec"
 args = "python professional_trading_optimizer.py"
 waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Enhanced AI Trading Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python enhanced_trading_dashboard.py"
+waitForPort = 5002
 
 [[ports]]
 localPort = 3000
