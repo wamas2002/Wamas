@@ -44,6 +44,7 @@ class ProductionEliteDashboard:
             'performance': None,
             'last_update': None
         }
+        self.exchange = None
         self.initialize_connections()
 
     def initialize_connections(self):
@@ -55,7 +56,7 @@ class ProductionEliteDashboard:
             passphrase = os.getenv('OKX_PASSPHRASE')
 
             if all([api_key, secret_key, passphrase]):
-                self.okx_exchange = ccxt.okx({
+                self.exchange = ccxt.okx({
                     'apiKey': api_key,
                     'secret': secret_key,
                     'password': passphrase,
@@ -65,7 +66,7 @@ class ProductionEliteDashboard:
                 })
 
                 # Test connection
-                balance = self.okx_exchange.fetch_balance()
+                balance = self.exchange.fetch_balance()
                 self.connection_status['okx'] = True
                 print("OKX connection established successfully")
             else:
@@ -577,43 +578,40 @@ def get_dashboard_data():
     try:
         # Get real OKX data
         # Placeholder for actual OKX exchange setup
-        class MockExchange:  # Mock Exchange Class
-            def fetch_balance(self):
-                return {'USDT': {'total': 10000}}
+        # Use real OKX exchange connection
+        if not dashboard.exchange:
+            return jsonify({'error': 'OKX connection unavailable'}), 500
 
-            def fetch_positions(self):
-                return []
+        # Fetch authentic balance data
+        balance_info = dashboard.exchange.fetch_balance()
+        total_balance = float(balance_info.get('USDT', {}).get('total', 0))
 
-        exchange = MockExchange()
-        # exchange = get_okx_exchange()
-        if not exchange:
-            return jsonify({'error': 'Exchange connection failed'}), 500
+        # Get authentic positions
+        positions = dashboard.exchange.fetch_positions()
+        active_positions = [p for p in positions if float(p.get('contracts', 0)) > 0]
 
-        # Fetch live balance
-        balance_info = exchange.fetch_balance()
-        total_balance = balance_info.get('USDT', {}).get('total', 0)
+        # Calculate authentic P&L
+        total_pnl = sum(float(pos.get('unrealizedPnl', 0)) for pos in active_positions)
 
-        # Get live positions
-        positions = exchange.fetch_positions()
-        active_positions = [p for p in positions if p['size'] > 0]
+        # Get authentic market signals
+        signals = dashboard.get_trading_signals()
 
-        # Calculate P&L from positions
-        total_pnl = sum(pos.get('unrealizedPnl', 0) for pos in active_positions)
-
-        # Get recent signals from database
-        signals = get_recent_signals()
-
-        # Get top performing pairs
+        # Get authentic top pairs
         top_pairs = get_top_pairs()
 
-        # Calculate stats
+        # Calculate authentic performance stats
+        win_count = len([p for p in active_positions if float(p.get('unrealizedPnl', 0)) > 0])
+        total_positions = len(active_positions) if active_positions else 1
+        win_rate = (win_count / total_positions) * 100
+        daily_return = (total_pnl / total_balance * 100) if total_balance > 0 else 0
+        
         stats = {
-            'daily_return': '+3.82%',
-            'win_rate': '83.3%',
-            'volatility': 'High'
+            'daily_return': f"{daily_return:+.2f}%",
+            'win_rate': f"{win_rate:.1f}%",
+            'volatility': 'Low' if abs(daily_return) < 1 else 'Medium' if abs(daily_return) < 3 else 'High'
         }
 
-        # Generate events
+        # Generate authentic events
         events = get_recent_events()
 
         dashboard_data = {
@@ -721,8 +719,6 @@ def get_recent_events():
     except Exception:
         pass
     return []
-        {'time': '02:55', 'event': 'Executing BUY order...'}
-    ]
 
 if __name__ == '__main__':
     print("🚀 Starting Production Elite Trading Dashboard")
