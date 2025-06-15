@@ -247,12 +247,12 @@
                 <h1 class="text-2xl font-bold gradient-text">Elites Trading Dashboard</h1>
             </div>
             <nav class="flex space-x-6">
-                <a href="#" class="text-gray-300 hover:text-white transition-colors">Portfolio</a>
-                <a href="#" class="text-gray-300 hover:text-white transition-colors">AI Insights</a>
-                <a href="#" class="text-gray-300 hover:text-white transition-colors">Analytics</a>
-                <a href="#" class="text-gray-300 hover:text-white transition-colors">Strategy</a>
-                <a href="#" class="text-gray-300 hover:text-white transition-colors">Builder</a>
-                <a href="#" class="text-gray-300 hover:text-white transition-colors">Control</a>
+                <a href="/portfolio" class="text-gray-300 hover:text-white transition-colors">Portfolio</a>
+                <a href="/strategy" class="text-gray-300 hover:text-white transition-colors">AI Insights</a>
+                <a href="/analytics" class="text-gray-300 hover:text-white transition-colors">Analytics</a>
+                <a href="/ai-panel" class="text-gray-300 hover:text-white transition-colors">Strategy</a>
+                <a href="/live-trading" class="text-gray-300 hover:text-white transition-colors">Builder</a>
+                <a href="/settings" class="text-gray-300 hover:text-white transition-colors">Control</a>
                 <button class="text-gray-300 hover:text-white transition-colors">🌙</button>
             </nav>
         </div>
@@ -390,20 +390,25 @@
                         </select>
                     </div>
                     <div class="filter-group">
+                        <label>Market Type</label>
+                        <select class="filter-select" id="market-filter" onchange="filterSignals()">
+                            <option value="">All</option>
+                            <option value="spot">🟢 Spot</option>
+                            <option value="futures">⚡ Futures</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Direction</label>
+                        <select class="filter-select" id="direction-filter" onchange="filterSignals()">
+                            <option value="">All</option>
+                            <option value="long">🔼 Long</option>
+                            <option value="short">🔽 Short</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
                         <label>Confidence</label>
                         <input type="range" class="filter-range" id="confidence-filter" min="50" max="100" value="70" onchange="filterSignals()">
                         <span class="text-xs" id="confidence-display">70%+</span>
-                    </div>
-                    <div class="filter-group">
-                        <label>Type</label>
-                        <div class="flex gap-2">
-                            <label class="flex items-center text-xs">
-                                <input type="checkbox" class="mr-1" id="buy-filter" checked onchange="filterSignals()"> BUY
-                            </label>
-                            <label class="flex items-center text-xs">
-                                <input type="checkbox" class="mr-1" id="sell-filter" checked onchange="filterSignals()"> SELL
-                            </label>
-                        </div>
                     </div>
                 </div>
                 
@@ -565,21 +570,29 @@
             }
         }
 
-        // Update signal log
+        // Update signal log with enhanced structure
         function updateSignalLog(signals) {
             const signalLogEl = document.getElementById('signal-log');
-            signalLogEl.innerHTML = signals.map(signal => `
-                <div class="flex items-center justify-between">
+            signalLogEl.innerHTML = signals.map(signal => {
+                const marketBadge = signal.market_type === 'futures' ? '⚡' : '🟢';
+                const directionIcon = signal.trade_direction === 'long' ? '🔼' : 
+                                    signal.trade_direction === 'short' ? '🔽' : '';
+                
+                return `
+                <div class="flex items-center justify-between mb-2 p-2 rounded-lg bg-gray-800">
                     <div class="flex items-center space-x-2">
                         <span class="text-xs text-gray-400">${signal.time}</span>
                         <span class="px-2 py-1 text-xs rounded ${signal.color === 'success' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
                             ${signal.action}
                         </span>
-                        <span class="text-xs">${signal.symbol}</span>
+                        <span class="text-xs">${signal.symbol || signal.base_symbol}</span>
+                        <span class="text-xs">${marketBadge}</span>
+                        <span class="text-xs">${directionIcon}</span>
                     </div>
                     <span class="text-xs neon-green">▲ ${signal.confidence}</span>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Update top pairs
@@ -666,22 +679,24 @@
             }, 3000);
         }
         
-        // Signal filtering functions
+        // Enhanced signal filtering functions
         let allSignals = [];
         
         function filterSignals() {
             const symbolFilter = document.getElementById('symbol-filter').value;
+            const marketFilter = document.getElementById('market-filter').value;
+            const directionFilter = document.getElementById('direction-filter').value;
             const confidenceFilter = parseInt(document.getElementById('confidence-filter').value);
-            const buyFilter = document.getElementById('buy-filter').checked;
-            const sellFilter = document.getElementById('sell-filter').checked;
             
             document.getElementById('confidence-display').textContent = `${confidenceFilter}%+`;
             
             const filteredSignals = allSignals.filter(signal => {
-                const symbolMatch = !symbolFilter || signal.symbol.includes(symbolFilter);
+                const symbolMatch = !symbolFilter || (signal.symbol || signal.base_symbol || '').includes(symbolFilter);
+                const marketMatch = !marketFilter || signal.market_type === marketFilter;
+                const directionMatch = !directionFilter || signal.trade_direction === directionFilter;
                 const confidenceMatch = parseInt(signal.confidence) >= confidenceFilter;
-                const typeMatch = (signal.action === 'BUY' && buyFilter) || (signal.action === 'SELL' && sellFilter);
-                return symbolMatch && confidenceMatch && typeMatch;
+                
+                return symbolMatch && marketMatch && directionMatch && confidenceMatch;
             });
             
             updateSignalLog(filteredSignals);
