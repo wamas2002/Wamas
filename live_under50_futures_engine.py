@@ -296,17 +296,34 @@ class LiveUnder50FuturesEngine:
                 logger.error(f"Insufficient balance for trade: ${balance:.2f}")
                 return False
             
-            # Calculate position size (conservative for live trading)
-            max_position_value = balance * self.max_position_size
+            # Ultra-conservative position sizing for margin requirements
+            # Only use 1% of balance per trade to avoid margin issues
+            trade_amount = balance * 0.01  # $0.91 per trade
             
-            # Further reduce position size for margin requirements
-            # Use only 1% of balance for micro positions
-            conservative_position_value = min(max_position_value, balance * 0.01)
-            position_size = conservative_position_value / signal['price']
+            # Calculate position size directly from trade amount
+            position_size = trade_amount / signal['price']
             
-            # Ensure minimum position size requirements
-            if position_size < 1:
-                position_size = 1
+            # Ensure minimum position size (1 unit)
+            if position_size < 1.0:
+                position_size = 1.0
+                trade_amount = position_size * signal['price']
+            
+            # Calculate required margin (position value / leverage)
+            required_margin = trade_amount / signal['leverage']
+            
+            # Safety check: ensure margin doesn't exceed 5% of balance
+            if required_margin > balance * 0.05:
+                # Reduce leverage to 1x if needed
+                signal['leverage'] = 1
+                required_margin = trade_amount
+                
+                # If still too large, reduce position size
+                if required_margin > balance * 0.05:
+                    trade_amount = balance * 0.05
+                    position_size = trade_amount / signal['price']
+                    required_margin = trade_amount
+            
+            logger.info(f"Conservative sizing - Balance: ${balance:.2f}, Trade: ${trade_amount:.2f}, Margin: ${required_margin:.2f}, Size: {position_size:.4f}, Leverage: {signal['leverage']}x")
             
             # Set leverage
             try:
@@ -332,7 +349,7 @@ class LiveUnder50FuturesEngine:
                        f"Leverage: {signal['leverage']}x (Order ID: {order_id})")
             
             # Set stop loss and take profit
-            self.set_stop_loss_take_profit(signal, order_id, entry_price)
+            self.set_stop_loss_take_profit(signal, order_id, entry_price, position_size)
             
             # Save to database
             self.save_live_position(signal, order_id, entry_price, position_size)
@@ -348,50 +365,80 @@ class LiveUnder50FuturesEngine:
             self.log_action("TRADE_FAILED", signal.get('symbol', 'UNKNOWN'), str(e), False, str(e))
             return False
     
-    def set_stop_loss_take_profit(self, signal: Dict, order_id: str, entry_price: float):
-        """Set stop loss and take profit orders"""
+    def set_stop_loss_take_profit(self, signal: Dict, order_id: str, entry_price: float, position_size: float):
+        """Set stop loss and take profit orders with proper position sizing"""
         try:
             symbol = signal['symbol']
-            position_size = self.get_position_size(symbol)
+            
+            # Get market info for minimum order size
+            market = self.exchange.markets.get(symbol)
+            if not market:
+                logger.warning(f"Market info not found for {symbol}, skipping SL/TP")
+                return
+            
+            min_amount = market.get('limits', {}).get('amount', {}).get('min', 1.0)
+            amount_precision = market.get('precision', {}).get('amount', 4)
+            
+            # Round position size to market precision
+            rounded_position_size = round(position_size, int(amount_precision))
+            
+            # Ensure position size meets minimum requirements
+            if rounded_position_size < min_amount:
+                logger.warning(f"Position size {rounded_position_size} below minimum {min_amount} for {symbol}")
+                return
             
             if signal['signal'] == 'LONG':
-                # Stop loss (sell)
-                sl_order = self.exchange.create_order(
-                    symbol=symbol,
-                    type='stop',
-                    side='sell',
-                    amount=position_size,
-                    price=signal['stop_loss']
-                )
+                # Stop loss (sell) - use stop market order for better execution
+                try:
+                    sl_order = self.exchange.create_order(
+                        symbol=symbol,
+                        type='market',
+                        side='sell',
+                        amount=rounded_position_size,
+                        params={'stopPrice': signal['stop_loss'], 'triggerDirection': 'below'}
+                    )
+                    logger.info(f"Stop loss set at {signal['stop_loss']:.6f} for {symbol}")
+                except Exception as e:
+                    logger.warning(f"Failed to set stop loss: {e}")
                 
-                # Take profit (sell)
-                tp_order = self.exchange.create_order(
-                    symbol=symbol,
-                    type='limit',
-                    side='sell',
-                    amount=position_size,
-                    price=signal['take_profit']
-                )
+                # Take profit (sell) - use limit order
+                try:
+                    tp_order = self.exchange.create_order(
+                        symbol=symbol,
+                        type='limit',
+                        side='sell',
+                        amount=rounded_position_size,
+                        price=signal['take_profit']
+                    )
+                    logger.info(f"Take profit set at {signal['take_profit']:.6f} for {symbol}")
+                except Exception as e:
+                    logger.warning(f"Failed to set take profit: {e}")
             else:
-                # Stop loss (buy)
-                sl_order = self.exchange.create_order(
-                    symbol=symbol,
-                    type='stop',
-                    side='buy',
-                    amount=position_size,
-                    price=signal['stop_loss']
-                )
+                # Stop loss (buy) - for short positions
+                try:
+                    sl_order = self.exchange.create_order(
+                        symbol=symbol,
+                        type='market',
+                        side='buy',
+                        amount=rounded_position_size,
+                        params={'stopPrice': signal['stop_loss'], 'triggerDirection': 'above'}
+                    )
+                    logger.info(f"Stop loss set at {signal['stop_loss']:.6f} for {symbol}")
+                except Exception as e:
+                    logger.warning(f"Failed to set stop loss: {e}")
                 
-                # Take profit (buy)
-                tp_order = self.exchange.create_order(
-                    symbol=symbol,
-                    type='limit',
-                    side='buy',
-                    amount=position_size,
-                    price=signal['take_profit']
-                )
-            
-            logger.info(f"Set SL: {signal['stop_loss']:.6f} TP: {signal['take_profit']:.6f} for {symbol}")
+                # Take profit (buy) - for short positions
+                try:
+                    tp_order = self.exchange.create_order(
+                        symbol=symbol,
+                        type='limit',
+                        side='buy',
+                        amount=rounded_position_size,
+                        price=signal['take_profit']
+                    )
+                    logger.info(f"Take profit set at {signal['take_profit']:.6f} for {symbol}")
+                except Exception as e:
+                    logger.warning(f"Failed to set take profit: {e}")
             
         except Exception as e:
             logger.error(f"Failed to set SL/TP for {symbol}: {e}")
@@ -401,12 +448,12 @@ class LiveUnder50FuturesEngine:
         try:
             positions = self.exchange.fetch_positions([symbol])
             for position in positions:
-                if position['symbol'] == symbol and position['size'] > 0:
-                    return position['size']
-            return 0
+                if position['symbol'] == symbol and position.get('contracts', 0) > 0:
+                    return float(position.get('contracts', 0))
+            return 0.0
         except Exception as e:
             logger.error(f"Failed to get position size for {symbol}: {e}")
-            return 0
+            return 0.0
     
     def save_live_position(self, signal: Dict, order_id: str, entry_price: float, position_size: float):
         """Save live position to database"""

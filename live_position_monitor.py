@@ -1,257 +1,284 @@
 #!/usr/bin/env python3
 """
-Live Position Monitor with SELL Order Capabilities
-Real-time monitoring of positions with automatic stop-loss and profit-taking
+Live Position Monitor
+Real-time tracking of live futures positions with P&L analysis
 """
 
-import os
 import ccxt
+import os
 import sqlite3
-from datetime import datetime
+import logging
+import pandas as pd
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import time
 
-def analyze_current_positions():
-    """Analyze current positions for SELL opportunities"""
-    exchange = ccxt.okx({
-        'apiKey': os.environ.get('OKX_API_KEY'),
-        'secret': os.environ.get('OKX_SECRET_KEY'),
-        'password': os.environ.get('OKX_PASSPHRASE'),
-        'sandbox': False,
-        'rateLimit': 2000,
-        'enableRateLimit': True,
-    })
-    
-    print("LIVE POSITION ANALYSIS WITH SELL CAPABILITIES")
-    print("=" * 55)
-    
-    balance = exchange.fetch_balance()
-    usdt_balance = float(balance['USDT']['free'])
-    print(f"USDT Balance: ${usdt_balance:.2f}")
-    
-    positions_with_sell_signals = []
-    
-    # Analyze each cryptocurrency position
-    for currency in ['BTC', 'ETH', 'SOL', 'DOGE', 'ADA']:
-        if currency in balance and balance[currency]['free'] > 0:
-            amount = float(balance[currency]['free'])
-            symbol = f"{currency}/USDT"
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class LivePositionMonitor:
+    def __init__(self):
+        self.exchange = None
+        self.db_path = 'live_trading_positions.db'
+        self.initialize_exchange()
+        self.setup_database()
+
+    def initialize_exchange(self):
+        """Initialize OKX exchange for live monitoring"""
+        try:
+            self.exchange = ccxt.okx({
+                'apiKey': os.environ.get('OKX_API_KEY'),
+                'secret': os.environ.get('OKX_SECRET_KEY'),
+                'password': os.environ.get('OKX_PASSPHRASE'),
+                'sandbox': False,
+                'enableRateLimit': True,
+            })
+            self.exchange.load_markets()
+            logger.info("Live position monitor connected to OKX")
+        except Exception as e:
+            logger.error(f"Failed to initialize exchange: {e}")
+
+    def setup_database(self):
+        """Setup position monitoring database"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
             
-            try:
-                ticker = exchange.fetch_ticker(symbol)
-                current_price = float(ticker['last'])
-                position_value = amount * current_price
-                
-                # Get entry price from database
-                entry_price = get_weighted_entry_price(symbol, amount)
-                
-                if entry_price and position_value > 1:  # Only analyze meaningful positions
-                    profit_pct = ((current_price - entry_price) / entry_price) * 100
-                    profit_usdt = (current_price - entry_price) * amount
-                    
-                    # Calculate stop-loss and profit targets
-                    stop_loss_price = entry_price * 0.98  # 2% stop-loss
-                    profit_target_quick = entry_price * 1.015  # 1.5% profit
-                    profit_target_medium = entry_price * 1.03   # 3% profit
-                    profit_target_high = entry_price * 1.05    # 5% profit
-                    
-                    print(f"\n{symbol} Position Analysis:")
-                    print(f"  Holdings: {amount:.6f} {currency}")
-                    print(f"  Entry Price: ${entry_price:.4f}")
-                    print(f"  Current Price: ${current_price:.4f}")
-                    print(f"  Position Value: ${position_value:.2f}")
-                    print(f"  Profit/Loss: {profit_pct:+.2f}% (${profit_usdt:+.2f})")
-                    print(f"  Stop-Loss: ${stop_loss_price:.4f}")
-                    
-                    # Check SELL conditions
-                    sell_action = None
-                    
-                    if current_price <= stop_loss_price:
-                        sell_action = {
-                            'type': 'STOP_LOSS',
-                            'reason': 'Price hit stop-loss level',
-                            'sell_percentage': 100,
-                            'priority': 'CRITICAL'
-                        }
-                    elif current_price >= profit_target_high:
-                        sell_action = {
-                            'type': 'PROFIT_HIGH',
-                            'reason': 'High profit target reached (5%)',
-                            'sell_percentage': 75,
-                            'priority': 'HIGH'
-                        }
-                    elif current_price >= profit_target_medium:
-                        sell_action = {
-                            'type': 'PROFIT_MEDIUM',
-                            'reason': 'Medium profit target reached (3%)',
-                            'sell_percentage': 50,
-                            'priority': 'MEDIUM'
-                        }
-                    elif current_price >= profit_target_quick:
-                        sell_action = {
-                            'type': 'PROFIT_QUICK',
-                            'reason': 'Quick profit target reached (1.5%)',
-                            'sell_percentage': 25,
-                            'priority': 'LOW'
-                        }
-                    
-                    if sell_action:
-                        sell_amount = amount * (sell_action['sell_percentage'] / 100)
-                        estimated_proceeds = sell_amount * current_price
-                        
-                        sell_action.update({
-                            'symbol': symbol,
-                            'currency': currency,
-                            'current_price': current_price,
-                            'sell_amount': sell_amount,
-                            'estimated_proceeds': estimated_proceeds,
-                            'profit_pct': profit_pct
-                        })
-                        
-                        positions_with_sell_signals.append(sell_action)
-                        
-                        priority_icon = "🚨" if sell_action['priority'] == 'CRITICAL' else "💰"
-                        print(f"  {priority_icon} SELL SIGNAL: {sell_action['type']}")
-                        print(f"     Action: SELL {sell_action['sell_percentage']}% ({sell_amount:.6f} {currency})")
-                        print(f"     Proceeds: ${estimated_proceeds:.2f}")
-                        print(f"     Reason: {sell_action['reason']}")
-                    else:
-                        print(f"  ✅ HOLD - No sell conditions met")
-                        print(f"     Next target: ${profit_target_quick:.4f} (1.5% profit)")
-                
-            except Exception as e:
-                print(f"Error analyzing {symbol}: {e}")
-    
-    return positions_with_sell_signals
-
-def get_weighted_entry_price(symbol, current_amount):
-    """Calculate weighted average entry price from trade history"""
-    try:
-        conn = sqlite3.connect('live_trading.db')
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT amount, price FROM live_trades 
-            WHERE symbol = ? AND side = 'buy' 
-            ORDER BY timestamp DESC LIMIT 20
-        ''', (symbol,))
-        
-        trades = cursor.fetchall()
-        conn.close()
-        
-        if not trades:
-            return None
-        
-        total_amount = 0
-        total_cost = 0
-        
-        for trade_amount, trade_price in trades:
-            amount_to_use = min(float(trade_amount), current_amount - total_amount)
-            if amount_to_use <= 0:
-                break
-                
-            total_amount += amount_to_use
-            total_cost += amount_to_use * float(trade_price)
+            # Create position tracking table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS position_tracking (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    position_id TEXT,
+                    side TEXT NOT NULL,
+                    entry_price REAL NOT NULL,
+                    position_size REAL NOT NULL,
+                    leverage INTEGER NOT NULL,
+                    entry_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    current_price REAL,
+                    unrealized_pnl REAL,
+                    percentage_change REAL,
+                    status TEXT DEFAULT 'OPEN',
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
             
-            if total_amount >= current_amount:
-                break
-        
-        return total_cost / total_amount if total_amount > 0 else None
-        
-    except Exception:
-        return None
+            conn.commit()
+            conn.close()
+            logger.info("Position monitoring database ready")
+        except Exception as e:
+            logger.error(f"Database setup failed: {e}")
 
-def demonstrate_sell_execution(sell_signals):
-    """Demonstrate how SELL orders would be executed"""
-    if not sell_signals:
-        print("\n📊 SELL ORDER STATUS")
-        print("=" * 30)
-        print("No SELL conditions triggered at current prices")
-        print("System continues monitoring for:")
-        print("  • Stop-loss: 2% below entry price")
-        print("  • Quick profit: 1.5% above entry price")
-        print("  • Medium profit: 3% above entry price")
-        print("  • High profit: 5% above entry price")
-        return
-    
-    print(f"\n🎯 SELL ORDER EXECUTION PLAN")
-    print("=" * 40)
-    
-    # Sort by priority
-    priority_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
-    sell_signals.sort(key=lambda x: priority_order[x['priority']])
-    
-    total_proceeds = 0
-    
-    for i, signal in enumerate(sell_signals, 1):
-        print(f"{i}. {signal['symbol']} - {signal['type']}")
-        print(f"   Priority: {signal['priority']}")
-        print(f"   Reason: {signal['reason']}")
-        print(f"   Action: SELL {signal['sell_amount']:.6f} {signal['currency']}")
-        print(f"   Price: ${signal['current_price']:.4f}")
-        print(f"   Proceeds: ${signal['estimated_proceeds']:.2f}")
-        print(f"   P&L: {signal['profit_pct']:+.2f}%")
-        print(f"   Command: exchange.create_market_sell_order('{signal['symbol']}', {signal['sell_amount']:.6f})")
-        print()
-        
-        total_proceeds += signal['estimated_proceeds']
-    
-    print(f"Total Estimated Proceeds: ${total_proceeds:.2f}")
+    def get_current_balance(self) -> float:
+        """Get current USDT balance"""
+        try:
+            balance = self.exchange.fetch_balance()
+            return float(balance['USDT']['total'])
+        except Exception as e:
+            logger.error(f"Failed to fetch balance: {e}")
+            return 0.0
 
-def check_recent_sell_activity():
-    """Check for recent SELL order executions"""
-    try:
-        conn = sqlite3.connect('live_trading.db')
-        cursor = conn.cursor()
-        
-        # Check for any sell trades
-        cursor.execute('''
-            SELECT symbol, side, amount, price, timestamp 
-            FROM live_trades 
-            WHERE side = 'sell' 
-            ORDER BY timestamp DESC LIMIT 10
-        ''')
-        
-        sell_trades = cursor.fetchall()
-        
-        if sell_trades:
-            print(f"\n📈 RECENT SELL ACTIVITY")
-            print("=" * 30)
-            for trade in sell_trades:
-                symbol, side, amount, price, timestamp = trade
-                proceeds = float(amount) * float(price)
-                print(f"  {timestamp[:19]} | SELL {float(amount):.6f} {symbol} @ ${float(price):.4f} = ${proceeds:.2f}")
-        else:
-            print(f"\n📊 SELL HISTORY")
-            print("=" * 20)
-            print("No SELL orders executed yet")
-            print("System ready to execute when conditions are met")
-        
-        conn.close()
-        
-    except Exception:
-        print("No trading history available")
+    def get_live_positions(self) -> List[Dict]:
+        """Get all live futures positions"""
+        try:
+            positions = self.exchange.fetch_positions()
+            live_positions = []
+            
+            for position in positions:
+                if position['contracts'] and float(position['contracts']) > 0:
+                    live_positions.append({
+                        'symbol': position['symbol'],
+                        'side': position['side'],
+                        'size': float(position['contracts']),
+                        'entry_price': float(position['entryPrice']) if position['entryPrice'] else 0,
+                        'mark_price': float(position['markPrice']) if position['markPrice'] else 0,
+                        'unrealized_pnl': float(position['unrealizedPnl']) if position['unrealizedPnl'] else 0,
+                        'percentage': float(position['percentage']) if position['percentage'] else 0,
+                        'leverage': position.get('leverage', 1),
+                        'notional': float(position['notional']) if position['notional'] else 0
+                    })
+            
+            return live_positions
+        except Exception as e:
+            logger.error(f"Failed to fetch positions: {e}")
+            return []
+
+    def update_position_tracking(self, positions: List[Dict]):
+        """Update position tracking in database"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            for pos in positions:
+                # Check if position exists
+                cursor.execute('''
+                    SELECT id FROM position_tracking 
+                    WHERE symbol = ? AND status = 'OPEN'
+                ''', (pos['symbol'],))
+                
+                existing = cursor.fetchone()
+                
+                if existing:
+                    # Update existing position
+                    cursor.execute('''
+                        UPDATE position_tracking 
+                        SET current_price = ?, unrealized_pnl = ?, 
+                            percentage_change = ?, last_updated = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    ''', (pos['mark_price'], pos['unrealized_pnl'], 
+                          pos['percentage'], existing[0]))
+                else:
+                    # Insert new position
+                    cursor.execute('''
+                        INSERT INTO position_tracking 
+                        (symbol, side, entry_price, position_size, leverage, 
+                         current_price, unrealized_pnl, percentage_change)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (pos['symbol'], pos['side'], pos['entry_price'], 
+                          pos['size'], pos['leverage'], pos['mark_price'], 
+                          pos['unrealized_pnl'], pos['percentage']))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Failed to update position tracking: {e}")
+
+    def calculate_portfolio_performance(self) -> Dict:
+        """Calculate overall portfolio performance"""
+        try:
+            positions = self.get_live_positions()
+            balance = self.get_current_balance()
+            
+            total_unrealized_pnl = sum(pos['unrealized_pnl'] for pos in positions)
+            total_notional = sum(pos['notional'] for pos in positions)
+            
+            performance = {
+                'current_balance': balance,
+                'active_positions': len(positions),
+                'total_unrealized_pnl': total_unrealized_pnl,
+                'total_notional': total_notional,
+                'portfolio_percentage': (total_unrealized_pnl / balance * 100) if balance > 0 else 0,
+                'positions': positions,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            return performance
+        except Exception as e:
+            logger.error(f"Failed to calculate performance: {e}")
+            return {}
+
+    def get_position_history(self, hours: int = 24) -> List[Dict]:
+        """Get position history from database"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            since_time = datetime.now() - timedelta(hours=hours)
+            
+            df = pd.read_sql_query('''
+                SELECT * FROM position_tracking 
+                WHERE last_updated >= ? 
+                ORDER BY last_updated DESC
+            ''', conn, params=(since_time,))
+            
+            conn.close()
+            return df.to_dict('records')
+        except Exception as e:
+            logger.error(f"Failed to get position history: {e}")
+            return []
+
+    def generate_performance_report(self) -> Dict:
+        """Generate comprehensive performance report"""
+        try:
+            performance = self.calculate_portfolio_performance()
+            history = self.get_position_history(24)
+            
+            # Calculate daily statistics
+            daily_pnl_changes = []
+            for pos in history:
+                if pos['unrealized_pnl']:
+                    daily_pnl_changes.append(pos['unrealized_pnl'])
+            
+            report = {
+                'current_performance': performance,
+                'daily_statistics': {
+                    'positions_tracked': len(history),
+                    'avg_unrealized_pnl': sum(daily_pnl_changes) / len(daily_pnl_changes) if daily_pnl_changes else 0,
+                    'max_unrealized_pnl': max(daily_pnl_changes) if daily_pnl_changes else 0,
+                    'min_unrealized_pnl': min(daily_pnl_changes) if daily_pnl_changes else 0,
+                },
+                'risk_metrics': {
+                    'exposure_ratio': (performance.get('total_notional', 0) / performance.get('current_balance', 1)) if performance.get('current_balance', 0) > 0 else 0,
+                    'diversification': len(set(pos['symbol'] for pos in performance.get('positions', []))),
+                    'average_leverage': sum(pos['leverage'] for pos in performance.get('positions', [])) / len(performance.get('positions', [])) if performance.get('positions') else 0
+                },
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            return report
+        except Exception as e:
+            logger.error(f"Failed to generate performance report: {e}")
+            return {}
+
+    def monitor_positions(self):
+        """Monitor positions and update tracking"""
+        try:
+            logger.info("🔄 Monitoring live positions...")
+            
+            # Get current positions
+            positions = self.get_live_positions()
+            
+            if positions:
+                logger.info(f"📊 Tracking {len(positions)} live positions")
+                
+                # Update database
+                self.update_position_tracking(positions)
+                
+                # Generate performance summary
+                performance = self.calculate_portfolio_performance()
+                
+                logger.info(f"💰 Portfolio Status:")
+                logger.info(f"   Balance: ${performance.get('current_balance', 0):.2f}")
+                logger.info(f"   Active Positions: {performance.get('active_positions', 0)}")
+                logger.info(f"   Total P&L: ${performance.get('total_unrealized_pnl', 0):.2f}")
+                logger.info(f"   Portfolio %: {performance.get('portfolio_percentage', 0):.3f}%")
+                
+                # Log individual positions
+                for pos in positions:
+                    pnl_color = "🟢" if pos['unrealized_pnl'] >= 0 else "🔴"
+                    logger.info(f"   {pnl_color} {pos['symbol']}: {pos['side']} "
+                               f"${pos['unrealized_pnl']:.2f} ({pos['percentage']:.2f}%)")
+            else:
+                logger.info("📭 No active positions found")
+                
+        except Exception as e:
+            logger.error(f"Position monitoring failed: {e}")
 
 def main():
     """Main monitoring function"""
-    print(f"Analysis Time: {datetime.now().strftime('%H:%M:%S')}")
+    monitor = LivePositionMonitor()
     
-    # Analyze current positions
-    sell_signals = analyze_current_positions()
+    logger.info("🚀 Starting Live Position Monitor")
+    logger.info("📈 Tracking real-time P&L and position performance")
     
-    # Demonstrate execution plan
-    demonstrate_sell_execution(sell_signals)
-    
-    # Check recent activity
-    check_recent_sell_activity()
-    
-    print(f"\n🔄 AUTOMATED SELL SYSTEM STATUS")
-    print("=" * 40)
-    print("Your trading system includes:")
-    print("  ✓ Real-time position monitoring")
-    print("  ✓ Automatic stop-loss protection")
-    print("  ✓ Multi-level profit taking")
-    print("  ✓ Risk-based position sizing")
-    print("  ✓ Complete trade execution logging")
-    print(f"\nMonitoring continues 24/7 for optimal exit points")
+    while True:
+        try:
+            monitor.monitor_positions()
+            
+            # Generate detailed report every 10 cycles
+            if int(time.time()) % 600 == 0:  # Every 10 minutes
+                report = monitor.generate_performance_report()
+                if report:
+                    logger.info("📊 Performance Report Generated")
+            
+            logger.info("⏰ Next update in 60 seconds...")
+            time.sleep(60)  # Update every minute
+            
+        except KeyboardInterrupt:
+            logger.info("🛑 Position monitor stopped by user")
+            break
+        except Exception as e:
+            logger.error(f"Monitor error: {e}")
+            time.sleep(60)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -18,19 +18,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "install_packages"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Live Trading System"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Pure Local Trading Engine"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Direct Auto Trading"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -56,21 +44,9 @@ args = "Elite Trading Dashboard"
 task = "workflow.run"
 args = "Live Under $50 Futures Trading"
 
-[[workflows.workflow]]
-name = "install_packages"
-author = "agent"
-
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "uv add pandas plotly scikit-learn pandas-ta requests websocket-client"
-
-[[workflows.workflow]]
-name = "Live Trading System"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python signal_execution_bridge.py"
+task = "workflow.run"
+args = "Live Position Monitor"
 
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
@@ -88,14 +64,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python pure_local_trading_engine.py"
-
-[[workflows.workflow]]
-name = "Direct Auto Trading"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python direct_execution_fix.py"
 
 [[workflows.workflow]]
 name = "Professional Trading Optimizer"
@@ -149,6 +117,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python live_under50_futures_engine.py"
+
+[[workflows.workflow]]
+name = "Live Position Monitor"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python live_position_monitor.py"
 
 [[ports]]
 localPort = 3000
