@@ -178,24 +178,8 @@ class ProductionEliteDashboard:
 
         except Exception as e:
             print(f"Portfolio data error: {e}")
-
-        # Return system-based portfolio data
-        return {
-            'usdt_balance': 1000.0,
-            'total_value': 1247.83,
-            'day_change': 24.75,
-            'day_change_percent': 2.03,
-            'positions': [
-                {'symbol': 'BTC', 'amount': 0.015, 'price': 67200, 'value': 1008.0, 'allocation': 45.2},
-                {'symbol': 'ETH', 'amount': 0.8, 'price': 3520, 'value': 281.6, 'allocation': 22.6},
-                {'symbol': 'SOL', 'amount': 12.5, 'price': 142, 'value': 177.5, 'allocation': 14.2}
-            ],
-            'open_trades': 3,
-            'diversification': 3,
-            'largest_position': 45.2,
-            'source': 'system_estimate',
-            'timestamp': datetime.now().isoformat()
-        }
+            # Only return authentic OKX data - no fallbacks
+            raise Exception("Unable to fetch authentic OKX portfolio data")
 
     def get_trading_signals(self, filters=None):
         """Get trading signals from authentic OKX market analysis"""
@@ -312,45 +296,49 @@ class ProductionEliteDashboard:
             signals = self.get_trading_signals()
             signal_count = len(signals)
 
-            # Calculate metrics
+            # Calculate authentic OKX metrics only
+            if not self.exchange:
+                raise Exception("No OKX connection available for performance metrics")
+                
             portfolio = self.get_portfolio_data()
-            portfolio_value = portfolio.get('total_value', 1000)
-            starting_value = 1000.0
+            
+            # Get actual trading history from OKX
+            try:
+                positions = self.exchange.fetch_positions()
+                active_positions = [p for p in positions if float(p.get('contracts', 0)) > 0]
+                
+                # Calculate real P&L from OKX positions
+                total_unrealized_pnl = sum(float(pos.get('unrealizedPnl', 0)) for pos in active_positions)
+                total_percentage = sum(float(pos.get('percentage', 0)) for pos in active_positions)
+                
+                # Count profitable vs losing positions
+                profitable_positions = len([p for p in active_positions if float(p.get('unrealizedPnl', 0)) > 0])
+                total_positions = len(active_positions) if active_positions else 1
+                real_win_rate = (profitable_positions / total_positions) * 100
+                
+                performance = {
+                    'total_trades': len(active_positions),
+                    'win_rate': round(real_win_rate, 1),
+                    'total_pnl': round(total_unrealized_pnl, 2),
+                    'total_return_pct': round(total_percentage, 2),
+                    'active_positions': len(active_positions),
+                    'profitable_positions': profitable_positions,
+                    'unrealized_pnl': round(total_unrealized_pnl, 2),
+                    'source': 'okx_live_positions',
+                    'timestamp': datetime.now().isoformat()
+                }
 
-            total_pnl = portfolio_value - starting_value
-            win_rate = 0.72  # Based on high confidence signals
-
-            # Risk metrics
-            daily_returns = [0.018, 0.025, -0.008, 0.032, 0.015, 0.021, -0.012]
-            avg_return = np.mean(daily_returns)
-            std_return = np.std(daily_returns)
-            sharpe_ratio = (avg_return / std_return) * np.sqrt(252) if std_return > 0 else 0
-
-            performance = {
-                'total_trades': total_trades + signal_count,
-                'win_rate': win_rate,
-                'total_pnl': round(total_pnl, 2),
-                'avg_holding_time': '4.2 hours',
-                'sharpe_ratio': round(sharpe_ratio, 2),
-                'max_drawdown': 0.035,
-                'realized_pnl': round(total_pnl * 0.8, 2),
-                'unrealized_pnl': round(total_pnl * 0.2, 2),
-                'roi_percentage': round(((portfolio_value / starting_value) - 1) * 100, 2),
-                'best_trade': 45.8,
-                'worst_trade': -12.3,
-                'profit_factor': 1.85,
-                'avg_trade_duration': 4.2
-            }
-
-            self.cache['performance'] = performance
-            return performance
+                self.cache['performance'] = performance
+                return performance
+                
+            except Exception as e:
+                print(f"OKX performance data error: {e}")
+                raise Exception("Unable to fetch authentic OKX performance data")
 
         except Exception as e:
             print(f"Performance metrics error: {e}")
-            return {
-                'total_trades': 0, 'win_rate': 0, 'total_pnl': 0,
-                'sharpe_ratio': 0, 'max_drawdown': 0, 'roi_percentage': 0
-            }
+            # Only return authentic OKX data - no fallbacks
+            raise Exception("Unable to fetch authentic OKX performance metrics")
 
     def get_engine_status(self):
         """Get current trading engine status"""
@@ -476,27 +464,12 @@ def api_dashboard_data():
 
     except Exception as e:
         print(f"Dashboard API error: {e}")
-        # Return safe fallback data
+        # Return error status - no fallback data
         return jsonify({
-            'portfolio': {
-                'usdt_balance': 0,
-                'total_value': 0,
-                'positions': [],
-                'open_trades': 0
-            },
-            'signals': [],
-            'performance': {
-                'total_trades': 0,
-                'win_rate': 0,
-                'sharpe_ratio': 0
-            },
-            'trends': [],
-            'engines': {},
-            'notifications': [],
-            'timestamp': datetime.now().isoformat(),
             'status': 'error',
-            'error': str(e)
-        })
+            'error': 'Unable to load authentic OKX data',
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 @app.route('/api/signal_explorer')
 @authenticated
