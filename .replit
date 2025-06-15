@@ -48,6 +48,14 @@ args = "Master Portfolio Dashboard"
 task = "workflow.run"
 args = "Fixed Elite Trading Dashboard"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Production Elite Dashboard"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Streamlit Elite Dashboard"
+
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
 author = 23429574
@@ -140,6 +148,24 @@ author = "agent"
 task = "shell.exec"
 args = "python elite_dashboard_fixed.py"
 waitForPort = 3005
+
+[[workflows.workflow]]
+name = "Production Elite Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python production_elite_dashboard.py"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Streamlit Elite Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run streamlit_elite_dashboard.py --server.port 5000"
+waitForPort = 5000
 
 [[ports]]
 localPort = 80
