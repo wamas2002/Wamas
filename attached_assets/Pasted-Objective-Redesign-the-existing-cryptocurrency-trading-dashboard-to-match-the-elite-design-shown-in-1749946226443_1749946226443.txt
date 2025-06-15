@@ -1,0 +1,80 @@
+Objective:
+Redesign the existing cryptocurrency trading dashboard to match the elite design shown in the uploaded image, ensuring no disruption to the backend, models, or trading logic.
+
+⸻
+
+🎯 Mandatory Instructions
+
+✅ Do NOT change or interrupt:
+	•	Any API routes or logic
+	•	Any ML models, signal generators, or ensemble systems
+	•	The current database schema or data pipelines
+	•	Any real-time OKX market data streaming or portfolio logic
+	•	Signal execution bridges or risk management logic
+
+✅ Preserve all ports and backend services. Only the dashboard UI/UX should change, not the system logic.
+
+⸻
+
+🖥️ Design Requirements Based on Uploaded UI
+	1.	Header Section:
+	•	Add summary boxes for:
+	•	✅ System Status
+	•	💰 Portfolio Balance (real-time OKX data)
+	•	📊 Strategy Win Rate
+	•	🌪️ Market Volatility Index
+	2.	Main Chart Area (Center):
+	•	Embed TradingView widget with:
+	•	Live BTC/USDT (or selected symbol)
+	•	Buy/Sell labels on trades
+	•	Timeframe control
+	•	Tab toggles: Trades | All Logs
+	3.	Right Panel: Strategy Builder:
+	•	Stackable widgets (sortable):
+	•	Volume
+	•	ATR
+	•	Take Profit
+	•	Add a ✅ “Validated” badge if config passes checks
+	4.	Bottom Left: Portfolio Snapshot:
+	•	Show:
+	•	Active Trades count
+	•	Profit/Loss (P&L %)
+	•	Portfolio Exposure bar
+	5.	Bottom Right: AI Model Monitor:
+	•	Live display:
+	•	Current active model (e.g. LSTM, XGBoost)
+	•	Status (Healthy/Warning)
+	•	Time to next retraining
+	6.	Bottom Center: Strategy Ties Visual:
+	•	Visual mapping of strategy logic flow (optional using Chart.js or D3)
+
+⸻
+
+🌓 Dark Theme Required
+	•	Design must use dark color scheme as shown in the image.
+	•	Optionally include a toggle (Light/Dark).
+
+⸻
+
+📱 Responsive Design
+	•	Must work on Desktop, Tablet, and Mobile.
+	•	Use collapsible sidebar and adaptive grid/flex layout.
+
+⸻
+
+📂 Pages to Apply the New Design:
+
+Apply this elite UI to the following pages:
+	1.	Dashboard (Port 3000 or current main dashboard)
+	2.	Strategy Builder
+	3.	Portfolio
+	4.	AI Panel
+	5.	Analytics
+
+⸻
+
+🔒 Final Condition:
+
+✅ The system must remain live and trading-ready after this visual upgrade.
+✅ All core components, data flows, and model predictions must remain 100% functional.
+✅ Only visual design enhancements are allowed.

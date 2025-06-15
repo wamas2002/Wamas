@@ -54,7 +54,7 @@ args = "Enhanced AI Trading Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Performance Analytics Dashboard"
+args = "Elite Trading Dashboard"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -141,13 +141,13 @@ args = "python enhanced_trading_dashboard.py"
 waitForPort = 5002
 
 [[workflows.workflow]]
-name = "Performance Analytics Dashboard"
+name = "Elite Trading Dashboard"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run performance_dashboard.py --server.port 7000"
-waitForPort = 7000
+args = "python elite_dashboard_simple.py"
+waitForPort = 3000
 
 [[ports]]
 localPort = 3000

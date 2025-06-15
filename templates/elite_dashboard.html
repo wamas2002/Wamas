@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elites Trading Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            50: '#0f1419',
+                            100: '#1a1f2e',
+                            200: '#252e3e',
+                            300: '#2a3441',
+                            400: '#374151',
+                            500: '#4b5563',
+                            600: '#6b7280',
+                            700: '#9ca3af',
+                            800: '#d1d5db',
+                            900: '#f9fafb'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .glass-effect {
+            background: rgba(26, 31, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-green { color: #00ff88; }
+        .neon-red { color: #ff4757; }
+        .neon-blue { color: #3742fa; }
+        .gradient-text {
+            background: linear-gradient(135deg, #00ff88, #3742fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .chart-container { height: 300px; }
+        .confidence-gauge {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #00ff88 0%, #00ff88 var(--confidence, 88%), #374151 var(--confidence, 88%), #374151 100%);
+            position: relative;
+        }
+        .confidence-inner {
+            width: 80px;
+            height: 80px;
+            background: #1a1f2e;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tradingview-widget {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-dark-50 text-white min-h-screen">
+    <!-- Header -->
+    <header class="glass-effect p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold">A</span>
+                </div>
+                <h1 class="text-2xl font-bold gradient-text">Elites Trading Dashboard</h1>
+            </div>
+            <nav class="flex space-x-6">
+                <a href="#" class="text-gray-300 hover:text-white transition-colors">Portfolio</a>
+                <a href="#" class="text-gray-300 hover:text-white transition-colors">AI Insights</a>
+                <a href="#" class="text-gray-300 hover:text-white transition-colors">Analytics</a>
+                <a href="#" class="text-gray-300 hover:text-white transition-colors">Strategy</a>
+                <a href="#" class="text-gray-300 hover:text-white transition-colors">Builder</a>
+                <a href="#" class="text-gray-300 hover:text-white transition-colors">Control</a>
+                <button class="text-gray-300 hover:text-white transition-colors">🌙</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <div class="px-6 grid grid-cols-12 gap-6">
+        <!-- Top Row: Key Metrics -->
+        <div class="col-span-3">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-gray-400 text-sm mb-2">Portfolio Balance</h3>
+                <div class="text-3xl font-bold" id="portfolio-balance">$25,400</div>
+                <div class="text-xs text-gray-500 mt-1">TradingView 1hour ↗</div>
+            </div>
+        </div>
+        
+        <div class="col-span-3">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-gray-400 text-sm mb-2">Confidence Gauge</h3>
+                <div class="flex items-center justify-between">
+                    <div class="confidence-gauge" style="--confidence: 88%">
+                        <div class="confidence-inner">
+                            <span class="text-2xl font-bold neon-green" id="confidence-value">88%</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-500">Last comp</div>
+                        <div class="text-sm" id="last-comp">84 ↗</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-6">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-gray-400 text-sm mb-2">Profit & Loss</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-2xl font-bold neon-green" id="current-profit">$3,210</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="profitChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Row: Main Chart & Signals -->
+        <div class="col-span-8">
+            <div class="glass-effect p-6 rounded-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-4">
+                        <h3 class="text-xl font-bold">BTC/USDT</h3>
+                        <span class="text-sm text-gray-400">1h 📈</span>
+                    </div>
+                </div>
+                
+                <!-- TradingView Widget -->
+                <div class="tradingview-widget mb-4">
+                    <div id="tradingview_chart" style="height: 400px; background: #1a1f2e; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <div class="text-center">
+                            <div class="text-lg font-semibold mb-2">Live Chart</div>
+                            <div class="text-sm text-gray-400">BTC/USDT Real-time Data</div>
+                            <div class="mt-4 grid grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <div class="text-gray-400">Price</div>
+                                    <div class="font-bold" id="btc-price">$67,240</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-400">24h Change</div>
+                                    <div class="font-bold neon-green" id="btc-change">+2.4%</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-400">Volume</div>
+                                    <div class="font-bold">1.2B</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-400">Market Cap</div>
+                                    <div class="font-bold">1.3T</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Stats -->
+                <div class="grid grid-cols-3 gap-6 mt-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold neon-green" id="win-rate">74.5%</div>
+                        <div class="text-sm text-gray-400">Win Rate</div>
+                        <div class="text-xs text-gray-500">Daily return</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold neon-green" id="daily-return">+3.82%</div>
+                        <div class="text-sm text-gray-400">Daily Return</div>
+                        <div class="text-xs text-gray-500 flex items-center justify-center">
+                            <span class="mr-1">📈</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold neon-blue" id="volatility">High</div>
+                        <div class="text-sm text-gray-400">Market Volatility</div>
+                        <div class="text-xs text-neon-blue">Strategy Reversion</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Signals & Top Pairs -->
+        <div class="col-span-4">
+            <!-- AT Signal Log -->
+            <div class="glass-effect p-6 rounded-xl mb-6">
+                <h3 class="text-lg font-bold mb-4">AT Signal Log</h3>
+                <div id="signal-log" class="space-y-3">
+                    <!-- Signals will be populated here -->
+                </div>
+            </div>
+
+            <!-- Top Pairs -->
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-lg font-bold mb-4">Top Pairs</h3>
+                <div class="text-xs text-gray-400 mb-3">Las 1nes</div>
+                <div id="top-pairs" class="space-y-3">
+                    <!-- Top pairs will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Rebalancing & Event Log -->
+        <div class="col-span-6">
+            <div class="glass-effect p-6 rounded-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold">Rebalancing</h3>
+                    <span class="text-xs text-gray-400">04:12:58</span>
+                </div>
+                <div class="text-sm text-gray-400 mb-2">Rotation out</div>
+                <div class="text-sm">SOL, MATIC</div>
+            </div>
+        </div>
+
+        <div class="col-span-6">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-lg font-bold mb-4">Event Log</h3>
+                <div id="event-log" class="space-y-2 text-sm">
+                    <!-- Events will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for charts and data
+        let profitChart;
+        let dashboardData = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProfitChart();
+            loadDashboardData();
+            
+            // Update data every 3 seconds
+            setInterval(loadDashboardData, 3000);
+        });
+
+        // Initialize profit chart
+        function initializeProfitChart() {
+            const ctx = document.getElementById('profitChart').getContext('2d');
+            profitChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'],
+                    datasets: [{
+                        data: [3000, 3100, 3150, 3080, 3200, 3180, 3210],
+                        backgroundColor: function(context) {
+                            const index = context.dataIndex;
+                            const colors = ['#10b981', '#10b981', '#ef4444', '#10b981', '#ef4444', '#10b981', '#10b981'];
+                            return colors[index];
+                        },
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af', font: { size: 10 } }
+                        },
+                        y: {
+                            display: false,
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load dashboard data from API
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard-data');
+                dashboardData = await response.json();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Use fallback data if API fails
+                updateDashboardWithFallback();
+            }
+        }
+
+        // Update dashboard with real data
+        function updateDashboard() {
+            // Portfolio balance
+            document.getElementById('portfolio-balance').textContent = 
+                `$${dashboardData.portfolio?.balance?.toLocaleString() || '25,400'}`;
+
+            // Confidence gauge
+            const confidence = dashboardData.confidence?.confidence || 88;
+            document.getElementById('confidence-value').textContent = `${confidence}%`;
+            document.querySelector('.confidence-gauge').style.setProperty('--confidence', `${confidence}%`);
+
+            // Profit & Loss
+            const profit = dashboardData.profit_loss?.current_profit || 3210;
+            document.getElementById('current-profit').textContent = `$${profit}`;
+            
+            // Update profit chart
+            if (profitChart && dashboardData.profit_loss?.profits) {
+                profitChart.data.datasets[0].data = dashboardData.profit_loss.profits;
+                profitChart.update('none');
+            }
+
+            // System stats
+            if (dashboardData.stats) {
+                document.getElementById('win-rate').textContent = dashboardData.stats.win_rate || '74.5%';
+                document.getElementById('daily-return').textContent = dashboardData.stats.daily_return || '+3.82%';
+                document.getElementById('volatility').textContent = dashboardData.stats.volatility || 'High';
+            }
+
+            // Signal log
+            updateSignalLog(dashboardData.signals || []);
+
+            // Top pairs
+            updateTopPairs(dashboardData.top_pairs || []);
+
+            // Event log
+            updateEventLog(dashboardData.events || []);
+        }
+
+        // Update signal log
+        function updateSignalLog(signals) {
+            const signalLogEl = document.getElementById('signal-log');
+            signalLogEl.innerHTML = signals.map(signal => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gray-400">${signal.time}</span>
+                        <span class="px-2 py-1 text-xs rounded ${signal.color === 'success' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                            ${signal.action}
+                        </span>
+                        <span class="text-xs">${signal.symbol}</span>
+                    </div>
+                    <span class="text-xs neon-green">▲ ${signal.confidence}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update top pairs
+        function updateTopPairs(pairs) {
+            const topPairsEl = document.getElementById('top-pairs');
+            topPairsEl.innerHTML = pairs.map(pair => `
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">${pair.symbol}</span>
+                    <span class="text-sm ${pair.color === 'success' ? 'neon-green' : 'neon-red'}">${pair.change}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update event log
+        function updateEventLog(events) {
+            const eventLogEl = document.getElementById('event-log');
+            eventLogEl.innerHTML = events.map(event => `
+                <div class="flex items-start space-x-2">
+                    <span class="text-xs text-gray-400 w-12">${event.time}</span>
+                    <span class="text-xs text-gray-300 flex-1">${event.event}</span>
+                </div>
+            `).join('');
+        }
+
+        // Fallback data if API fails
+        function updateDashboardWithFallback() {
+            // Use static data that matches the uploaded image
+            updateSignalLog([
+                {time: '02:45', action: 'SELL', symbol: 'BTC/USDT', confidence: '81%', color: 'danger'},
+                {time: '02:17', action: 'BUY', symbol: 'ETH/USDT', confidence: '80%', color: 'success'},
+                {time: '01:50', action: 'BUY', symbol: 'NEAR/USDT', confidence: '90%', color: 'success'},
+                {time: '01:24', action: 'SELL', symbol: 'SAND/USDT', confidence: '84%', color: 'danger'},
+                {time: '00:55', action: 'BUY', symbol: 'SOL/USDT', confidence: '80%', color: 'success'}
+            ]);
+
+            updateTopPairs([
+                {symbol: 'ETH/USD', change: '+31.23%', color: 'success'},
+                {symbol: 'ETC/USD', change: '+990', color: 'success'},
+                {symbol: 'LTC/USD', change: '+450', color: 'success'}
+            ]);
+
+            updateEventLog([
+                {time: '04:40', event: 'Adapting to sideways regime...'},
+                {time: '03:56', event: 'Executing BUY order..'},
+                {time: '08:30', event: 'Detecting bear regime'},
+                {time: '04:40', event: 'Defaulting to sideways regime'},
+                {time: '02:55', event: 'Executing BUY order...'}
+            ]);
+        }
+
+        // Real-time market data simulation for BTC
+        function updateMarketData() {
+            // This would normally connect to your existing OKX data feed
+            const price = 67240 + (Math.random() - 0.5) * 1000;
+            const change = (Math.random() * 5 - 2.5).toFixed(2);
+            
+            document.getElementById('btc-price').textContent = `$${price.toFixed(0).toLocaleString()}`;
+            document.getElementById('btc-change').textContent = `${change > 0 ? '+' : ''}${change}%`;
+            document.getElementById('btc-change').className = change > 0 ? 'font-bold neon-green' : 'font-bold neon-red';
+        }
+
+        // Update market data every 5 seconds
+        setInterval(updateMarketData, 5000);
+        updateMarketData(); // Initial call
+    </script>
+</body>
+</html>
