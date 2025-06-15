@@ -16,6 +16,7 @@ from flask_socketio import SocketIO, emit
 import pandas as pd
 import numpy as np
 from functools import wraps
+from okx_data_validator import OKXDataValidator
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'elite_trading_production_2024'
@@ -45,6 +46,10 @@ class ProductionEliteDashboard:
             'last_update': None
         }
         self.exchange = None
+        
+        # Initialize OKX data validator for authentic data sourcing
+        self.okx_validator = OKXDataValidator()
+        
         self.initialize_connections()
 
     def initialize_connections(self):
@@ -115,63 +120,35 @@ class ProductionEliteDashboard:
                 }
 
     def get_portfolio_data(self):
-        """Get portfolio data with robust error handling"""
+        """Get portfolio data using OKX validator for 100% authentic data"""
         try:
-            if self.okx_exchange and self.connection_status['okx']:
-                balance_data = self.okx_exchange.fetch_balance()
-
-                usdt_balance = float(balance_data.get('USDT', {}).get('total', 0))
-                total_value = usdt_balance
-                positions = []
-
-                for symbol, data in balance_data.items():
-                    if symbol != 'USDT' and isinstance(data, dict):
-                        amount = float(data.get('total', 0))
-                        if amount > 0.001:  # Minimum threshold
-                            try:
-                                # Skip invalid symbols
-                                if symbol in ['CHE', 'BETH', 'LDBNB']:
-                                    continue
-
-                                ticker = self.okx_exchange.fetch_ticker(f"{symbol}/USDT")
-                                price = float(ticker.get('last', 0))
-                                value = amount * price
-                                total_value += value
-
-                                time.sleep(0.1)  # Rate limiting
-
-                                positions.append({
-                                    'symbol': symbol,
-                                    'amount': round(amount, 6),
-                                    'price': round(price, 4),
-                                    'value': round(value, 2),
-                                    'allocation': 0  # Will calculate after
-                                })
-                            except Exception as e:
-                                print(f"Error fetching ticker for {symbol}: {e}")
-                                continue
-
-                # Calculate allocations
-                for pos in positions:
-                    pos['allocation'] = round((pos['value'] / total_value) * 100, 2) if total_value > 0 else 0
-
-                # Get 24h change
-                yesterday_value = total_value * 0.98  # Estimate
-                day_change = total_value - yesterday_value
-                day_change_percent = (day_change / yesterday_value) * 100 if yesterday_value > 0 else 0
-
-                portfolio_data = {
-                    'usdt_balance': round(usdt_balance, 2),
-                    'total_value': round(total_value, 2),
-                    'day_change': round(day_change, 2),
-                    'day_change_percent': round(day_change_percent, 2),
-                    'positions': positions,
-                    'open_trades': len(positions),
-                    'diversification': len(positions),
-                    'largest_position': max([p['allocation'] for p in positions]) if positions else 0,
-                    'source': 'okx_live',
-                    'timestamp': datetime.now().isoformat()
-                }
+            # Use OKX validator for authenticated portfolio data
+            portfolio_data = self.okx_validator.get_authentic_portfolio()
+            
+            # Transform to dashboard format
+            dashboard_portfolio = {
+                'usdt_balance': portfolio_data['balance'],
+                'total_value': portfolio_data['balance'] + portfolio_data['total_unrealized_pnl'],
+                'day_change': portfolio_data['total_unrealized_pnl'],
+                'day_change_percent': (portfolio_data['total_unrealized_pnl'] / portfolio_data['balance']) * 100 if portfolio_data['balance'] > 0 else 0,
+                'positions': [
+                    {
+                        'symbol': pos['symbol'].replace('/USDT:USDT', '').replace(':USDT', ''),
+                        'amount': pos['size'],
+                        'price': pos['mark_price'],
+                        'value': abs(pos['size'] * pos['mark_price']),
+                        'allocation': abs(pos['percentage']),
+                        'pnl': pos['unrealized_pnl'],
+                        'side': pos['side']
+                    }
+                    for pos in portfolio_data['positions']
+                ],
+                'open_trades': portfolio_data['position_count'],
+                'diversification': portfolio_data['position_count'],
+                'largest_position': max([abs(pos['percentage']) for pos in portfolio_data['positions']]) if portfolio_data['positions'] else 0,
+                'source': 'okx_authenticated',
+                'timestamp': portfolio_data['timestamp']
+            }
 
                 self.cache['portfolio'] = portfolio_data
                 return portfolio_data
