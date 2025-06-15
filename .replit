@@ -147,7 +147,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python elite_dashboard_professional.py"
+args = "python elite_dashboard_production.py"
 waitForPort = 3000
 
 [[ports]]
