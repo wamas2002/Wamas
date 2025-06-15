@@ -556,6 +556,21 @@
                                 <option>Buy Signals</option>
                                 <option>Sell Signals</option>
                             </select>
+                            <select class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3" id="market-type-filter" onchange="filterSignalsByMarketType()">
+                                <option value="all">All Markets</option>
+                                <option value="spot">Spot Only</option>
+                                <option value="futures">Futures Only</option>
+                            </select>
+                            
+                            <!-- Market Type Filter Badges -->
+                            <div class="pt-3 border-t border-gray-700">
+                                <h4 class="text-sm text-gray-400 mb-2">Quick Filters:</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <button class="filter-badge px-3 py-1 rounded-full text-xs bg-gray-600 text-white hover:bg-gray-500 transition-colors" data-filter="all" onclick="setMarketFilter('all')">All</button>
+                                    <button class="filter-badge px-3 py-1 rounded-full text-xs bg-green-600 text-white hover:bg-green-500 transition-colors" data-filter="spot" onclick="setMarketFilter('spot')">Spot</button>
+                                    <button class="filter-badge px-3 py-1 rounded-full text-xs bg-blue-600 text-white hover:bg-blue-500 transition-colors" data-filter="futures" onclick="setMarketFilter('futures')">Futures</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1495,6 +1510,54 @@
                     </div>
                 `;
             }
+        }
+
+        // Signal Market Type Filtering Functions
+        let currentMarketFilter = 'all';
+        
+        function filterSignalsByMarketType() {
+            const selectElement = document.getElementById('market-type-filter');
+            const filterValue = selectElement.value;
+            setMarketFilter(filterValue);
+        }
+        
+        function setMarketFilter(filterType) {
+            currentMarketFilter = filterType;
+            const signalItems = document.querySelectorAll('.signal-item');
+            const filterBadges = document.querySelectorAll('.filter-badge');
+            
+            // Update active filter badge
+            filterBadges.forEach(badge => {
+                const badgeFilter = badge.getAttribute('data-filter');
+                if (badgeFilter === filterType) {
+                    badge.classList.add('opacity-100');
+                    badge.classList.remove('opacity-60');
+                } else {
+                    badge.classList.add('opacity-60');
+                    badge.classList.remove('opacity-100');
+                }
+            });
+            
+            // Filter signals
+            signalItems.forEach(item => {
+                const marketType = item.getAttribute('data-market-type');
+                if (filterType === 'all' || marketType === filterType) {
+                    item.style.display = 'block';
+                    item.style.animation = 'fadeIn 0.3s ease-in-out';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Update dropdown
+            const selectElement = document.getElementById('market-type-filter');
+            if (selectElement) {
+                selectElement.value = filterType;
+            }
+            
+            // Show filter notification
+            const filterText = filterType === 'all' ? 'All Markets' : filterType.charAt(0).toUpperCase() + filterType.slice(1);
+            showNotification(`Filtering by: ${filterText}`, 'info');
         }
 
         // Theme Management Functions
