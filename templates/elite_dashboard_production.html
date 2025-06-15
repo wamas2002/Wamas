@@ -1116,34 +1116,9 @@
             `).join('');
         }
 
-        function getDefaultSignals() {
-            return [
-                {time: '14:45', action: 'SELL', symbol: 'BTC/USDT', confidence: '91%'},
-                {time: '14:17', action: 'BUY', symbol: 'ETH/USDT', confidence: '85%'},
-                {time: '13:50', action: 'BUY', symbol: 'NEAR/USDT', confidence: '88%'},
-                {time: '13:24', action: 'SELL', symbol: 'SAND/USDT', confidence: '82%'},
-                {time: '12:55', action: 'BUY', symbol: 'SOL/USDT', confidence: '79%'}
-            ];
-        }
+        // REMOVED: No fallback signals - only authentic OKX data
 
-        function getDefaultTopPairs() {
-            return [
-                {symbol: 'ETH/USDT', change: '+31.23%'},
-                {symbol: 'BTC/USDT', change: '+12.45%'},
-                {symbol: 'SOL/USDT', change: '+8.90%'},
-                {symbol: 'ADA/USDT', change: '+6.78%'}
-            ];
-        }
-
-        function getDefaultEvents() {
-            return [
-                {time: '14:40', event: 'AI model confidence increased to 91%'},
-                {time: '14:30', event: 'New BUY signal generated for ETH/USDT'},
-                {time: '14:15', event: 'Portfolio rebalancing initiated'},
-                {time: '14:00', event: 'Market volatility detected - switching to adaptive mode'},
-                {time: '13:45', event: 'Profit target reached for BTC position'}
-            ];
-        }
+        // REMOVED: All mock data functions - only authentic OKX data
 
         function addInteractiveElements() {
             // Add hover effects and click handlers
@@ -1170,13 +1145,7 @@
             }, 500);
         }
 
-        function updateMarketData() {
-            const price = 67240 + (Math.random() - 0.5) * 1000;
-            const change = (Math.random() * 5 - 2.5).toFixed(2);
-            
-            animateValue('btc-price', '', `$${price.toFixed(0).toLocaleString()}`);
-            animateValue('btc-change', '', `${change > 0 ? '+' : ''}${change}%`);
-        }
+        // REMOVED: Mock market data function - only authentic OKX data via API
 
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
