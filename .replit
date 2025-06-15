@@ -147,12 +147,16 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd . && PORT=3003 npm start"
+args = "python react_server.py"
 waitForPort = 3003
 
 [[ports]]
 localPort = 3000
 externalPort = 3003
+
+[[ports]]
+localPort = 3003
+externalPort = 5000
 
 [[ports]]
 localPort = 5000

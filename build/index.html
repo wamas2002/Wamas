@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Elite AI Trading Dashboard - Professional Cryptocurrency Trading Platform" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/zustand@4.4.0/index.umd.js"></script>
+    <script src="https://unpkg.com/react-toastify@9.1.0/dist/ReactToastify.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/react-toastify@9.1.0/dist/ReactToastify.css" />
+    <script src="https://unpkg.com/react-grid-layout@1.4.0/build/index.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/react-grid-layout@1.4.0/css/styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/react-resizable@3.0.5/css/styles.css" />
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/socket.io-client@4.7.0/dist/socket.io.min.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              gray: {
+                950: '#030712',
+                900: '#111827',
+                800: '#1f2937',
+                750: '#253141',
+                700: '#374151',
+                600: '#4b5563',
+                500: '#6b7280',
+                400: '#9ca3af',
+                300: '#d1d5db',
+                200: '#e5e7eb',
+                100: '#f3f4f6',
+                50: '#f9fafb'
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
+    <title>Elite Trading Dashboard</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #030712;
+        color: #ffffff;
+      }
+      
+      .react-grid-layout {
+        position: relative;
+      }
+      
+      .react-grid-item {
+        transition: all 200ms ease;
+        transition-property: left, top;
+      }
+      
+      .react-grid-item.cssTransforms {
+        transition-property: transform;
+      }
+      
+      .react-grid-item > .react-resizable-handle {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        bottom: 0;
+        right: 0;
+        cursor: se-resize;
+      }
+      
+      .react-grid-item > .react-resizable-handle::after {
+        content: "";
+        position: absolute;
+        right: 3px;
+        bottom: 3px;
+        width: 5px;
+        height: 5px;
+        border-right: 2px solid rgba(255, 255, 255, 0.4);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+      }
+      
+      .react-grid-item:not(.react-grid-placeholder) {
+        background: #111827;
+        border: 1px solid #374151;
+      }
+      
+      .react-grid-placeholder {
+        background: rgba(59, 130, 246, 0.2);
+        opacity: 0.2;
+        transition-duration: 100ms;
+        z-index: 2;
+        border: 1px dashed #3b82f6;
+      }
+      
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #1f2937;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 3px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #6b7280;
+      }
+    </style>
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script src="./static/js/app.bundle.js"></script>
+</body>
+</html>

@@ -33,6 +33,7 @@ dependencies = [
     "websocket>=0.2.1",
     "websocket-client>=1.8.0",
     "xgboost>=3.0.2",
+    "flask-cors>=6.0.1",
 ]
 
 [[tool.uv.index]]
