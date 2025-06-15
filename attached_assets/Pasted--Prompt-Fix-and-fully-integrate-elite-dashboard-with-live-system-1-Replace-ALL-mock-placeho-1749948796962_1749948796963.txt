@@ -1,0 +1,34 @@
+# 🧠 Prompt: Fix and fully integrate elite dashboard with live system
+
+# 1. Replace ALL mock/placeholder values in the elite_dashboard_simple.py with REAL system data:
+# ----------------------------------------------------------------------------
+# ✅ Live Balance & Prices → Connect to OKX WebSocket (wss://ws.okx.com:8443/ws/v5/public)
+# ✅ Trade History → Pull from live trade database (db/trade_logs.db or MongoDB depending on config)
+# ✅ AI Signals → Display current signals from ai/signal_generator.py and ai/ensemble.py
+# ✅ Portfolio Metrics → Real-time calculation based on positions from portfolio/live_positions.py
+
+# 2. Ensure all values auto-update every 30s (or use Socket.IO/WebSocket if available)
+# ----------------------------------------------------------------------------
+# ✅ Price feeds, portfolio PnL, signal confidence levels
+# ✅ Market regime status, open positions, trade stats
+
+# 3. Repair All Broken Navigation (Tabs & Buttons)
+# ----------------------------------------------------------------------------
+# ✅ Connect all tabs in the dashboard to Flask routes (/ai-insights, /portfolio, /signals)
+# ✅ All buttons (Start/Stop Trading, Refresh, Export) → Trigger real API actions via Flask endpoints
+# ✅ Notification Center → Convert popup alerts into a persistent dropdown (with read/archive options)
+
+# 4. Test full synchronization between backend and dashboard
+# ----------------------------------------------------------------------------
+# ✅ All values must reflect real data from the system (NO mock/hardcoded data)
+# ✅ Cross-check signals, trades, and balances across dashboard, OKX, and logs
+# ✅ Eliminate all static/dummy components and ensure UI interacts with backend
+
+# 5. UX Upgrade Requirements:
+# ----------------------------------------------------------------------------
+# ✅ Implement persistent Notification Center (to replace popup spam)
+# ✅ Use icons/colors to reflect signal strength and regime (green: bull, red: bear, gray: sideways)
+# ✅ Confirm performance charts (PnL, drawdown) use real-time data
+# ✅ Mobile responsiveness: Make tabs and metrics clean and readable on smaller screens
+
+# Deploy the new dashboard on PORT 6001 and ensure full operational logging.

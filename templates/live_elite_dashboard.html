@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Elite Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+    <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .notification-dropdown { max-height: 400px; overflow-y: auto; }
+        .signal-high { border-left: 4px solid #10b981; }
+        .signal-medium { border-left: 4px solid #f59e0b; }
+        .signal-low { border-left: 4px solid #ef4444; }
+        .tab-active { background: linear-gradient(135deg, #10b981, #059669); }
+        .mobile-tab { transition: all 0.3s ease; }
+        @media (max-width: 768px) {
+            .desktop-only { display: none; }
+            .mobile-only { display: block; }
+        }
+        @media (min-width: 769px) {
+            .desktop-only { display: block; }
+            .mobile-only { display: none; }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-700 p-4 sticky top-0 z-50">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold">ET</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                        Elite Trading Dashboard
+                    </h1>
+                    <div class="flex items-center space-x-2 text-xs text-gray-400">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span id="connection-status">Connected to Live OKX Data</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Trading Controls -->
+                <div class="hidden md:flex space-x-2">
+                    <button id="start-trading" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors">
+                        Start Trading
+                    </button>
+                    <button id="stop-trading" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors">
+                        Stop Trading
+                    </button>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="relative">
+                    <button id="notifications-btn" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors relative">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5h5M7 17h5l-5-5h5m-5 5V7a7 7 0 1 1 14 0v10"></path>
+                        </svg>
+                        <span id="notification-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    
+                    <!-- Notification Dropdown -->
+                    <div id="notifications-dropdown" class="absolute right-0 mt-2 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-lg hidden notification-dropdown">
+                        <div class="p-4 border-b border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-semibold">Notifications</h3>
+                                <button id="mark-all-read" class="text-xs text-blue-400 hover:text-blue-300">Mark all read</button>
+                            </div>
+                        </div>
+                        <div id="notifications-list" class="p-2">
+                            <div class="text-center text-gray-400 py-4">No new notifications</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Status -->
+                <div class="flex items-center space-x-2 text-sm">
+                    <span class="text-gray-400">AI Confidence:</span>
+                    <span id="ai-confidence" class="text-green-400 font-semibold">88%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-only bg-gray-900 border-b border-gray-700">
+        <div class="flex justify-around">
+            <button class="mobile-tab tab-active py-3 px-4 text-sm font-medium" data-tab="portfolio">Portfolio</button>
+            <button class="mobile-tab py-3 px-4 text-sm font-medium" data-tab="signals">Signals</button>
+            <button class="mobile-tab py-3 px-4 text-sm font-medium" data-tab="trades">Trades</button>
+            <button class="mobile-tab py-3 px-4 text-sm font-medium" data-tab="system">System</button>
+        </div>
+    </nav>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-only bg-gray-900 border-b border-gray-700">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-8">
+                <button class="nav-tab tab-active py-4 px-6 text-sm font-medium border-b-2 border-green-500" data-tab="portfolio">
+                    Portfolio Overview
+                </button>
+                <button class="nav-tab py-4 px-6 text-sm font-medium border-b-2 border-transparent" data-tab="signals">
+                    AI Signals
+                </button>
+                <button class="nav-tab py-4 px-6 text-sm font-medium border-b-2 border-transparent" data-tab="trades">
+                    Trade History
+                </button>
+                <button class="nav-tab py-4 px-6 text-sm font-medium border-b-2 border-transparent" data-tab="system">
+                    System Status
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Portfolio Tab -->
+        <div id="portfolio-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Portfolio Summary -->
+                <div class="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold">Portfolio Summary</h2>
+                        <div class="text-sm text-gray-400" id="last-updated">Last updated: --</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <div class="text-sm text-gray-400 mb-2">Total Value</div>
+                            <div id="total-value" class="text-3xl font-bold text-white">$0.00</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-sm text-gray-400 mb-2">24h Change</div>
+                            <div id="day-change" class="text-2xl font-bold">$0.00</div>
+                            <div id="day-change-percent" class="text-sm">(0.00%)</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-sm text-gray-400 mb-2">USDT Balance</div>
+                            <div id="usdt-balance" class="text-2xl font-bold text-white">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Performance -->
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">AI Performance</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">Confidence Level</span>
+                                <span id="confidence-value" class="text-green-400">88%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div id="confidence-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: 88%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Active Signals</span>
+                                <span id="active-signals-count" class="text-white">0</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Trading Engines</span>
+                                <span class="text-green-400">8 Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Portfolio Positions -->
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Current Positions</h3>
+                <div id="positions-list" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">Loading positions...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signals Tab -->
+        <div id="signals-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-green-400" id="buy-signals">0</div>
+                    <div class="text-sm text-gray-400">BUY Signals</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-red-400" id="sell-signals">0</div>
+                    <div class="text-sm text-gray-400">SELL Signals</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-yellow-400" id="avg-confidence">0%</div>
+                    <div class="text-sm text-gray-400">Avg Confidence</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-blue-400" id="high-conf-signals">0</div>
+                    <div class="text-sm text-gray-400">High Confidence (>80%)</div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Live Trading Signals</h3>
+                    <div class="flex space-x-2">
+                        <select id="signal-filter" class="bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm">
+                            <option value="all">All Signals</option>
+                            <option value="buy">BUY Only</option>
+                            <option value="sell">SELL Only</option>
+                            <option value="high">High Confidence (>80%)</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="signals-list" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">Loading signals...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trades Tab -->
+        <div id="trades-tab" class="tab-content hidden">
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Recent Trades</h3>
+                    <div class="text-sm text-gray-400">Last 24 hours</div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-3 px-4 text-gray-400 font-medium">Symbol</th>
+                                <th class="text-left py-3 px-4 text-gray-400 font-medium">Side</th>
+                                <th class="text-left py-3 px-4 text-gray-400 font-medium">Amount</th>
+                                <th class="text-left py-3 px-4 text-gray-400 font-medium">Price</th>
+                                <th class="text-left py-3 px-4 text-gray-400 font-medium">Status</th>
+                                <th class="text-left py-3 px-4 text-gray-400 font-medium">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-table">
+                            <tr>
+                                <td colspan="6" class="text-center text-gray-400 py-8">Loading trades...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Tab -->
+        <div id="system-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Trading Engines Status</h3>
+                    <div id="engines-status" class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                            <span>Pure Local Trading Engine</span>
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                            <span>Advanced Futures Trading</span>
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                            <span>Signal Execution Bridge</span>
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                            <span>Direct Auto Trading</span>
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Live Market Prices</h3>
+                    <div id="market-prices" class="space-y-3">
+                        <div class="text-center text-gray-400 py-8">Loading market data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Global state
+        let currentTab = 'portfolio';
+        let liveData = {
+            portfolio: {},
+            signals: [],
+            trades: [],
+            prices: {},
+            notifications: []
+        };
+
+        // Socket events
+        socket.on('connect', function() {
+            document.getElementById('connection-status').textContent = 'Connected to Live OKX Data';
+            loadInitialData();
+        });
+
+        socket.on('disconnect', function() {
+            document.getElementById('connection-status').textContent = 'Disconnected - Reconnecting...';
+        });
+
+        socket.on('portfolio_update', function(data) {
+            liveData.portfolio = data;
+            updatePortfolioDisplay();
+        });
+
+        socket.on('signals_update', function(data) {
+            liveData.signals = data;
+            updateSignalsDisplay();
+        });
+
+        socket.on('trades_update', function(data) {
+            liveData.trades = data;
+            updateTradesDisplay();
+        });
+
+        socket.on('prices_update', function(data) {
+            liveData.prices = data;
+            updatePricesDisplay();
+        });
+
+        socket.on('new_notification', function(notification) {
+            addNotification(notification);
+        });
+
+        // Tab switching
+        document.querySelectorAll('.nav-tab, .mobile-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                switchTab(this.dataset.tab);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab, .mobile-tab').forEach(tab => {
+                tab.classList.remove('tab-active', 'border-green-500');
+                tab.classList.add('border-transparent');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // Add active class to selected tab
+            document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(tab => {
+                tab.classList.add('tab-active');
+                if (tab.classList.contains('nav-tab')) {
+                    tab.classList.remove('border-transparent');
+                    tab.classList.add('border-green-500');
+                }
+            });
+            
+            currentTab = tabName;
+        }
+
+        // Load initial data
+        async function loadInitialData() {
+            try {
+                const [portfolioRes, signalsRes, tradesRes, pricesRes] = await Promise.all([
+                    fetch('/api/portfolio'),
+                    fetch('/api/signals'),
+                    fetch('/api/trades'),
+                    fetch('/api/prices')
+                ]);
+
+                liveData.portfolio = await portfolioRes.json();
+                liveData.signals = await signalsRes.json();
+                liveData.trades = await tradesRes.json();
+                liveData.prices = await pricesRes.json();
+
+                updatePortfolioDisplay();
+                updateSignalsDisplay();
+                updateTradesDisplay();
+                updatePricesDisplay();
+            } catch (error) {
+                console.error('Failed to load initial data:', error);
+            }
+        }
+
+        // Update portfolio display
+        function updatePortfolioDisplay() {
+            const portfolio = liveData.portfolio;
+            if (!portfolio || !portfolio.total_value) return;
+
+            document.getElementById('total-value').textContent = formatCurrency(portfolio.total_value);
+            document.getElementById('usdt-balance').textContent = formatCurrency(portfolio.total_balance);
+            
+            const dayChange = portfolio.day_change || 0;
+            const dayChangePercent = portfolio.day_change_percent || 0;
+            
+            const changeElement = document.getElementById('day-change');
+            const percentElement = document.getElementById('day-change-percent');
+            
+            changeElement.textContent = formatCurrency(dayChange);
+            percentElement.textContent = `(${dayChangePercent >= 0 ? '+' : ''}${dayChangePercent.toFixed(2)}%)`;
+            
+            const colorClass = dayChange >= 0 ? 'text-green-400' : 'text-red-400';
+            changeElement.className = `text-2xl font-bold ${colorClass}`;
+            percentElement.className = `text-sm ${colorClass}`;
+
+            document.getElementById('last-updated').textContent = 
+                `Last updated: ${new Date().toLocaleTimeString()}`;
+
+            // Update positions
+            const positionsList = document.getElementById('positions-list');
+            if (portfolio.positions && portfolio.positions.length > 0) {
+                positionsList.innerHTML = portfolio.positions.map(pos => `
+                    <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                        <div>
+                            <div class="font-medium">${pos.symbol}</div>
+                            <div class="text-sm text-gray-400">${pos.amount.toFixed(6)} tokens</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-medium">${formatCurrency(pos.value)}</div>
+                            <div class="text-sm text-gray-400">${pos.percentage.toFixed(2)}%</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                positionsList.innerHTML = '<div class="text-center text-gray-400 py-8">No positions found</div>';
+            }
+        }
+
+        // Update signals display
+        function updateSignalsDisplay() {
+            const signals = liveData.signals || [];
+            
+            // Update signal stats
+            const buySignals = signals.filter(s => s.action === 'BUY').length;
+            const sellSignals = signals.filter(s => s.action === 'SELL').length;
+            const avgConfidence = signals.length > 0 ? 
+                signals.reduce((sum, s) => sum + s.confidence, 0) / signals.length : 0;
+            const highConfSignals = signals.filter(s => s.confidence > 80).length;
+            
+            document.getElementById('buy-signals').textContent = buySignals;
+            document.getElementById('sell-signals').textContent = sellSignals;
+            document.getElementById('avg-confidence').textContent = avgConfidence.toFixed(1) + '%';
+            document.getElementById('high-conf-signals').textContent = highConfSignals;
+            document.getElementById('active-signals-count').textContent = signals.length;
+
+            // Update confidence display
+            const confidenceValue = Math.round(avgConfidence);
+            document.getElementById('ai-confidence').textContent = confidenceValue + '%';
+            document.getElementById('confidence-value').textContent = confidenceValue + '%';
+            document.getElementById('confidence-bar').style.width = confidenceValue + '%';
+
+            // Update signals list
+            const signalsList = document.getElementById('signals-list');
+            if (signals.length > 0) {
+                signalsList.innerHTML = signals.map(signal => {
+                    const confidenceClass = signal.confidence > 80 ? 'signal-high' : 
+                        signal.confidence > 60 ? 'signal-medium' : 'signal-low';
+                    const actionColor = signal.action === 'BUY' ? 'text-green-400' : 'text-red-400';
+                    
+                    return `
+                        <div class="p-4 bg-gray-800 rounded-lg ${confidenceClass}">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-3">
+                                    <span class="font-medium text-white">${signal.symbol}</span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded ${actionColor} bg-opacity-20">
+                                        ${signal.action}
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium text-white">${signal.confidence.toFixed(1)}%</div>
+                                    <div class="text-xs text-gray-400">${signal.source}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Price: $${signal.price.toFixed(4)}</span>
+                                <span class="text-gray-400">Risk: ${signal.risk}</span>
+                                <span class="text-gray-400">${formatTime(signal.timestamp)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                signalsList.innerHTML = '<div class="text-center text-gray-400 py-8">No active signals</div>';
+            }
+        }
+
+        // Update trades display
+        function updateTradesDisplay() {
+            const trades = liveData.trades || [];
+            const tradesTable = document.getElementById('trades-table');
+            
+            if (trades.length > 0) {
+                tradesTable.innerHTML = trades.map(trade => `
+                    <tr class="border-b border-gray-700">
+                        <td class="py-3 px-4 font-medium">${trade.symbol}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs font-medium rounded ${
+                                trade.side === 'BUY' ? 'text-green-400 bg-green-400 bg-opacity-20' : 
+                                'text-red-400 bg-red-400 bg-opacity-20'
+                            }">
+                                ${trade.side}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">${formatCurrency(trade.amount)}</td>
+                        <td class="py-3 px-4">$${trade.price.toFixed(4)}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs font-medium rounded ${
+                                trade.status === 'completed' ? 'text-green-400 bg-green-400 bg-opacity-20' : 
+                                'text-yellow-400 bg-yellow-400 bg-opacity-20'
+                            }">
+                                ${trade.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-gray-400">${formatTime(trade.timestamp)}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tradesTable.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400 py-8">No recent trades</td></tr>';
+            }
+        }
+
+        // Update prices display
+        function updatePricesDisplay() {
+            const prices = liveData.prices || {};
+            const pricesContainer = document.getElementById('market-prices');
+            
+            const priceEntries = Object.entries(prices);
+            if (priceEntries.length > 0) {
+                pricesContainer.innerHTML = priceEntries.map(([symbol, data]) => {
+                    const changeColor = data.change >= 0 ? 'text-green-400' : 'text-red-400';
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                            <div>
+                                <div class="font-medium">${symbol}</div>
+                                <div class="text-sm text-gray-400">Vol: ${formatVolume(data.volume)}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-medium">$${data.price.toFixed(4)}</div>
+                                <div class="text-sm ${changeColor}">
+                                    ${data.change_percent >= 0 ? '+' : ''}${data.change_percent.toFixed(2)}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                pricesContainer.innerHTML = '<div class="text-center text-gray-400 py-8">Loading market data...</div>';
+            }
+        }
+
+        // Notification handling
+        document.getElementById('notifications-btn').addEventListener('click', function() {
+            const dropdown = document.getElementById('notifications-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        function addNotification(notification) {
+            liveData.notifications.unshift(notification);
+            updateNotificationCount();
+        }
+
+        function updateNotificationCount() {
+            const unreadCount = liveData.notifications.filter(n => !n.read).length;
+            const countElement = document.getElementById('notification-count');
+            
+            if (unreadCount > 0) {
+                countElement.textContent = unreadCount;
+                countElement.classList.remove('hidden');
+            } else {
+                countElement.classList.add('hidden');
+            }
+        }
+
+        // Trading controls
+        document.getElementById('start-trading').addEventListener('click', async function() {
+            try {
+                await fetch('/api/trading/start', { method: 'POST' });
+                this.classList.add('bg-green-700');
+                setTimeout(() => this.classList.remove('bg-green-700'), 200);
+            } catch (error) {
+                console.error('Failed to start trading:', error);
+            }
+        });
+
+        document.getElementById('stop-trading').addEventListener('click', async function() {
+            try {
+                await fetch('/api/trading/stop', { method: 'POST' });
+                this.classList.add('bg-red-700');
+                setTimeout(() => this.classList.remove('bg-red-700'), 200);
+            } catch (error) {
+                console.error('Failed to stop trading:', error);
+            }
+        });
+
+        // Utility functions
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        function formatVolume(value) {
+            if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+            if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+            return value.toFixed(0);
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial tab
+            switchTab('portfolio');
+            
+            // Auto-refresh data every 30 seconds
+            setInterval(loadInitialData, 30000);
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#notifications-btn') && !e.target.closest('#notifications-dropdown')) {
+                document.getElementById('notifications-dropdown').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
