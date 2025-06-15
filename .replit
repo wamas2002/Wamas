@@ -123,6 +123,24 @@ task = "shell.exec"
 args = "python master_portfolio_dashboard.py"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Elite Dashboard Port 5000"
+author = 23429574
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python elite_dashboard_production.py"
+
+[[workflows.workflow]]
+name = "Enhanced Elite Dashboard"
+author = 23429574
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python enhanced_elite_dashboard_server.py"
+
 [[ports]]
 localPort = 80
 externalPort = 6800
