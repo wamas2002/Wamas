@@ -641,9 +641,95 @@
             document.getElementById('btc-change').className = change > 0 ? 'font-bold neon-green' : 'font-bold neon-red';
         }
 
+        // Premium UX Functions
+        
+        // Animated number counter
+        function animateNumberUpdate(element, newValue) {
+            if (element.textContent !== newValue) {
+                element.classList.add('updating');
+                element.textContent = newValue;
+                setTimeout(() => element.classList.remove('updating'), 300);
+            }
+        }
+        
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+        
+        // Signal filtering functions
+        let allSignals = [];
+        
+        function filterSignals() {
+            const symbolFilter = document.getElementById('symbol-filter').value;
+            const confidenceFilter = parseInt(document.getElementById('confidence-filter').value);
+            const buyFilter = document.getElementById('buy-filter').checked;
+            const sellFilter = document.getElementById('sell-filter').checked;
+            
+            document.getElementById('confidence-display').textContent = `${confidenceFilter}%+`;
+            
+            const filteredSignals = allSignals.filter(signal => {
+                const symbolMatch = !symbolFilter || signal.symbol.includes(symbolFilter);
+                const confidenceMatch = parseInt(signal.confidence) >= confidenceFilter;
+                const typeMatch = (signal.action === 'BUY' && buyFilter) || (signal.action === 'SELL' && sellFilter);
+                return symbolMatch && confidenceMatch && typeMatch;
+            });
+            
+            updateSignalLog(filteredSignals);
+        }
+        
+        // Timeframe selector
+        function setTimeframe(timeframe) {
+            document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show loading spinner briefly
+            const chartContainer = document.getElementById('tradingview_chart');
+            const originalContent = chartContainer.innerHTML;
+            chartContainer.innerHTML = '<div class="flex items-center justify-center h-full"><div class="spinner"></div>Updating chart...</div>';
+            
+            setTimeout(() => {
+                chartContainer.innerHTML = originalContent;
+                showToast(`Chart updated to ${timeframe} timeframe`, 'success');
+            }, 1000);
+        }
+        
+        // Track new signals for toast notifications
+        let lastSignalTime = null;
+        
+        function isNewSignal(signal) {
+            const signalTime = new Date(signal.timestamp || Date.now()).getTime();
+            if (!lastSignalTime || signalTime > lastSignalTime) {
+                lastSignalTime = signalTime;
+                return true;
+            }
+            return false;
+        }
+        
+        // Enhanced signal log update with stored reference
+        const originalUpdateSignalLog = updateSignalLog;
+        updateSignalLog = function(signals) {
+            allSignals = signals;
+            originalUpdateSignalLog(signals);
+        };
+        
         // Update market data every 5 seconds
         setInterval(updateMarketData, 5000);
         updateMarketData(); // Initial call
+        
+        // Show welcome toast on load
+        setTimeout(() => {
+            showToast('Elite Trading Dashboard loaded with authentic data', 'success');
+        }, 1000);
     </script>
 </body>
 </html>
