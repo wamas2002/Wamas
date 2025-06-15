@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Trading Dashboard - Professional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+    <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .tab-active { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .gradient-text { background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .status-online { background: #10b981; }
+        .status-offline { background: #ef4444; }
+        .status-warning { background: #f59e0b; }
+        .signal-high { border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.1); }
+        .signal-medium { border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .signal-low { border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .trade-profit { color: #10b981; }
+        .trade-loss { color: #ef4444; }
+        .notification-high { border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .notification-medium { border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .notification-low { border-left: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 5px; background: #374151; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #10b981; cursor: pointer; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #374151; transition: .4s; border-radius: 24px; }
+        .switch-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .switch-slider { background-color: #10b981; }
+        input:checked + .switch-slider:before { transform: translateX(26px); }
+        .loading-spinner { border: 3px solid #374151; border-top: 3px solid #10b981; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-950 bg-opacity-90 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <div class="text-xl font-semibold">Connecting to Trading Systems...</div>
+            <div class="text-gray-400 mt-2">Initializing professional dashboard</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-700 p-4 sticky top-0 z-40">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
+                    <span class="text-white font-bold text-lg">EP</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold gradient-text">Elite Professional Dashboard</h1>
+                    <div class="flex items-center space-x-3 text-sm text-gray-400">
+                        <div id="connection-status" class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-400 rounded-full pulse"></div>
+                            <span>Connected to Live Systems</span>
+                        </div>
+                        <span>•</span>
+                        <span id="last-update">Updated: --</span>
+                        <span>•</span>
+                        <span id="active-engines">Engines: 0/4</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Notification Bell -->
+                <div class="relative">
+                    <button id="notification-bell" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors relative">
+                        <span class="text-xl">🔔</span>
+                        <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="flex space-x-2">
+                    <button id="emergency-stop" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2">
+                        <span>🛑</span>
+                        <span>Emergency Stop</span>
+                    </button>
+                    <button id="refresh-all" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2">
+                        <span>🔄</span>
+                        <span>Refresh All</span>
+                    </button>
+                </div>
+                
+                <!-- System Health -->
+                <div class="bg-gray-800 rounded-lg px-3 py-2">
+                    <div class="flex items-center space-x-2 text-sm">
+                        <span class="text-gray-400">Health:</span>
+                        <div id="system-health" class="flex items-center space-x-1">
+                            <div class="w-2 h-2 status-online rounded-full"></div>
+                            <span class="text-green-400 font-medium">Optimal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-gray-900 border-b border-gray-700">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-1 overflow-x-auto">
+                <button class="nav-tab tab-active px-6 py-4 text-sm font-medium rounded-t-lg transition-all duration-200 whitespace-nowrap" data-tab="overview">
+                    📊 Portfolio Overview
+                </button>
+                <button class="nav-tab px-6 py-4 text-sm font-medium rounded-t-lg transition-all duration-200 hover:bg-gray-800 whitespace-nowrap" data-tab="signals">
+                    🔍 Signal Explorer
+                </button>
+                <button class="nav-tab px-6 py-4 text-sm font-medium rounded-t-lg transition-all duration-200 hover:bg-gray-800 whitespace-nowrap" data-tab="performance">
+                    📈 Performance Analytics
+                </button>
+                <button class="nav-tab px-6 py-4 text-sm font-medium rounded-t-lg transition-all duration-200 hover:bg-gray-800 whitespace-nowrap" data-tab="engines">
+                    ⚙️ Engine Control
+                </button>
+                <button class="nav-tab px-6 py-4 text-sm font-medium rounded-t-lg transition-all duration-200 hover:bg-gray-800 whitespace-nowrap" data-tab="trends">
+                    📉 Confidence Trends
+                </button>
+                <button class="nav-tab px-6 py-4 text-sm font-medium rounded-t-lg transition-all duration-200 hover:bg-gray-800 whitespace-nowrap" data-tab="notifications">
+                    🔔 Notifications
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification Panel -->
+    <div id="notification-panel" class="fixed top-20 right-4 w-96 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-30 hidden">
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center justify-between">
+                <h3 class="font-semibold">Notifications</h3>
+                <button id="close-notifications" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+        </div>
+        <div id="notification-list" class="max-h-96 overflow-y-auto p-4 space-y-3">
+            <!-- Notifications will be populated here -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Portfolio Overview Tab -->
+        <div id="overview-tab" class="tab-content">
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400 text-sm font-medium">Total Portfolio</h3>
+                        <div class="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <span class="text-green-400">💰</span>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2" id="total-portfolio">$0.00</div>
+                    <div class="flex items-center space-x-2">
+                        <span id="portfolio-change" class="text-green-400 text-sm font-medium">+$0.00</span>
+                        <span id="portfolio-change-percent" class="text-gray-400 text-sm">(0.00%)</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400 text-sm font-medium">Open Trades</h3>
+                        <div class="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <span class="text-blue-400">📈</span>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2" id="open-trades">0</div>
+                    <div class="text-gray-400 text-sm">Active positions</div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400 text-sm font-medium">Win Rate</h3>
+                        <div class="w-10 h-10 bg-yellow-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <span class="text-yellow-400">🎯</span>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2" id="win-rate">0%</div>
+                    <div class="text-gray-400 text-sm">Success ratio</div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400 text-sm font-medium">Sharpe Ratio</h3>
+                        <div class="w-10 h-10 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <span class="text-purple-400">📊</span>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2" id="sharpe-ratio">0.00</div>
+                    <div class="text-gray-400 text-sm">Risk-adjusted return</div>
+                </div>
+            </div>
+
+            <!-- Portfolio Allocation & Recent Activity -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-xl font-semibold mb-6">Portfolio Allocation</h3>
+                    <div id="portfolio-positions" class="space-y-4">
+                        <div class="text-center text-gray-400 py-8">Loading allocation data...</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-xl font-semibold mb-6">Recent Activity</h3>
+                    <div id="recent-activity" class="space-y-4">
+                        <div class="text-center text-gray-400 py-8">Loading recent activity...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signal Explorer Tab -->
+        <div id="signals-tab" class="tab-content hidden">
+            <!-- Filters -->
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Signal Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Confidence Range</label>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-gray-400">0%</span>
+                            <input type="range" id="confidence-slider" class="slider flex-1" min="0" max="100" value="0">
+                            <span class="text-sm text-gray-400">100%</span>
+                        </div>
+                        <div class="text-center text-sm text-green-400 mt-2" id="confidence-value">0% - 100%</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Signal Type</label>
+                        <select id="signal-type-filter" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                            <option value="all">All Signals</option>
+                            <option value="BUY">BUY Only</option>
+                            <option value="SELL">SELL Only</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Source Engine</label>
+                        <select id="engine-filter" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                            <option value="all">All Engines</option>
+                            <option value="pure_local">Pure Local</option>
+                            <option value="enhanced_ai">Enhanced AI</option>
+                            <option value="professional">Professional</option>
+                            <option value="futures">Futures</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button id="apply-filters" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signal Results -->
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold">Signal Results</h3>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-400">Total: <span id="total-signals">0</span></span>
+                        <button id="export-signals" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm">Export</button>
+                    </div>
+                </div>
+                <div id="signal-results" class="space-y-4">
+                    <div class="text-center text-gray-400 py-8">Apply filters to see signals</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Analytics Tab -->
+        <div id="performance-tab" class="tab-content hidden">
+            <!-- Performance Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Trading Statistics</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Total Trades</span>
+                            <span id="perf-total-trades" class="text-white font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Win Rate</span>
+                            <span id="perf-win-rate" class="text-green-400 font-medium">0%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Avg Holding Time</span>
+                            <span id="perf-holding-time" class="text-white font-medium">0h</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Profit Factor</span>
+                            <span id="perf-profit-factor" class="text-green-400 font-medium">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Risk Metrics</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Sharpe Ratio</span>
+                            <span id="perf-sharpe" class="text-white font-medium">0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Max Drawdown</span>
+                            <span id="perf-drawdown" class="text-red-400 font-medium">0%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Best Trade</span>
+                            <span id="perf-best-trade" class="text-green-400 font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Worst Trade</span>
+                            <span id="perf-worst-trade" class="text-red-400 font-medium">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">P&L Breakdown</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Total P&L</span>
+                            <span id="perf-total-pnl" class="text-green-400 font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Realized P&L</span>
+                            <span id="perf-realized-pnl" class="text-white font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Unrealized P&L</span>
+                            <span id="perf-unrealized-pnl" class="text-yellow-400 font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">ROI</span>
+                            <span id="perf-roi" class="text-green-400 font-medium">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equity Curve Chart -->
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <h3 class="text-xl font-semibold mb-6">Equity Curve</h3>
+                <div class="h-96">
+                    <canvas id="equity-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Engine Control Tab -->
+        <div id="engines-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Engine Status Cards -->
+                <div id="engine-cards" class="space-y-6">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Engine Logs -->
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-xl font-semibold mb-6">Engine Activity Log</h3>
+                    <div id="engine-logs" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div class="text-center text-gray-400 py-8">Loading engine logs...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confidence Trends Tab -->
+        <div id="trends-tab" class="tab-content hidden">
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-6">Confidence Trends - Last 25 Signals</h3>
+                <div class="h-96">
+                    <canvas id="confidence-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Regime Detection -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Current Market Regime</h3>
+                    <div class="text-center">
+                        <div id="current-regime" class="text-3xl font-bold text-yellow-400">SIDEWAYS</div>
+                        <div class="text-gray-400 text-sm mt-2">Detected by Enhanced AI</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Regime Distribution</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Bullish</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-400 h-2 rounded-full" style="width: 60%"></div>
+                                </div>
+                                <span class="text-sm text-white">60%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Sideways</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-700 rounded-full h-2">
+                                    <div class="bg-yellow-400 h-2 rounded-full" style="width: 35%"></div>
+                                </div>
+                                <span class="text-sm text-white">35%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Bearish</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-700 rounded-full h-2">
+                                    <div class="bg-red-400 h-2 rounded-full" style="width: 5%"></div>
+                                </div>
+                                <span class="text-sm text-white">5%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Signal Quality Score</h3>
+                    <div class="text-center">
+                        <div id="signal-quality" class="text-3xl font-bold text-green-400">A+</div>
+                        <div class="text-gray-400 text-sm mt-2">Based on confidence & regime</div>
+                        <div class="w-full bg-gray-700 rounded-full h-3 mt-4">
+                            <div id="quality-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="notifications-tab" class="tab-content hidden">
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold">Notification Center</h3>
+                    <div class="flex space-x-3">
+                        <button id="mark-all-read" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm">
+                            Mark All Read
+                        </button>
+                        <button id="clear-notifications" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+                <div id="all-notifications" class="space-y-4">
+                    <div class="text-center text-gray-400 py-8">No notifications</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Socket.IO and global state
+        const socket = io();
+        let currentTab = 'overview';
+        let liveData = {
+            portfolio: {},
+            signals: [],
+            performance: {},
+            trends: [],
+            engines: {},
+            notifications: []
+        };
+        let charts = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSocketEvents();
+            initializeEventListeners();
+            loadInitialData();
+            initializeCharts();
+            
+            // Hide loading overlay after initialization
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }, 2000);
+        });
+
+        function initializeSocketEvents() {
+            socket.on('connect', function() {
+                updateConnectionStatus(true);
+                console.log('Connected to professional dashboard');
+            });
+
+            socket.on('disconnect', function() {
+                updateConnectionStatus(false);
+            });
+
+            socket.on('portfolio_update', function(data) {
+                liveData.portfolio = data;
+                updatePortfolioDisplay();
+            });
+
+            socket.on('signals_update', function(data) {
+                liveData.signals = data;
+                updateSignalDisplay();
+            });
+
+            socket.on('performance_update', function(data) {
+                liveData.performance = data;
+                updatePerformanceDisplay();
+            });
+
+            socket.on('trends_update', function(data) {
+                liveData.trends = data;
+                updateTrendsDisplay();
+            });
+
+            socket.on('engine_status_update', function(data) {
+                liveData.engines = data;
+                updateEngineDisplay();
+            });
+
+            socket.on('notifications_update', function(data) {
+                liveData.notifications = data;
+                updateNotificationDisplay();
+            });
+
+            socket.on('new_notification', function(data) {
+                addNotificationToDisplay(data);
+                showNotificationToast(data);
+            });
+        }
+
+        function initializeEventListeners() {
+            // Tab navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+
+            // Signal filters
+            document.getElementById('apply-filters').addEventListener('click', applySignalFilters);
+            document.getElementById('confidence-slider').addEventListener('input', updateConfidenceValue);
+
+            // Engine controls
+            document.getElementById('emergency-stop').addEventListener('click', emergencyStop);
+            document.getElementById('refresh-all').addEventListener('click', refreshAllData);
+
+            // Notification controls
+            document.getElementById('notification-bell').addEventListener('click', toggleNotificationPanel);
+            document.getElementById('close-notifications').addEventListener('click', closeNotificationPanel);
+            document.getElementById('mark-all-read').addEventListener('click', markAllNotificationsRead);
+            document.getElementById('clear-notifications').addEventListener('click', clearAllNotifications);
+        }
+
+        async function loadInitialData() {
+            try {
+                const response = await fetch('/api/dashboard_data');
+                if (!response.ok) throw new Error('Failed to fetch data');
+                
+                const data = await response.json();
+                
+                liveData.portfolio = data.portfolio || {};
+                liveData.signals = data.signals || [];
+                liveData.performance = data.performance || {};
+                liveData.trends = data.trends || [];
+                liveData.engines = data.engines || {};
+                liveData.notifications = data.notifications || [];
+
+                updateAllDisplays();
+                updateLastUpdated();
+            } catch (error) {
+                console.error('Failed to load initial data:', error);
+                showErrorMessage('Failed to connect to trading systems');
+            }
+        }
+
+        function updateAllDisplays() {
+            updatePortfolioDisplay();
+            updateSignalDisplay();
+            updatePerformanceDisplay();
+            updateTrendsDisplay();
+            updateEngineDisplay();
+            updateNotificationDisplay();
+        }
+
+        function updatePortfolioDisplay() {
+            const portfolio = liveData.portfolio;
+            if (!portfolio) return;
+
+            document.getElementById('total-portfolio').textContent = formatCurrency(portfolio.total_value || 0);
+            document.getElementById('open-trades').textContent = portfolio.open_trades || 0;
+            
+            // Update portfolio positions
+            const positionsContainer = document.getElementById('portfolio-positions');
+            if (portfolio.positions && portfolio.positions.length > 0) {
+                positionsContainer.innerHTML = portfolio.positions.map(pos => `
+                    <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <span class="text-blue-400 text-sm font-bold">${pos.symbol.substring(0,3)}</span>
+                            </div>
+                            <div>
+                                <div class="font-medium text-white">${pos.symbol}</div>
+                                <div class="text-sm text-gray-400">${formatNumber(pos.amount)} tokens</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-medium text-white">${formatCurrency(pos.value)}</div>
+                            <div class="text-sm text-gray-400">${pos.allocation.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                positionsContainer.innerHTML = '<div class="text-center text-gray-400 py-8">No active positions</div>';
+            }
+        }
+
+        function updateSignalDisplay() {
+            const signalResults = document.getElementById('signal-results');
+            const signals = liveData.signals || [];
+            
+            document.getElementById('total-signals').textContent = signals.length;
+            
+            if (signals.length > 0) {
+                signalResults.innerHTML = signals.map(signal => {
+                    const confidenceClass = signal.confidence > 80 ? 'signal-high' : 
+                        signal.confidence > 60 ? 'signal-medium' : 'signal-low';
+                    const actionColor = signal.action === 'BUY' ? 'text-green-400' : 'text-red-400';
+                    
+                    return `
+                        <div class="p-4 bg-gray-800 rounded-lg ${confidenceClass} hover:bg-gray-750 transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-4">
+                                    <span class="font-semibold text-white text-lg">${signal.symbol}</span>
+                                    <span class="px-3 py-1 text-sm font-medium rounded-lg ${actionColor} bg-opacity-20">
+                                        ${signal.action}
+                                    </span>
+                                    <span class="px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded">${signal.source}</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xl font-bold text-white">${signal.confidence.toFixed(1)}%</div>
+                                    <div class="text-sm text-gray-400">Confidence</div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-400">Model:</span>
+                                    <span class="text-white ml-1">${signal.model}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Regime:</span>
+                                    <span class="text-white ml-1">${signal.regime}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">P&L Exp:</span>
+                                    <span class="text-green-400 ml-1">${signal.pnl_expectancy.toFixed(2)}%</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Risk:</span>
+                                    <span class="text-white ml-1">${signal.risk_level}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-400">
+                                ${formatTime(signal.timestamp)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                signalResults.innerHTML = '<div class="text-center text-gray-400 py-8">No signals match current filters</div>';
+            }
+        }
+
+        function updatePerformanceDisplay() {
+            const perf = liveData.performance;
+            if (!perf) return;
+
+            document.getElementById('win-rate').textContent = (perf.win_rate * 100).toFixed(1) + '%';
+            document.getElementById('sharpe-ratio').textContent = perf.sharpe_ratio.toFixed(2);
+            
+            document.getElementById('perf-total-trades').textContent = perf.total_trades;
+            document.getElementById('perf-win-rate').textContent = (perf.win_rate * 100).toFixed(1) + '%';
+            document.getElementById('perf-holding-time').textContent = perf.avg_holding_time;
+            document.getElementById('perf-profit-factor').textContent = perf.profit_factor.toFixed(2);
+            document.getElementById('perf-sharpe').textContent = perf.sharpe_ratio.toFixed(2);
+            document.getElementById('perf-drawdown').textContent = (perf.max_drawdown * 100).toFixed(1) + '%';
+            document.getElementById('perf-best-trade').textContent = formatCurrency(perf.best_trade);
+            document.getElementById('perf-worst-trade').textContent = formatCurrency(perf.worst_trade);
+            document.getElementById('perf-total-pnl').textContent = formatCurrency(perf.total_pnl);
+            document.getElementById('perf-realized-pnl').textContent = formatCurrency(perf.realized_pnl);
+            document.getElementById('perf-unrealized-pnl').textContent = formatCurrency(perf.unrealized_pnl);
+            document.getElementById('perf-roi').textContent = perf.roi_percentage.toFixed(2) + '%';
+        }
+
+        function updateEngineDisplay() {
+            const engines = liveData.engines;
+            if (!engines) return;
+
+            const engineCards = document.getElementById('engine-cards');
+            const engineNames = {
+                'pure_local': 'Pure Local Trading',
+                'enhanced_ai': 'Enhanced AI',
+                'professional_optimizer': 'Professional Optimizer',
+                'futures_engine': 'Futures Engine'
+            };
+
+            engineCards.innerHTML = Object.entries(engines).map(([key, engine]) => {
+                const statusColor = engine.active && engine.connected ? 'status-online' : 
+                    engine.connected ? 'status-warning' : 'status-offline';
+                const statusText = engine.active && engine.connected ? 'Active' :
+                    engine.connected ? 'Paused' : 'Offline';
+
+                return `
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-semibold">${engineNames[key]}</h4>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 ${statusColor} rounded-full"></div>
+                                <span class="text-sm font-medium">${statusText}</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Tables:</span>
+                                <span class="text-white">${engine.tables}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Last Signal:</span>
+                                <span class="text-white">${engine.last_signal}</span>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" ${engine.active ? 'checked' : ''} 
+                                   onchange="toggleEngine('${key}', this.checked)">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            // Update active engines count
+            const activeCount = Object.values(engines).filter(e => e.active && e.connected).length;
+            document.getElementById('active-engines').textContent = `Engines: ${activeCount}/4`;
+        }
+
+        function updateNotificationDisplay() {
+            const notifications = liveData.notifications || [];
+            
+            // Update notification badge
+            const badge = document.getElementById('notification-badge');
+            const unreadCount = notifications.filter(n => !n.dismissed).length;
+            
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Update notification lists
+            updateNotificationList('notification-list', notifications.slice(0, 5));
+            updateNotificationList('all-notifications', notifications);
+        }
+
+        function updateNotificationList(containerId, notifications) {
+            const container = document.getElementById(containerId);
+            
+            if (notifications.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8">No notifications</div>';
+                return;
+            }
+
+            container.innerHTML = notifications.map(notification => {
+                const priorityClass = `notification-${notification.priority}`;
+                const icon = notification.type === 'engine_control' ? '⚙️' :
+                    notification.type === 'trade' ? '💰' :
+                    notification.type === 'alert' ? '⚠️' : '📢';
+
+                return `
+                    <div class="p-3 bg-gray-800 rounded-lg ${priorityClass} ${notification.dismissed ? 'opacity-50' : ''}">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-3">
+                                <span class="text-lg">${icon}</span>
+                                <div>
+                                    <div class="font-medium text-white">${notification.title}</div>
+                                    <div class="text-sm text-gray-400">${notification.message}</div>
+                                    <div class="text-xs text-gray-500 mt-1">${formatTime(notification.timestamp)}</div>
+                                </div>
+                            </div>
+                            ${!notification.dismissed ? `
+                                <button onclick="dismissNotification(${notification.id})" 
+                                        class="text-gray-400 hover:text-white text-sm">✕</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function initializeCharts() {
+            // Initialize empty charts
+            const ctx1 = document.getElementById('equity-chart').getContext('2d');
+            charts.equity = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: { 
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('confidence-chart').getContext('2d');
+            charts.confidence = new Chart(ctx2, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Profitable',
+                        data: [],
+                        backgroundColor: '#10b981',
+                        borderColor: '#10b981'
+                    }, {
+                        label: 'Loss',
+                        data: [],
+                        backgroundColor: '#ef4444',
+                        borderColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    scales: {
+                        y: { 
+                            title: { display: true, text: 'Confidence %', color: '#9ca3af' },
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: { 
+                            title: { display: true, text: 'Time', color: '#9ca3af' },
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTrendsDisplay() {
+            const trends = liveData.trends || [];
+            if (trends.length === 0) return;
+
+            // Update confidence chart
+            const profitable = trends.filter(t => t.profitable).map((t, i) => ({
+                x: i, y: t.confidence
+            }));
+            const losses = trends.filter(t => !t.profitable).map((t, i) => ({
+                x: i, y: t.confidence
+            }));
+
+            charts.confidence.data.datasets[0].data = profitable;
+            charts.confidence.data.datasets[1].data = losses;
+            charts.confidence.update();
+        }
+
+        // Utility functions
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('tab-active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('tab-active');
+            currentTab = tabName;
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connection-status');
+            if (connected) {
+                statusElement.innerHTML = '<div class="w-2 h-2 bg-green-400 rounded-full pulse"></div><span>Connected to Live Systems</span>';
+            } else {
+                statusElement.innerHTML = '<div class="w-2 h-2 bg-red-400 rounded-full"></div><span>Disconnected - Reconnecting...</span>';
+            }
+        }
+
+        function updateLastUpdated() {
+            document.getElementById('last-update').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value || 0);
+        }
+
+        function formatNumber(value, decimals = 4) {
+            return Number(value || 0).toFixed(decimals);
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function updateConfidenceValue() {
+            const slider = document.getElementById('confidence-slider');
+            document.getElementById('confidence-value').textContent = `${slider.value}% - 100%`;
+        }
+
+        async function applySignalFilters() {
+            const filters = {
+                confidence_min: document.getElementById('confidence-slider').value,
+                signal_type: document.getElementById('signal-type-filter').value,
+                source_engine: document.getElementById('engine-filter').value
+            };
+
+            try {
+                const params = new URLSearchParams(filters);
+                const response = await fetch(`/api/signal_explorer?${params}`);
+                const signals = await response.json();
+                liveData.signals = signals;
+                updateSignalDisplay();
+            } catch (error) {
+                console.error('Failed to apply filters:', error);
+            }
+        }
+
+        async function toggleEngine(engineName, active) {
+            try {
+                const response = await fetch('/api/toggle_engine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ engine_name: engineName, active })
+                });
+                
+                if (response.ok) {
+                    showNotificationToast({
+                        type: 'engine_control',
+                        title: 'Engine Updated',
+                        message: `${engineName} ${active ? 'activated' : 'deactivated'}`,
+                        priority: 'medium'
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to toggle engine:', error);
+            }
+        }
+
+        async function dismissNotification(notificationId) {
+            try {
+                const response = await fetch('/api/dismiss_notification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notification_id: notificationId })
+                });
+                
+                if (response.ok) {
+                    // Update local data
+                    const notification = liveData.notifications.find(n => n.id === notificationId);
+                    if (notification) notification.dismissed = true;
+                    updateNotificationDisplay();
+                }
+            } catch (error) {
+                console.error('Failed to dismiss notification:', error);
+            }
+        }
+
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notification-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function closeNotificationPanel() {
+            document.getElementById('notification-panel').classList.add('hidden');
+        }
+
+        function markAllNotificationsRead() {
+            liveData.notifications.forEach(n => n.dismissed = true);
+            updateNotificationDisplay();
+        }
+
+        function clearAllNotifications() {
+            liveData.notifications = [];
+            updateNotificationDisplay();
+        }
+
+        function emergencyStop() {
+            if (confirm('Are you sure you want to emergency stop all trading engines?')) {
+                Object.keys(liveData.engines).forEach(engine => {
+                    toggleEngine(engine, false);
+                });
+                showNotificationToast({
+                    type: 'alert',
+                    title: 'Emergency Stop Activated',
+                    message: 'All trading engines have been stopped',
+                    priority: 'high'
+                });
+            }
+        }
+
+        function refreshAllData() {
+            loadInitialData();
+            showNotificationToast({
+                type: 'system',
+                title: 'Data Refreshed',
+                message: 'All dashboard data has been updated',
+                priority: 'low'
+            });
+        }
+
+        function showNotificationToast(notification) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-lg z-50 transition-all duration-300`;
+            toast.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <span class="text-lg">
+                        ${notification.type === 'engine_control' ? '⚙️' :
+                          notification.type === 'trade' ? '💰' :
+                          notification.type === 'alert' ? '⚠️' : '📢'}
+                    </span>
+                    <div>
+                        <div class="font-medium text-white">${notification.title}</div>
+                        <div class="text-sm text-gray-400">${notification.message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-white">✕</button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        function showErrorMessage(message) {
+            showNotificationToast({
+                type: 'alert',
+                title: 'System Error',
+                message: message,
+                priority: 'high'
+            });
+        }
+
+        function addNotificationToDisplay(notification) {
+            liveData.notifications.unshift(notification);
+            updateNotificationDisplay();
+        }
+
+        // Auto-refresh every 15 seconds
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                updateLastUpdated();
+                // Request fresh data via WebSocket
+                socket.emit('request_update');
+            }
+        }, 15000);
+    </script>
+</body>
+</html>

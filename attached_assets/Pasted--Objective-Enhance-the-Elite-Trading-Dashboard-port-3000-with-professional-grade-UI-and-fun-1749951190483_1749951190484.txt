@@ -1,0 +1,74 @@
+# 🧠 Objective:
+# Enhance the Elite Trading Dashboard (port 3000) with professional-grade UI and functionality
+# — in a single development branch — without modifying or disrupting the core trading system
+# (ai/, trading/, execution/, or ML models).
+
+# 🔒 Non-Destructive Directive:
+# DO NOT modify:
+#   - Core ML models in ai/
+#   - Core signal logic in trading/
+#   - Execution flows in execution/
+#   - Main script engines (signal_execution_bridge.py, pure_local_trading_engine.py, etc.)
+
+# ✅ Upgrade Targets: Elite Dashboard (dashboard/elite_dashboard.py, port 3000)
+
+## 1. 🔍 Signal Explorer Tab
+- Add real-time filtering:
+  • Confidence % (slider)
+  • Signal type (BUY/SELL)
+  • Source engine (dropdown: Pure Local, AI Optimizer, Futures)
+- Display: timestamp, model used, regime, PnL expectancy
+- Data source: /api/signals → connected to signals.db or active memory
+
+## 2. 📊 Performance Analytics Tab
+- Show:
+  • Equity curve (real PnL from trade logs)
+  • Win rate, Sharpe ratio, avg. holding time
+  • Realized/unrealized PnL
+- Pull from portfolio database or real-time API `/api/portfolio_metrics`
+
+## 3. 🔔 Notification Center
+- Add dismissible alerts for:
+  • Executed trades
+  • Signal anomalies
+  • Risk triggers (drawdown, overbuy, etc.)
+- Display via WebSocket or polling `/api/alerts`
+
+## 4. ⚙️ Engine Control Panel
+- Add toggles to activate/deactivate each engine:
+  • Pure Local
+  • Enhanced AI
+  • Futures
+- Display current engine status using `/api/engine_status`
+
+## 5. 📉 Confidence Trends Chart
+- Graph confidence levels of last 25 signals
+- Color code:
+  • Green: Profitable
+  • Red: Loss
+- Overlay regime detection zones (bull/bear/sideways)
+
+## 6. 📈 Portfolio Overview Panel
+- Real-time data:
+  • USDT balance
+  • Current open trades
+  • Allocation per symbol
+- Source: OKX WebSocket and `/api/portfolio`
+
+## 7. 🚀 UI & Technical Polish
+- Auto-refresh (every 15s via WebSocket)
+- Responsive layout with tabbed interface
+- Async data fetching for large tables
+- Lazy load inactive charts/tabs
+- Page loading spinner while connecting
+
+## 8. 🔒 Internal Security Enforcement
+- NO public API endpoints exposed
+- All backend routes behind authenticated session
+- Use Flask app context and `@login_required` decorators
+
+# ✅ Final Deployment Result:
+An elite dashboard with interactive trading intelligence, live OKX metrics, AI insights, real signals, and secure modular components — all running independently of core logic.
+
+# Branch Name Suggestion:
+`enhanced_dashboard_pro_v1`
