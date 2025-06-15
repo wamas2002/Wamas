@@ -147,7 +147,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python live_elite_dashboard.py"
+args = "python live_elite_dashboard_fixed.py"
 waitForPort = 6001
 
 [[ports]]
