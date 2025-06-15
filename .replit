@@ -42,11 +42,11 @@ args = "Comprehensive System Monitor"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Elite Trading Dashboard"
+args = "Master Portfolio Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Master Portfolio Dashboard"
+args = "Clean Elite Trading Dashboard"
 
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
@@ -106,15 +106,6 @@ task = "shell.exec"
 args = "python comprehensive_system_monitor.py"
 
 [[workflows.workflow]]
-name = "Elite Trading Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python elite_dashboard_production.py"
-waitForPort = 3005
-
-[[workflows.workflow]]
 name = "Master Portfolio Dashboard"
 author = "agent"
 
@@ -140,6 +131,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python enhanced_elite_dashboard_server.py"
+
+[[workflows.workflow]]
+name = "Clean Elite Trading Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python elite_dashboard_clean.py"
+waitForPort = 3005
 
 [[ports]]
 localPort = 80
