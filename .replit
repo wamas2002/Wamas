@@ -18,15 +18,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Professional Trading Optimizer"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Enhanced AI Trading Dashboard"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Premium React Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -48,6 +40,14 @@ args = "Live Position Monitor"
 task = "workflow.run"
 args = "Advanced Position Manager"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Intelligent Profit Optimizer"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Master Portfolio Dashboard"
+
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
 author = 23429574
@@ -58,15 +58,6 @@ task = "shell.exec"
 args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
 
 [[workflows.workflow]]
-name = "Professional Trading Optimizer"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python professional_trading_optimizer.py"
-waitForPort = 5001
-
-[[workflows.workflow]]
 name = "Enhanced AI Trading Dashboard"
 author = "agent"
 
@@ -74,15 +65,6 @@ author = "agent"
 task = "shell.exec"
 args = "python enhanced_trading_dashboard.py"
 waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Premium React Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python premium_dashboard_server.py"
-waitForPort = 3004
 
 [[workflows.workflow]]
 name = "Live Elite Dashboard"
@@ -125,6 +107,23 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python advanced_position_manager.py"
+
+[[workflows.workflow]]
+name = "Intelligent Profit Optimizer"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python intelligent_profit_optimizer.py"
+
+[[workflows.workflow]]
+name = "Master Portfolio Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python master_portfolio_dashboard.py"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000
