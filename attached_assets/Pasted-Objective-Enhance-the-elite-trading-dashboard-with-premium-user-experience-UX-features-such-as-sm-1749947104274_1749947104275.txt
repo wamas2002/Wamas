@@ -1,0 +1,68 @@
+Objective:
+Enhance the elite trading dashboard with premium user experience (UX) features such as smooth animations, live interactions, and contextual tooltips — while maintaining full system integrity and backend compatibility.
+
+⸻
+
+🔐 Constraints
+
+✅ DO NOT:
+	•	Change any backend logic, ML model behavior, API routes, or execution engine
+	•	Modify any data processing, trading signals, or OKX connectivity
+
+✅ DO:
+	•	Improve frontend interactivity and usability only
+	•	Use lightweight, performance-optimized libraries (e.g., Chart.js, ApexCharts, Framer Motion)
+
+⸻
+
+🎯 Features to Add
+	1.	📊 Interactive Trading Chart Upgrades
+	•	Add tooltip on hover (entry/exit, profit %, stop loss)
+	•	Enable zoom/pan support on TradingView widget
+	•	Add multi-timeframe selector (15m, 1h, 4h, 1d)
+	2.	📈 Animated Metric Counters
+	•	Use animated number counters for:
+	•	Portfolio Balance
+	•	Strategy Win Rate
+	•	Confidence Scores
+	•	Daily P&L
+	3.	⚙️ Live Signal Feed with Filters
+	•	Scrollable feed showing:
+	•	Symbol, signal type (BUY/SELL), confidence, time
+	•	Enable live filter by:
+	•	Symbol (dropdown)
+	•	Confidence level (slider)
+	•	Type (checkbox BUY / SELL)
+	4.	🧠 AI Model Card Enhancements
+	•	Add:
+	•	“Next retraining in…” countdown
+	•	Animated health badge (green pulsing for healthy, red for error)
+	•	Tooltip: model accuracy, # trades used in training
+	5.	📋 Strategy Builder UX Enhancements
+	•	Drag-and-drop layout for indicators
+	•	Show parameter sliders (e.g. RSI period, TP%, SL%)
+	•	Real-time preview of logic with live TradingView overlay (where possible)
+	6.	🎨 Theme & Aesthetic Improvements
+	•	Add animated tab transitions (Framer Motion or CSS transitions)
+	•	Implement toast notifications for:
+	•	Signal triggered
+	•	Trade executed
+	•	Stop loss triggered
+	•	Add hover states and subtle motion for all buttons and cards
+
+⸻
+
+🖥️ Apply These To:
+	•	Dashboard
+	•	Strategy Builder
+	•	AI Panel
+	•	Portfolio
+	•	Signal Monitor
+
+⸻
+
+🧪 Final Requirements
+	•	Must work on all devices (responsive)
+	•	No additional load on backend
+	•	Keep latency under 200ms on all UI updates
+	•	Must preserve current system state and real-time trading functionality
