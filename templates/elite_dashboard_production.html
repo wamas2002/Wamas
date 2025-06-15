@@ -741,7 +741,7 @@
                             <div class="grid grid-cols-4 gap-6 text-sm">
                                 <div class="glass-effect p-4 rounded-lg">
                                     <div class="text-gray-400 mb-1">Price</div>
-                                    <div class="text-lg font-bold neon-green" id="btc-price">$67,240</div>
+                                    <div class="text-lg font-bold neon-green" id="btc-price">Loading...</div>
                                 </div>
                                 <div class="glass-effect p-4 rounded-lg">
                                     <div class="text-gray-400 mb-1">24h Change</div>
@@ -1019,19 +1019,17 @@
             // Update with authentic OKX data only
             if (dashboardData && dashboardData.portfolio) {
                 animateValue('portfolio-balance', document.getElementById('portfolio-balance').textContent, '$' + (dashboardData.portfolio.usdt_balance || 0).toLocaleString());
-                animateValue('total-value', document.getElementById('total-value').textContent, '$' + (dashboardData.portfolio.total_value || 0).toLocaleString());
-                animateValue('daily-pnl', document.getElementById('daily-pnl').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
-                animateValue('daily-change', document.getElementById('daily-change').textContent, (dashboardData.portfolio.day_change_percent || 0).toFixed(2) + '%');
+                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
                 
                 // Update confidence from authentic signals
                 if (dashboardData.signals && dashboardData.signals.length > 0) {
                     const avgConfidence = dashboardData.signals.reduce((acc, s) => acc + s.confidence, 0) / dashboardData.signals.length;
                     animateValue('confidence-value', document.getElementById('confidence-value').textContent, avgConfidence.toFixed(0) + '%');
                 }
-                
-                // Update profit from authentic data
-                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
             }
+            
+            // Fetch and update real BTC price
+            fetchMarketData();
             
             // Update with authentic signals only
             updateEnhancedSignalLog(dashboardData.signals || []);
@@ -1039,10 +1037,26 @@
             updateEnhancedEventLog(dashboardData.events || []);
         }
 
+        async function fetchMarketData() {
+            try {
+                const response = await fetch('/api/market-data');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.market_data && data.market_data.btc_price) {
+                        animateValue('btc-price', document.getElementById('btc-price').textContent, '$' + data.market_data.btc_price.toLocaleString());
+                        animateValue('btc-change', document.getElementById('btc-change').textContent, (data.market_data.btc_change_24h || 0).toFixed(2) + '%');
+                    }
+                }
+            } catch (error) {
+                console.error('Market data fetch error:', error);
+            }
+        }
+
         function updateDashboardWithFallback() {
-            updateEnhancedSignalLog(getDefaultSignals());
-            updateEnhancedTopPairs(getDefaultTopPairs());
-            updateEnhancedEventLog(getDefaultEvents());
+            // Show loading states instead of fallback data
+            document.getElementById('portfolio-balance').textContent = 'No Data';
+            document.getElementById('current-profit').textContent = 'No Data';
+            document.getElementById('btc-price').textContent = 'No Data';
         }
 
         function animateValue(elementId, oldValue, newValue) {

@@ -389,6 +389,26 @@ def api_backtest_results():
         print(f"Backtest results error: {e}")
         return jsonify({'backtest_results': {}}), 500
 
+@app.route('/api/market-data')
+def api_market_data():
+    """Get real-time market data including BTC price"""
+    try:
+        # Get BTC price from OKX
+        btc_ticker = dashboard.okx_validator.okx_client.fetch_ticker('BTC/USDT')
+        
+        market_data = {
+            'btc_price': float(btc_ticker['last']),
+            'btc_change_24h': float(btc_ticker['percentage'] or 0),
+            'btc_volume': float(btc_ticker['quoteVolume'] or 0),
+            'timestamp': datetime.now().isoformat(),
+            'source': 'okx_live'
+        }
+        
+        return jsonify({'market_data': market_data})
+    except Exception as e:
+        print(f"Market data error: {e}")
+        return jsonify({'market_data': {}}), 500
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint"""
