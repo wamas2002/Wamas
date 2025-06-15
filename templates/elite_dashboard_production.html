@@ -374,6 +374,116 @@
         <div id="dashboard-tab" class="tab-content active">
             <!-- Enhanced Main Dashboard Grid -->
             <div class="grid grid-cols-12 gap-6 animate-slide-up">
+        
+        <!-- AI Signals Explorer Tab -->
+        <div id="signals-tab" class="tab-content">
+            <div class="grid grid-cols-12 gap-6">
+                <div class="col-span-8">
+                    <div class="glass-effect p-6 rounded-xl">
+                        <h3 class="text-xl font-bold mb-4">AI Signal Explorer</h3>
+                        <div class="space-y-4" id="signals-list">
+                            <!-- Signals loaded via API -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-4">
+                    <div class="glass-effect p-6 rounded-xl">
+                        <h3 class="text-lg font-bold mb-4">Signal Filters</h3>
+                        <div class="space-y-3">
+                            <select class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                <option>All Symbols</option>
+                                <option>BTC/USDT</option>
+                                <option>ETH/USDT</option>
+                            </select>
+                            <select class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                <option>All Directions</option>
+                                <option>Buy Signals</option>
+                                <option>Sell Signals</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Backtest Results Tab -->
+        <div id="backtest-tab" class="tab-content">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-xl font-bold mb-4">Backtest Results</h3>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-400">+247%</div>
+                        <div class="text-gray-400">Total Return</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-400">1.8</div>
+                        <div class="text-gray-400">Sharpe Ratio</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-yellow-400">-8.5%</div>
+                        <div class="text-gray-400">Max Drawdown</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Strategy Controls Tab -->
+        <div id="strategy-tab" class="tab-content">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-xl font-bold mb-4">Strategy Controls</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span>Auto Trading</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Risk Management</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Max Position Size</label>
+                            <input type="range" min="1" max="100" value="25" class="w-full">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Portfolio History Tab -->
+        <div id="portfolio-tab" class="tab-content">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-xl font-bold mb-4">Portfolio History</h3>
+                <div class="chart-container">
+                    <canvas id="portfolio-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trade Logs Tab -->
+        <div id="logs-tab" class="tab-content">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-xl font-bold mb-4">Trade Logs</h3>
+                <div class="space-y-3" id="trade-logs">
+                    <!-- Trade logs loaded via API -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notification Center Tab -->
+        <div id="notifications-tab" class="tab-content">
+            <div class="glass-effect p-6 rounded-xl">
+                <h3 class="text-xl font-bold mb-4">Notification Center</h3>
+                <div class="space-y-3" id="notifications-list">
+                    <!-- Notifications loaded via API -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Main Dashboard Grid -->
         <!-- Top Row: Enhanced Key Metrics -->
         <div class="col-span-3">
             <div class="glass-effect metric-card p-6 rounded-xl animate-fade-in">

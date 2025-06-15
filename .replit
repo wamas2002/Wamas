@@ -112,7 +112,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python elite_dashboard_production.py"
-waitForPort = 3004
+waitForPort = 3005
 
 [[workflows.workflow]]
 name = "Master Portfolio Dashboard"
@@ -156,6 +156,10 @@ externalPort = 5000
 [[ports]]
 localPort = 3004
 externalPort = 5173
+
+[[ports]]
+localPort = 3005
+externalPort = 8000
 
 [[ports]]
 localPort = 5000
