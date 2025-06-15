@@ -48,6 +48,7 @@ class MasterPortfolioAnalytics:
                 'password': os.environ.get('OKX_PASSPHRASE'),
                 'sandbox': False,
                 'enableRateLimit': True,
+                'rateLimit': 2000,  # Increased rate limit
             })
             self.exchange.load_markets()
             logger.info("Master portfolio analytics connected to OKX")

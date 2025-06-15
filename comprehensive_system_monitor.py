@@ -37,18 +37,26 @@ class ComprehensiveSystemMonitor:
 
     def initialize_exchange(self):
         """Initialize OKX exchange for real-time data"""
-        try:
-            self.exchange = ccxt.okx({
-                'apiKey': os.environ.get('OKX_API_KEY'),
-                'secret': os.environ.get('OKX_SECRET_KEY'),
-                'password': os.environ.get('OKX_PASSPHRASE'),
-                'sandbox': False,
-                'enableRateLimit': True,
-            })
-            self.exchange.load_markets()
-            logger.info("System monitor connected to OKX")
-        except Exception as e:
-            logger.error(f"Failed to initialize exchange: {e}")
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                self.exchange = ccxt.okx({
+                    'apiKey': os.environ.get('OKX_API_KEY'),
+                    'secret': os.environ.get('OKX_SECRET_KEY'),
+                    'password': os.environ.get('OKX_PASSPHRASE'),
+                    'sandbox': False,
+                    'enableRateLimit': True,
+                    'rateLimit': 2000,  # 2 second rate limit
+                })
+                self.exchange.load_markets()
+                logger.info("System monitor connected to OKX")
+                return
+            except Exception as e:
+                logger.error(f"Exchange connection attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(5)  # Wait before retry
+                else:
+                    logger.error("All exchange connection attempts failed")
 
     def setup_database(self):
         """Setup comprehensive monitoring database"""

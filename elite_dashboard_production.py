@@ -128,10 +128,16 @@ class ProductionEliteDashboard:
                         amount = float(data.get('total', 0))
                         if amount > 0.001:  # Minimum threshold
                             try:
+                                # Skip invalid symbols
+                                if symbol in ['CHE', 'BETH', 'LDBNB']:
+                                    continue
+                                    
                                 ticker = self.okx_exchange.fetch_ticker(f"{symbol}/USDT")
                                 price = float(ticker.get('last', 0))
                                 value = amount * price
                                 total_value += value
+                                
+                                time.sleep(0.1)  # Rate limiting
                                 
                                 positions.append({
                                     'symbol': symbol,
