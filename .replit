@@ -54,7 +54,7 @@ args = "Elite Trading Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Under $50 Futures Trading"
+args = "Live Under $50 Futures Trading"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -143,12 +143,12 @@ args = "python elite_dashboard_production.py"
 waitForPort = 3000
 
 [[workflows.workflow]]
-name = "Under $50 Futures Trading"
+name = "Live Under $50 Futures Trading"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python under50_futures_trading_engine.py"
+args = "python live_under50_futures_engine.py"
 
 [[ports]]
 localPort = 3000
