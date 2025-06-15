@@ -296,32 +296,50 @@ class LiveUnder50FuturesEngine:
                 logger.error(f"Insufficient balance for trade: ${balance:.2f}")
                 return False
             
+            # Account for existing margin usage from active positions
+            # Get current margin usage to calculate available margin
+            try:
+                positions = self.exchange.fetch_positions()
+                used_margin = 0
+                for pos in positions:
+                    if pos['contracts'] and float(pos['contracts']) > 0:
+                        used_margin += float(pos.get('initialMargin', 0) or 0)
+            except:
+                used_margin = 0
+            
+            # Calculate available margin (conservative approach)
+            available_balance = balance - used_margin
+            safety_buffer = available_balance * 0.3  # Keep 30% buffer
+            usable_balance = available_balance - safety_buffer
+            
             # Ultra-conservative position sizing for margin requirements
-            # Only use 1% of balance per trade to avoid margin issues
-            trade_amount = balance * 0.01  # $0.91 per trade
+            # Use 0.5% of usable balance per trade to account for existing positions
+            trade_amount = max(usable_balance * 0.005, 0.50)  # Minimum $0.50 trade
             
             # Calculate position size directly from trade amount
             position_size = trade_amount / signal['price']
             
-            # Ensure minimum position size (1 unit)
-            if position_size < 1.0:
-                position_size = 1.0
+            # Ensure minimum position size (1 unit for most tokens)
+            min_size = 1.0
+            if position_size < min_size:
+                position_size = min_size
                 trade_amount = position_size * signal['price']
             
-            # Calculate required margin (position value / leverage)
+            # Calculate required margin with current leverage
             required_margin = trade_amount / signal['leverage']
             
-            # Safety check: ensure margin doesn't exceed 5% of balance
-            if required_margin > balance * 0.05:
-                # Reduce leverage to 1x if needed
-                signal['leverage'] = 1
-                required_margin = trade_amount
-                
-                # If still too large, reduce position size
-                if required_margin > balance * 0.05:
-                    trade_amount = balance * 0.05
-                    position_size = trade_amount / signal['price']
-                    required_margin = trade_amount
+            # Final safety check: ensure total margin usage doesn't exceed limits
+            total_margin_after = used_margin + required_margin
+            if total_margin_after > balance * 0.7:  # Don't use more than 70% total balance as margin
+                # Reduce to smallest viable position
+                max_additional_margin = (balance * 0.7) - used_margin
+                if max_additional_margin > 0:
+                    trade_amount = max_additional_margin * signal['leverage']
+                    position_size = max(trade_amount / signal['price'], min_size)
+                    required_margin = max_additional_margin
+                else:
+                    logger.warning(f"Insufficient available margin for new position: Used ${used_margin:.2f}, Available ${available_balance:.2f}")
+                    return False
             
             logger.info(f"Conservative sizing - Balance: ${balance:.2f}, Trade: ${trade_amount:.2f}, Margin: ${required_margin:.2f}, Size: {position_size:.4f}, Leverage: {signal['leverage']}x")
             
