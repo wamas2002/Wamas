@@ -38,10 +38,6 @@ args = "Direct Auto Trading"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "48-Hour System Monitor"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Dynamic Trading System"
 
 [[workflows.workflow.tasks]]
@@ -55,6 +51,10 @@ args = "Enhanced AI Trading Dashboard"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Elite Trading Dashboard"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Premium React Dashboard"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -106,14 +106,6 @@ task = "shell.exec"
 args = "python direct_execution_fix.py"
 
 [[workflows.workflow]]
-name = "48-Hour System Monitor"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python system_monitor_2day_analysis.py"
-
-[[workflows.workflow]]
 name = "Dynamic Trading System"
 author = "agent"
 
@@ -148,6 +140,15 @@ author = "agent"
 task = "shell.exec"
 args = "python elite_dashboard_simple.py"
 waitForPort = 3000
+
+[[workflows.workflow]]
+name = "Premium React Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd . && PORT=3003 npm start"
+waitForPort = 3003
 
 [[ports]]
 localPort = 3000
