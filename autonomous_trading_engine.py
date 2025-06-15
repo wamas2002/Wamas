@@ -369,6 +369,9 @@ class AutonomousTradingEngine:
                 'volume_ratio': volume_ratio,
                 'rsi': rsi,
                 'entry_reasons': entry_reasons,
+                'market_type': 'spot',
+                'trade_direction': signal.lower(),
+                'source_engine': 'autonomous_trading_engine',
                 'timestamp': datetime.now().isoformat()
             }
             

@@ -188,6 +188,9 @@ class OKXDataValidator:
                             'price': current_price,
                             'price_change_pct': round(price_change_pct, 2),
                             'volume_surge': round(volume_surge, 2),
+                            'market_type': 'spot',
+                            'trade_direction': action.lower(),
+                            'source_engine': 'okx_data_validator',
                             'timestamp': datetime.now().isoformat(),
                             'source': 'okx_market_analysis',
                             'validated': True

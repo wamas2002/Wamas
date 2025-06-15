@@ -278,6 +278,9 @@ class LiveUnder50FuturesEngine:
                 'leverage': leverage,
                 'stop_loss': round(stop_loss, 8),
                 'take_profit': round(take_profit, 8),
+                'market_type': 'futures',
+                'trade_direction': signal.lower(),
+                'source_engine': 'live_under50_futures_engine',
                 'rsi': round(rsi, 1),
                 'volatility': round(volatility, 4),
                 'timestamp': datetime.now().isoformat()

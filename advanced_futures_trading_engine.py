@@ -422,6 +422,9 @@ class AdvancedFuturesEngine:
                 'volume_ratio': round(latest['volume_ratio'], 2),
                 'trend_strength': round(latest['trend_strength'], 2),
                 'entry_reasons': [signal[0] for signal in technical_signals],
+                'market_type': 'futures',
+                'trade_direction': signal.lower(),
+                'source_engine': 'advanced_futures_trading_engine',
                 'timestamp': datetime.now().isoformat()
             }
             
