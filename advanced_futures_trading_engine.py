@@ -27,9 +27,9 @@ class AdvancedFuturesEngine:
     def __init__(self):
         self.exchange = None
         self.db_path = 'futures_trading.db'
-        self.min_confidence = 72.0  # Higher threshold for futures
-        self.max_leverage = 5  # Conservative leverage
-        self.max_position_size = 0.15  # 15% max position size
+        self.min_confidence = 65.0  # Lowered threshold for more signals
+        self.max_leverage = 3  # Conservative leverage
+        self.max_position_size = 0.10  # 10% max position size
         self.stop_loss_pct = 0.06  # 6% stop loss
         self.take_profit_pct = 0.12  # 12% take profit
         self.symbols = ['BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'XRP/USDT:USDT', 'ADA/USDT:USDT', 'SOL/USDT:USDT', 'DOGE/USDT:USDT', 'LINK/USDT:USDT', 'LTC/USDT:USDT', 'DOT/USDT:USDT', 'AVAX/USDT:USDT', 'UNI/USDT:USDT', 'ATOM/USDT:USDT', 'NEAR/USDT:USDT', 'TRX/USDT:USDT', 'ICP/USDT:USDT', 'ALGO/USDT:USDT', 'HBAR/USDT:USDT', 'XLM/USDT:USDT', 'SAND/USDT:USDT', 'MANA/USDT:USDT', 'THETA/USDT:USDT', 'AXS/USDT:USDT', 'FIL/USDT:USDT', 'ETC/USDT:USDT', 'EGLD/USDT:USDT', 'FLOW/USDT:USDT', 'ENJ/USDT:USDT', 'CHZ/USDT:USDT', 'CRV/USDT:USDT']
@@ -283,20 +283,32 @@ class AdvancedFuturesEngine:
             
             latest = df.iloc[-1]
             
-            # Technical Analysis Score (40%)
+            # Technical Analysis Score (40%) - More sensitive thresholds
             technical_signals = []
             
-            # RSI signals
-            if latest['rsi'] < 30:
+            # RSI signals with broader ranges
+            if latest['rsi'] < 35:
                 technical_signals.append(('RSI_OVERSOLD', 15))
-            elif latest['rsi'] > 70:
+            elif latest['rsi'] > 65:
                 technical_signals.append(('RSI_OVERBOUGHT', -15))
-            elif 45 <= latest['rsi'] <= 55:
-                technical_signals.append(('RSI_NEUTRAL', 0))
+            elif 40 <= latest['rsi'] <= 60:
+                technical_signals.append(('RSI_NEUTRAL', 5))
+            elif latest['rsi'] < 45:
+                technical_signals.append(('RSI_BEARISH_LEAN', -8))
+            elif latest['rsi'] > 55:
+                technical_signals.append(('RSI_BULLISH_LEAN', 8))
             
-            # MACD signals
-            if latest['macd'] > latest['macd_signal'] and latest['macd_histogram'] > 0:
-                technical_signals.append(('MACD_BULLISH', 12))
+            # MACD signals - more sensitive
+            if latest['macd'] > latest['macd_signal']:
+                if latest['macd_histogram'] > 0:
+                    technical_signals.append(('MACD_BULLISH', 12))
+                else:
+                    technical_signals.append(('MACD_BULLISH_WEAK', 6))
+            elif latest['macd'] < latest['macd_signal']:
+                if latest['macd_histogram'] < 0:
+                    technical_signals.append(('MACD_BEARISH', -12))
+                else:
+                    technical_signals.append(('MACD_BEARISH_WEAK', -6))
             elif latest['macd'] < latest['macd_signal'] and latest['macd_histogram'] < 0:
                 technical_signals.append(('MACD_BEARISH', -12))
             
@@ -359,10 +371,10 @@ class AdvancedFuturesEngine:
             confidence = (technical_score * 0.4) + (ai_score * 0.4) + (momentum_score * 0.2)
             confidence = max(0, min(100, confidence))
             
-            # Determine signal
-            if confidence >= 75:
+            # Determine signal with lower thresholds for more activity
+            if confidence >= 65:
                 signal = 'LONG'
-            elif confidence <= 25:
+            elif confidence <= 35:
                 signal = 'SHORT'
             else:
                 signal = 'HOLD'

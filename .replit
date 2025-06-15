@@ -26,10 +26,6 @@ args = "Live Trading System"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Advanced Futures Trading"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Pure Local Trading Engine"
 
 [[workflows.workflow.tasks]]
@@ -56,6 +52,10 @@ args = "Live Elite Dashboard"
 task = "workflow.run"
 args = "Elite Trading Dashboard"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Under $50 Futures Trading"
+
 [[workflows.workflow]]
 name = "install_packages"
 author = "agent"
@@ -80,14 +80,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
-
-[[workflows.workflow]]
-name = "Advanced Futures Trading"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python advanced_futures_trading_engine.py"
 
 [[workflows.workflow]]
 name = "Pure Local Trading Engine"
@@ -149,6 +141,14 @@ author = "agent"
 task = "shell.exec"
 args = "python elite_dashboard_production.py"
 waitForPort = 3000
+
+[[workflows.workflow]]
+name = "Under $50 Futures Trading"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python under50_futures_trading_engine.py"
 
 [[ports]]
 localPort = 3000
