@@ -18,14 +18,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Enhanced AI Trading Dashboard"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Live Elite Dashboard"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Elite Trading Dashboard"
 
 [[workflows.workflow.tasks]]
@@ -48,6 +40,14 @@ args = "Intelligent Profit Optimizer"
 task = "workflow.run"
 args = "Master Portfolio Dashboard"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Advanced Signal Executor"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Comprehensive System Monitor"
+
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
 author = 23429574
@@ -56,24 +56,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run advanced_monitoring_dashboard.py --server.port 5002 --server.address 0.0.0.0 --server.enableWebsocketCompression false --server.enableCORS false --server.allowRunOnSave false"
-
-[[workflows.workflow]]
-name = "Enhanced AI Trading Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python enhanced_trading_dashboard.py"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Live Elite Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python live_elite_dashboard_fixed.py"
-waitForPort = 6001
 
 [[workflows.workflow]]
 name = "Elite Trading Dashboard"
@@ -124,6 +106,22 @@ author = "agent"
 task = "shell.exec"
 args = "python master_portfolio_dashboard.py"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Advanced Signal Executor"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python advanced_signal_executor.py"
+
+[[workflows.workflow]]
+name = "Comprehensive System Monitor"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python comprehensive_system_monitor.py"
 
 [[ports]]
 localPort = 3000
