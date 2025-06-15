@@ -46,15 +46,15 @@ args = "Enhanced AI Trading Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Elite Trading Dashboard"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Premium React Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Live Elite Dashboard"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Elite Trading Dashboard"
 
 [[workflows.workflow]]
 name = "install_packages"
@@ -124,15 +124,6 @@ args = "python enhanced_trading_dashboard.py"
 waitForPort = 5002
 
 [[workflows.workflow]]
-name = "Elite Trading Dashboard"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python elite_dashboard_simple.py"
-waitForPort = 3000
-
-[[workflows.workflow]]
 name = "Premium React Dashboard"
 author = "agent"
 
@@ -149,6 +140,15 @@ author = "agent"
 task = "shell.exec"
 args = "python live_elite_dashboard_fixed.py"
 waitForPort = 6001
+
+[[workflows.workflow]]
+name = "Elite Trading Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python elite_dashboard_live.py"
+waitForPort = 3000
 
 [[ports]]
 localPort = 3000
