@@ -48,31 +48,41 @@ class EliteDashboard:
             
             # Try to get from existing trading engine database
             try:
-                import ccxt
-                exchange = ccxt.okx({
-                    'apiKey': os.getenv('OKX_API_KEY'),
-                    'secret': os.getenv('OKX_SECRET_KEY'),
-                    'password': os.getenv('OKX_PASSPHRASE'),
-                    'sandbox': False,
-                    'enableRateLimit': True,
-                })
+                api_key = os.getenv('OKX_API_KEY')
+                secret_key = os.getenv('OKX_SECRET_KEY')
+                passphrase = os.getenv('OKX_PASSPHRASE')
                 
-                balance_data = exchange.fetch_balance()
-                balance = float(balance_data.get('USDT', {}).get('total', 0))
-                
-                # Calculate total portfolio value
-                total_value = balance
-                for symbol, data in balance_data.items():
-                    if symbol != 'USDT' and isinstance(data, dict):
-                        amount = data.get('total', 0)
-                        if amount and float(amount) > 0:
-                            try:
-                                ticker = exchange.fetch_ticker(f"{symbol}/USDT")
-                                price = ticker.get('last', 0)
-                                if price:
-                                    total_value += float(amount) * float(price)
-                            except:
-                                continue
+                if api_key and secret_key and passphrase:
+                    import ccxt
+                    exchange = ccxt.okx({
+                        'apiKey': api_key,
+                        'secret': secret_key,
+                        'password': passphrase,
+                        'sandbox': False,
+                        'enableRateLimit': True,
+                    })
+                    
+                    balance_data = exchange.fetch_balance()
+                    usdt_data = balance_data.get('USDT', {})
+                    balance = float(usdt_data.get('total', 0)) if usdt_data.get('total') else 0.0
+                    
+                    # Calculate total portfolio value
+                    total_value = balance
+                    for symbol, data in balance_data.items():
+                        if symbol != 'USDT' and isinstance(data, dict):
+                            amount = data.get('total', 0)
+                            if amount:
+                                try:
+                                    amount_float = float(amount)
+                                    if amount_float > 0:
+                                        ticker = exchange.fetch_ticker(f"{symbol}/USDT")
+                                        price = ticker.get('last', 0)
+                                        if price:
+                                            total_value += amount_float * float(price)
+                                except:
+                                    continue
+                else:
+                    raise Exception("OKX credentials not configured")
                                 
             except Exception as e:
                 print(f"OKX connection error: {e}")

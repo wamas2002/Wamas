@@ -294,6 +294,9 @@
         async function loadDashboardData() {
             try {
                 const response = await fetch('/api/dashboard-data');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 dashboardData = await response.json();
                 updateDashboard();
             } catch (error) {
