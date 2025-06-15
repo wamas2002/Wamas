@@ -40,6 +40,10 @@ class OKXDataValidator:
             print(f"❌ OKX connection failed: {e}")
             self.okx_client = None
     
+    def validate_connection(self):
+        """Validate OKX connection status"""
+        return self.okx_client is not None
+    
     def get_authentic_portfolio(self):
         """Get 100% authentic portfolio data from OKX"""
         if not self.okx_client:

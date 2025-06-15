@@ -46,7 +46,7 @@ args = "Master Portfolio Dashboard"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Clean Elite Trading Dashboard"
+args = "Fixed Elite Trading Dashboard"
 
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
@@ -133,12 +133,12 @@ task = "shell.exec"
 args = "python enhanced_elite_dashboard_server.py"
 
 [[workflows.workflow]]
-name = "Clean Elite Trading Dashboard"
+name = "Fixed Elite Trading Dashboard"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python elite_dashboard_clean.py"
+args = "python elite_dashboard_fixed.py"
 waitForPort = 3005
 
 [[ports]]
