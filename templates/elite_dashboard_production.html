@@ -1207,22 +1207,39 @@
                 const data = await response.json();
                 const signalsList = document.getElementById('signals-list');
                 
-                signalsList.innerHTML = data.signals.map(signal => `
-                    <div class="signal-item glass-effect p-4 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="font-bold">${signal.symbol}</span>
-                                <span class="ml-2 px-2 py-1 rounded text-xs ${signal.action === 'BUY' ? 'bg-green-600' : 'bg-red-600'}">${signal.action}</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold">${signal.confidence}%</div>
-                                <div class="text-xs text-gray-400">${signal.time}</div>
+                if (data.signals && data.signals.length > 0) {
+                    signalsList.innerHTML = data.signals.map(signal => `
+                        <div class="signal-item glass-effect p-4 rounded-lg mb-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold text-white">${signal.symbol}</span>
+                                    <span class="ml-2 px-2 py-1 rounded text-xs ${signal.action === 'BUY' ? 'bg-green-600' : 'bg-red-600'}">${signal.action}</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-green-400">${signal.confidence}%</div>
+                                    <div class="text-xs text-gray-400">${signal.time}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `).join('');
+                } else {
+                    signalsList.innerHTML = `
+                        <div class="glass-effect p-6 rounded-lg text-center">
+                            <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-300 text-lg font-semibold">No Active Signals</p>
+                            <p class="text-gray-400 text-sm mt-2">AI is analyzing market conditions for new opportunities</p>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 console.error('Failed to load signals:', error);
+                document.getElementById('signals-list').innerHTML = `
+                    <div class="glass-effect p-6 rounded-lg text-center border border-red-600">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                        <p class="text-red-300 text-lg font-semibold">Signal Data Unavailable</p>
+                        <p class="text-gray-400 text-sm mt-2">Check connection to OKX data source</p>
+                    </div>
+                `;
             }
         }
         
@@ -1230,9 +1247,70 @@
             try {
                 const response = await fetch('/api/backtest-results');
                 const data = await response.json();
-                // Update backtest metrics with real data
+                const results = data.backtest_results;
+                
+                if (results) {
+                    document.getElementById('backtest-content').innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Total Returns</h3>
+                                <p class="text-2xl font-bold ${results.total_returns >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                    ${(results.total_returns * 100).toFixed(2)}%
+                                </p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Win Rate</h3>
+                                <p class="text-2xl font-bold text-blue-400">${(results.win_rate * 100).toFixed(1)}%</p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Sharpe Ratio</h3>
+                                <p class="text-2xl font-bold text-purple-400">${results.sharpe_ratio}</p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Max Drawdown</h3>
+                                <p class="text-2xl font-bold text-red-400">${(results.max_drawdown * 100).toFixed(2)}%</p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Total Trades</h3>
+                                <p class="text-2xl font-bold text-white">${results.total_trades}</p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Profit Factor</h3>
+                                <p class="text-2xl font-bold text-yellow-400">${results.profit_factor}</p>
+                            </div>
+                        </div>
+                        <div class="glass-effect p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold mb-3">Performance Summary</h3>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-400">Period:</span>
+                                    <span class="text-white ml-2">${results.period}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Avg Trade Duration:</span>
+                                    <span class="text-white ml-2">${results.avg_trade_duration}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Best Trade:</span>
+                                    <span class="text-green-400 ml-2">$${results.best_trade}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Worst Trade:</span>
+                                    <span class="text-red-400 ml-2">$${results.worst_trade}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 console.error('Failed to load backtest data:', error);
+                document.getElementById('backtest-content').innerHTML = `
+                    <div class="glass-effect p-6 rounded-lg text-center border border-red-600">
+                        <i class="fas fa-chart-bar text-4xl text-red-400 mb-4"></i>
+                        <p class="text-red-300 text-lg font-semibold">Backtest Data Unavailable</p>
+                        <p class="text-gray-400 text-sm mt-2">Check connection to OKX performance data</p>
+                    </div>
+                `;
             }
         }
         
@@ -1240,9 +1318,58 @@
             try {
                 const response = await fetch('/api/portfolio-history');
                 const data = await response.json();
-                // Initialize portfolio history chart
+                const history = data.portfolio_history;
+                
+                if (history && history.length > 0) {
+                    const chartData = history.map(item => ({
+                        date: new Date(item.date).toLocaleDateString(),
+                        value: item.value,
+                        pnl: item.pnl,
+                        trades: item.trades
+                    }));
+                    
+                    document.getElementById('portfolio-history-content').innerHTML = `
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Current Value</h3>
+                                <p class="text-2xl font-bold text-green-400">$${chartData[chartData.length-1].value}</p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">30-Day Change</h3>
+                                <p class="text-2xl font-bold text-blue-400">+$${(chartData[chartData.length-1].value - chartData[0].value).toFixed(2)}</p>
+                            </div>
+                            <div class="glass-effect p-4 rounded-lg">
+                                <h3 class="text-sm text-gray-400 mb-2">Total Trades</h3>
+                                <p class="text-2xl font-bold text-white">${history.reduce((sum, item) => sum + item.trades, 0)}</p>
+                            </div>
+                        </div>
+                        <div class="glass-effect p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold mb-4">Portfolio Performance (30 Days)</h3>
+                            <div class="space-y-2 max-h-96 overflow-y-auto">
+                                ${chartData.slice(-15).map(item => `
+                                    <div class="flex justify-between items-center p-3 bg-white/5 rounded">
+                                        <span class="text-gray-300">${item.date}</span>
+                                        <div class="text-right">
+                                            <span class="text-white font-semibold">$${item.value}</span>
+                                            <span class="ml-3 text-xs ${item.pnl >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                                ${item.pnl >= 0 ? '+' : ''}$${item.pnl.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 console.error('Failed to load portfolio history:', error);
+                document.getElementById('portfolio-history-content').innerHTML = `
+                    <div class="glass-effect p-6 rounded-lg text-center border border-red-600">
+                        <i class="fas fa-chart-line text-4xl text-red-400 mb-4"></i>
+                        <p class="text-red-300 text-lg font-semibold">Portfolio History Unavailable</p>
+                        <p class="text-gray-400 text-sm mt-2">Check connection to OKX historical data</p>
+                    </div>
+                `;
             }
         }
         
@@ -1250,18 +1377,64 @@
             try {
                 const response = await fetch('/api/trade-logs');
                 const data = await response.json();
-                const tradeLogs = document.getElementById('trade-logs');
+                const logs = data.trade_logs;
                 
-                tradeLogs.innerHTML = data.logs.map(log => `
-                    <div class="glass-effect p-3 rounded-lg">
-                        <div class="flex justify-between">
-                            <span>${log.time} - ${log.action} ${log.symbol}</span>
-                            <span class="${log.pnl > 0 ? 'text-green-400' : 'text-red-400'}">${log.pnl > 0 ? '+' : ''}$${log.pnl}</span>
+                if (logs && logs.length > 0) {
+                    document.getElementById('trade-logs-content').innerHTML = `
+                        <div class="space-y-4">
+                            ${logs.map(log => `
+                                <div class="glass-effect p-4 rounded-lg border-l-4 ${log.side === 'LONG' ? 'border-green-400' : 'border-red-400'}">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <span class="font-bold text-white text-lg">${log.symbol}/USDT</span>
+                                            <span class="ml-3 px-2 py-1 rounded text-xs font-semibold ${log.side === 'LONG' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                                                ${log.action} ${log.side}
+                                            </span>
+                                            <span class="ml-2 px-2 py-1 rounded text-xs bg-blue-900 text-blue-300">${log.status}</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-bold ${log.pnl >= 0 ? 'text-green-400' : 'text-red-400'} text-lg">
+                                                ${log.pnl >= 0 ? '+' : ''}$${log.pnl.toFixed(2)}
+                                            </div>
+                                            <div class="text-xs text-gray-400">${new Date(log.timestamp).toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4 text-sm">
+                                        <div>
+                                            <span class="text-gray-400">Price:</span>
+                                            <span class="text-white ml-2">$${log.price}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400">Size:</span>
+                                            <span class="text-white ml-2">${log.size}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400">Source:</span>
+                                            <span class="text-blue-400 ml-2">${log.source}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                } else {
+                    document.getElementById('trade-logs-content').innerHTML = `
+                        <div class="glass-effect p-6 rounded-lg text-center">
+                            <i class="fas fa-history text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-300 text-lg font-semibold">No Trade History</p>
+                            <p class="text-gray-400 text-sm mt-2">Trades will appear here once executed</p>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 console.error('Failed to load trade logs:', error);
+                document.getElementById('trade-logs-content').innerHTML = `
+                    <div class="glass-effect p-6 rounded-lg text-center border border-red-600">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                        <p class="text-red-300 text-lg font-semibold">Trade Logs Unavailable</p>
+                        <p class="text-gray-400 text-sm mt-2">Check connection to OKX trading data</p>
+                    </div>
+                `;
             }
         }
         
@@ -1269,21 +1442,46 @@
             try {
                 const response = await fetch('/api/notifications');
                 const data = await response.json();
-                const notificationsList = document.getElementById('notifications-list');
+                const notifications = data.notifications;
                 
-                notificationsList.innerHTML = data.notifications.map(notif => `
-                    <div class="glass-effect p-3 rounded-lg">
-                        <div class="flex items-center">
-                            <i class="fas fa-${notif.type === 'alert' ? 'exclamation-triangle' : 'info-circle'} mr-3 text-${notif.type === 'alert' ? 'yellow' : 'blue'}-400"></i>
-                            <div>
-                                <div class="font-semibold">${notif.title}</div>
-                                <div class="text-sm text-gray-400">${notif.message}</div>
-                            </div>
+                if (notifications && notifications.length > 0) {
+                    document.getElementById('notifications-content').innerHTML = `
+                        <div class="space-y-4">
+                            ${notifications.map(notif => `
+                                <div class="glass-effect p-4 rounded-lg border-l-4 ${notif.type === 'alert' ? 'border-yellow-400' : notif.type === 'success' ? 'border-green-400' : 'border-blue-400'}">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-${notif.type === 'alert' ? 'exclamation-triangle' : notif.type === 'success' ? 'check-circle' : 'info-circle'} mr-3 text-${notif.type === 'alert' ? 'yellow' : notif.type === 'success' ? 'green' : 'blue'}-400 text-lg mt-1"></i>
+                                        <div class="flex-1">
+                                            <div class="font-semibold text-white text-lg">${notif.title}</div>
+                                            <div class="text-gray-300 mt-1">${notif.message}</div>
+                                            <div class="text-xs text-gray-400 mt-2">${new Date(notif.timestamp).toLocaleString()}</div>
+                                        </div>
+                                        <button class="text-gray-400 hover:text-white ml-3">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                } else {
+                    document.getElementById('notifications-content').innerHTML = `
+                        <div class="glass-effect p-6 rounded-lg text-center">
+                            <i class="fas fa-bell text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-300 text-lg font-semibold">No Notifications</p>
+                            <p class="text-gray-400 text-sm mt-2">System alerts and updates will appear here</p>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 console.error('Failed to load notifications:', error);
+                document.getElementById('notifications-content').innerHTML = `
+                    <div class="glass-effect p-6 rounded-lg text-center border border-red-600">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                        <p class="text-red-300 text-lg font-semibold">Notifications Unavailable</p>
+                        <p class="text-gray-400 text-sm mt-2">Check system notification service</p>
+                    </div>
+                `;
             }
         }
 
