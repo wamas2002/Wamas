@@ -647,7 +647,7 @@
                     <h3 class="text-gray-400 text-sm font-semibold">Portfolio Balance</h3>
                     <i class="fas fa-wallet text-blue-400"></i>
                 </div>
-                <div class="text-3xl font-bold neon-green mb-2" id="portfolio-balance">$25,400</div>
+                <div class="text-3xl font-bold neon-green mb-2" id="portfolio-balance">Loading...</div>
                 <div class="flex items-center justify-between">
                     <div class="text-xs text-gray-500">
                         <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
@@ -693,7 +693,7 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-between mb-4">
-                    <div class="text-3xl font-bold neon-green" id="current-profit">$3,210</div>
+                    <div class="text-3xl font-bold neon-green" id="current-profit">Loading...</div>
                     <div class="text-right">
                         <div class="text-xs text-gray-500">24h Change</div>
                         <div class="text-lg text-green-400 font-semibold">+12.4%</div>
@@ -1016,15 +1016,27 @@
         }
 
         function updateDashboardWithAnimation() {
-            // Animate number updates
-            animateValue('portfolio-balance', '$25,400', '$' + (dashboardData.portfolio?.balance || 25400).toLocaleString());
-            animateValue('confidence-value', '88%', (dashboardData.confidence?.confidence || 88) + '%');
-            animateValue('current-profit', '$3,210', '$' + (dashboardData.profit_loss?.current_profit || 3210).toLocaleString());
+            // Update with authentic OKX data only
+            if (dashboardData && dashboardData.portfolio) {
+                animateValue('portfolio-balance', document.getElementById('portfolio-balance').textContent, '$' + (dashboardData.portfolio.usdt_balance || 0).toLocaleString());
+                animateValue('total-value', document.getElementById('total-value').textContent, '$' + (dashboardData.portfolio.total_value || 0).toLocaleString());
+                animateValue('daily-pnl', document.getElementById('daily-pnl').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
+                animateValue('daily-change', document.getElementById('daily-change').textContent, (dashboardData.portfolio.day_change_percent || 0).toFixed(2) + '%');
+                
+                // Update confidence from authentic signals
+                if (dashboardData.signals && dashboardData.signals.length > 0) {
+                    const avgConfidence = dashboardData.signals.reduce((acc, s) => acc + s.confidence, 0) / dashboardData.signals.length;
+                    animateValue('confidence-value', document.getElementById('confidence-value').textContent, avgConfidence.toFixed(0) + '%');
+                }
+                
+                // Update profit from authentic data
+                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
+            }
             
-            // Update signals with enhanced styling
-            updateEnhancedSignalLog(dashboardData.signals || getDefaultSignals());
-            updateEnhancedTopPairs(dashboardData.top_pairs || getDefaultTopPairs());
-            updateEnhancedEventLog(dashboardData.events || getDefaultEvents());
+            // Update with authentic signals only
+            updateEnhancedSignalLog(dashboardData.signals || []);
+            updateEnhancedTopPairs(dashboardData.top_pairs || []);
+            updateEnhancedEventLog(dashboardData.events || []);
         }
 
         function updateDashboardWithFallback() {
