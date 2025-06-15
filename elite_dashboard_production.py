@@ -573,6 +573,6 @@ def handle_update_request():
 if __name__ == '__main__':
     print("🚀 Starting Production Elite Trading Dashboard")
     print("Robust data loading with comprehensive error handling")
-    print("🌐 Access: http://localhost:3000")
+    print("🌐 Access: http://localhost:3003")
     
-    socketio.run(app, host='0.0.0.0', port=3000, debug=False)
+    socketio.run(app, host='0.0.0.0', port=3003, debug=False)
