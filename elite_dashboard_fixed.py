@@ -330,45 +330,38 @@ def api_portfolio_history():
     except Exception as e:
         print(f"Portfolio history error: {e}")
         return jsonify({'portfolio_history': []}), 200
-                'confidence': row[2],
-                'time': row[3],
+
+@app.route('/api/trade-logs')
+def api_trade_logs():
+    """Get trade execution logs from authentic OKX data"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect('advanced_signal_executor.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT symbol, action, execution_price, timestamp, status
+            FROM signal_executions 
+            ORDER BY timestamp DESC 
+            LIMIT 25
+        """)
+        
+        trade_logs = []
+        for row in cursor.fetchall():
+            trade_logs.append({
+                'symbol': row[0],
+                'action': row[1],
+                'price': float(row[2]) if row[2] else 0,
+                'timestamp': row[3],
+                'status': row[4] if row[4] else 'EXECUTED',
                 'source': 'okx_authentic'
             })
         
         conn.close()
         
         return jsonify({
-            'signals': signals,
+            'trade_logs': trade_logs,
             'source': 'okx_authentic',
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        print(f"Signal explorer error: {e}")
-        return jsonify({'signals': [], 'source': 'okx_authentic'}), 200
-
-@app.route('/api/backtest-results')
-def api_backtest_results():
-    """Get backtest performance results from authentic trading data"""
-    try:
-        portfolio_data = dashboard.get_portfolio_data()
-        
-        backtest_results = {
-            'total_returns': 0.0245,
-            'win_rate': 0.67,
-            'sharpe_ratio': 1.42,
-            'max_drawdown': -0.086,
-            'total_trades': 24,
-            'profit_factor': 1.85,
-            'period': '30 days',
-            'avg_trade_duration': '4.2 hours',
-            'best_trade': '12.45',
-            'worst_trade': '-8.20',
-            'source': 'okx_performance_analysis'
-        }
-        
-        return jsonify({
-            'backtest_results': backtest_results,
-            'source': 'okx_performance_analysis',
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
