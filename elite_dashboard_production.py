@@ -197,98 +197,70 @@ class ProductionEliteDashboard:
         }
 
     def get_trading_signals(self, filters=None):
-        """Get trading signals from all engines"""
+        """Get trading signals from authentic OKX market analysis"""
         signals = []
 
-        # Enhanced AI signals
+        if not self.exchange:
+            return signals
+
         try:
-            if self.connection_status['databases'].get('enhanced_trading.db', {}).get('connected'):
-                conn = sqlite3.connect('enhanced_trading.db', timeout=5)
-                cursor = conn.cursor()
-
-                # Find signal tables
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%signal%'")
-                tables = [row[0] for row in cursor.fetchall()]
-
-                for table in tables:
-                    try:
-                        cursor.execute(f"PRAGMA table_info({table})")
-                        columns = [col[1] for col in cursor.fetchall()]
-
-                        if all(col in columns for col in ['symbol', 'confidence', 'timestamp']):
-                            cursor.execute(f'''
-                                SELECT symbol, confidence, timestamp
-                                FROM {table}
-                                WHERE timestamp > datetime('now', '-6 hours')
-                                ORDER BY timestamp DESC LIMIT 10
-                            ''')
-
-                            for row in cursor.fetchall():
-                                symbol, confidence, timestamp = row
-                                signals.append({
-                                    'symbol': symbol,
-                                    'action': 'SELL',
-                                    'confidence': float(confidence),
-                                    'timestamp': timestamp,
-                                    'source': 'Enhanced AI',
-                                    'model': 'LightGBM + CatBoost',
-                                    'regime': 'sideways',
-                                    'pnl_expectancy': round(float(confidence) * 0.15, 2),
-                                    'risk_level': 'medium'
-                                })
-                    except Exception as e:
-                        print(f"Error reading {table}: {e}")
+            # Get current positions from OKX
+            positions = self.exchange.fetch_positions()
+            active_symbols = [pos['symbol'] for pos in positions if pos['size'] > 0]
+            
+            # Get top volume symbols from OKX
+            tickers = self.exchange.fetch_tickers()
+            top_symbols = sorted(tickers.items(), key=lambda x: float(x[1]['quoteVolume'] or 0), reverse=True)[:20]
+            
+            for symbol, ticker in top_symbols:
+                try:
+                    if not symbol.endswith('/USDT'):
                         continue
-
-                conn.close()
-        except Exception as e:
-            print(f"Enhanced AI signals error: {e}")
-
-        # Get signals from active trading databases
-        trading_dbs = [
-            'advanced_futures_trading.db',
-            'advanced_signal_executor.db',
-            'intelligent_profit_optimizer.db'
-        ]
-        
-        for db_path in trading_dbs:
-            try:
-                conn = sqlite3.connect(db_path, timeout=2)
-                cursor = conn.cursor()
-                
-                # Check for signal tables
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-                tables = [row[0] for row in cursor.fetchall()]
-                
-                for table in tables:
-                    if 'signal' in table.lower() or 'futures' in table.lower():
-                        try:
-                            cursor.execute(f'''
-                                SELECT symbol, signal_type, confidence, timestamp
-                                FROM {table}
-                                WHERE timestamp >= datetime('now', '-2 hours')
-                                ORDER BY timestamp DESC LIMIT 5
-                            ''')
+                        
+                    # Calculate technical indicators from real price data
+                    ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=50)
+                    if len(ohlcv) < 20:
+                        continue
+                        
+                    closes = [candle[4] for candle in ohlcv]
+                    volumes = [candle[5] for candle in ohlcv]
+                    
+                    # Simple momentum and volume analysis
+                    current_price = closes[-1]
+                    prev_price = closes[-20]
+                    price_change = ((current_price - prev_price) / prev_price) * 100
+                    
+                    avg_volume = sum(volumes[-10:]) / 10
+                    current_volume = volumes[-1]
+                    volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
+                    
+                    # Generate confidence based on real market data
+                    confidence = min(95, abs(price_change) * 10 + volume_ratio * 20)
+                    
+                    if confidence > 60:  # Only high-confidence signals
+                        action = 'BUY' if price_change > 0 else 'SELL'
+                        if symbol in [pos['symbol'] for pos in positions if pos['size'] > 0]:
+                            action = 'HOLD'
                             
-                            for row in cursor.fetchall():
-                                if len(row) >= 4:
-                                    signals.append({
-                                        'symbol': row[0],
-                                        'action': row[1].upper(),
-                                        'confidence': float(row[2]),
-                                        'timestamp': row[3],
-                                        'source': 'Live Trading',
-                                        'model': 'Advanced ML',
-                                        'regime': 'active',
-                                        'pnl_expectancy': round(float(row[2]) * 0.01, 2),
-                                        'risk_level': 'managed'
-                                    })
-                        except Exception:
-                            continue
-                
-                conn.close()
-            except Exception:
-                continue
+                        signals.append({
+                            'symbol': symbol,
+                            'action': action,
+                            'confidence': round(confidence, 2),
+                            'timestamp': datetime.now().isoformat(),
+                            'source': 'OKX Market Analysis',
+                            'model': 'Technical + Volume',
+                            'regime': 'trending' if abs(price_change) > 2 else 'consolidating',
+                            'pnl_expectancy': round(abs(price_change) * 0.5, 2),
+                            'risk_level': 'low' if confidence > 80 else 'medium',
+                            'price_change': round(price_change, 2),
+                            'volume_ratio': round(volume_ratio, 2)
+                        })
+                        
+                except Exception as e:
+                    continue
+                    
+        except Exception as e:
+            print(f"OKX signals error: {e}")
 
         # Apply filters if provided
         if filters:
@@ -694,28 +666,61 @@ def get_recent_signals():
         return signals
 
     except Exception as e:
-        print(f"Error fetching signals: {e}")
-        return [
-            {'time': '02:45', 'action': 'SELL', 'symbol': 'BTC/USDT', 'confidence': '81%', 'color': 'danger'},
-            {'time': '02:17', 'action': 'BUY', 'symbol': 'ETH/USDT', 'confidence': '80%', 'color': 'success'},
-            {'time': '01:50', 'action': 'BUY', 'symbol': 'NEAR/USDT', 'confidence': '90%', 'color': 'success'}
-        ]
+        print(f"Database query error: {e}")
+        return []
 
 def get_top_pairs():
-    """Get top performing trading pairs"""
-    return [
-        {'symbol': 'ETH/USD', 'change': '+31.23%', 'color': 'success'},
-        {'symbol': 'ETC/USD', 'change': '+990', 'color': 'success'},
-        {'symbol': 'LTC/USD', 'change': '+450', 'color': 'success'}
-    ]
+    """Get top performing trading pairs from OKX"""
+    try:
+        if dashboard.exchange:
+            tickers = dashboard.exchange.fetch_tickers()
+            top_pairs = []
+            
+            for symbol, ticker in list(tickers.items())[:10]:
+                if ticker.get('percentage') is not None:
+                    change = ticker['percentage']
+                    top_pairs.append({
+                        'symbol': symbol,
+                        'change': f"{change:+.2f}%",
+                        'color': 'success' if change > 0 else 'danger'
+                    })
+            
+            return sorted(top_pairs, key=lambda x: abs(float(x['change'].replace('%', '').replace('+', ''))), reverse=True)[:5]
+    except Exception:
+        pass
+    return []
 
 def get_recent_events():
-    """Get recent system events"""
-    return [
-        {'time': '04:40', 'event': 'Adapting to sideways regime...'},
-        {'time': '03:56', 'event': 'Executing BUY order..'},
-        {'time': '08:30', 'event': 'Detecting bear regime'},
-        {'time': '04:40', 'event': 'Defaulting to sideways regime'},
+    """Get recent system events from OKX trading activity"""
+    try:
+        if dashboard.exchange:
+            balance = dashboard.exchange.fetch_balance()
+            positions = dashboard.exchange.fetch_positions()
+            
+            events = []
+            
+            # Add balance update event
+            total_balance = float(balance.get('USDT', {}).get('total', 0))
+            events.append({
+                'time': datetime.now().strftime('%H:%M'),
+                'event': f'Portfolio Balance: ${total_balance:.2f}',
+                'type': 'balance'
+            })
+            
+            # Add position events
+            for pos in positions:
+                if pos.get('contracts', 0) and float(pos['contracts']) > 0:
+                    pnl = float(pos.get('unrealizedPnl', 0))
+                    events.append({
+                        'time': datetime.now().strftime('%H:%M'),
+                        'event': f'{pos["symbol"]} position: ${pnl:.2f} P&L',
+                        'type': 'position'
+                    })
+            
+            return events[:5]
+    except Exception:
+        pass
+    return []
         {'time': '02:55', 'event': 'Executing BUY order...'}
     ]
 
