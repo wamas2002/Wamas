@@ -67,5 +67,5 @@ if __name__ == '__main__':
         os.system('npm run build')
     
     print("✅ Premium React Dashboard ready")
-    print("🌐 Access at: http://localhost:3003")
-    app.run(host='0.0.0.0', port=3003, debug=False)
+    print("🌐 Access at: http://localhost:3004")
+    app.run(host='0.0.0.0', port=3004, debug=False)
