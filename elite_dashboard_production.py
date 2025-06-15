@@ -149,9 +149,10 @@ class ProductionEliteDashboard:
                 'source': 'okx_authenticated',
                 'timestamp': portfolio_data['timestamp']
             }
-
-                self.cache['portfolio'] = portfolio_data
-                return portfolio_data
+            
+            # Cache and return the validated data
+            self.cache['portfolio'] = dashboard_portfolio
+            return dashboard_portfolio
 
         except Exception as e:
             print(f"Portfolio data error: {e}")
@@ -159,50 +160,28 @@ class ProductionEliteDashboard:
             raise Exception("Unable to fetch authentic OKX portfolio data")
 
     def get_trading_signals(self, filters=None):
-        """Get trading signals from authentic OKX market analysis"""
-        signals = []
-
-        if not self.exchange:
-            return signals
-
+        """Get trading signals using OKX validator for authentic market analysis"""
         try:
-            # Get current positions from OKX
-            positions = self.exchange.fetch_positions()
-            active_symbols = [pos['symbol'] for pos in positions if float(pos.get('contracts', 0)) > 0]
+            # Use OKX validator for authentic trading signals
+            signals = self.okx_validator.get_authentic_signals()
             
-            # Get top volume symbols from OKX
-            tickers = self.exchange.fetch_tickers()
-            top_symbols = sorted(tickers.items(), key=lambda x: float(x[1]['quoteVolume'] or 0), reverse=True)[:20]
+            # Apply filters if provided
+            if filters:
+                filtered_signals = []
+                for signal in signals:
+                    if filters.get('min_confidence', 0) <= signal['confidence']:
+                        if not filters.get('action') or signal['action'] == filters['action']:
+                            filtered_signals.append(signal)
+                signals = filtered_signals
             
-            for symbol, ticker in top_symbols:
-                try:
-                    if not symbol.endswith('/USDT'):
-                        continue
-                        
-                    # Calculate technical indicators from real price data
-                    ohlcv = self.exchange.fetch_ohlcv(symbol, '1h', limit=50)
-                    if len(ohlcv) < 20:
-                        continue
-                        
-                    closes = [candle[4] for candle in ohlcv]
-                    volumes = [candle[5] for candle in ohlcv]
-                    
-                    # Simple momentum and volume analysis
-                    current_price = closes[-1]
-                    prev_price = closes[-20]
-                    price_change = ((current_price - prev_price) / prev_price) * 100
-                    
-                    avg_volume = sum(volumes[-10:]) / 10
-                    current_volume = volumes[-1]
-                    volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
-                    
-                    # Generate confidence based on real market data
-                    confidence = min(95, abs(price_change) * 10 + volume_ratio * 20)
-                    
-                    if confidence > 60:  # Only high-confidence signals
-                        action = 'BUY' if price_change > 0 else 'SELL'
-                        if symbol in [pos['symbol'] for pos in positions if float(pos.get('contracts', 0)) > 0]:
-                            action = 'HOLD'
+            # Cache the validated signals
+            self.cache['signals'] = signals
+            return signals
+            
+        except Exception as e:
+            print(f"Trading signals error: {e}")
+            # Only return authentic OKX data - no fallbacks
+            raise Exception("Unable to fetch authentic OKX trading signals")
                             
                         signals.append({
                             'symbol': symbol,
