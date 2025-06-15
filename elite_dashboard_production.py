@@ -723,6 +723,6 @@ def get_recent_events():
 if __name__ == '__main__':
     print("🚀 Starting Production Elite Trading Dashboard")
     print("Robust data loading with comprehensive error handling")
-    print("🌐 Access: http://localhost:3003")
+    print("🌐 Access: http://localhost:5000")
 
-    socketio.run(app, host='0.0.0.0', port=3003, debug=False)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)

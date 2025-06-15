@@ -7,6 +7,7 @@
     <title>Elite Trading Dashboard - Professional</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/socket.io.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -274,6 +275,40 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(135deg, #2563eb, #059669);
         }
+        
+        /* Navigation Tab Styles */
+        .nav-tab {
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: transparent;
+            color: #9ca3af;
+            border: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen scroll-smooth">
@@ -306,8 +341,39 @@
         </div>
     </header>
 
-    <!-- Enhanced Main Dashboard Grid -->
-    <div class="px-6 grid grid-cols-12 gap-6 animate-slide-up">
+    <!-- Navigation Tabs -->
+    <nav class="glass-effect mx-6 mb-6 rounded-xl p-2 animate-fade-in">
+        <div class="flex space-x-1">
+            <button class="nav-tab active" data-tab="dashboard">
+                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+            </button>
+            <button class="nav-tab" data-tab="signals">
+                <i class="fas fa-brain mr-2"></i>AI Signals Explorer
+            </button>
+            <button class="nav-tab" data-tab="backtest">
+                <i class="fas fa-chart-bar mr-2"></i>Backtest Results
+            </button>
+            <button class="nav-tab" data-tab="strategy">
+                <i class="fas fa-cogs mr-2"></i>Strategy Controls
+            </button>
+            <button class="nav-tab" data-tab="portfolio">
+                <i class="fas fa-chart-pie mr-2"></i>Portfolio History
+            </button>
+            <button class="nav-tab" data-tab="logs">
+                <i class="fas fa-list-alt mr-2"></i>Trade Logs
+            </button>
+            <button class="nav-tab" data-tab="notifications">
+                <i class="fas fa-bell mr-2"></i>Notification Center
+            </button>
+        </div>
+    </nav>
+
+    <!-- Tab Content Container -->
+    <div id="tab-content" class="px-6">
+        <!-- Dashboard Tab (Default) -->
+        <div id="dashboard-tab" class="tab-content active">
+            <!-- Enhanced Main Dashboard Grid -->
+            <div class="grid grid-cols-12 gap-6 animate-slide-up">
         <!-- Top Row: Enhanced Key Metrics -->
         <div class="col-span-3">
             <div class="glass-effect metric-card p-6 rounded-xl animate-fade-in">
@@ -800,6 +866,145 @@
                 notification.remove();
             }, 3000);
         }
+
+        // Tab Navigation System
+        function initializeTabNavigation() {
+            const tabButtons = document.querySelectorAll('.nav-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    button.classList.add('active');
+                    document.getElementById(tabId + '-tab').classList.add('active');
+                    
+                    // Load tab-specific data
+                    loadTabData(tabId);
+                });
+            });
+        }
+        
+        function loadTabData(tabId) {
+            switch(tabId) {
+                case 'signals':
+                    loadSignalsData();
+                    break;
+                case 'backtest':
+                    loadBacktestData();
+                    break;
+                case 'portfolio':
+                    loadPortfolioHistory();
+                    break;
+                case 'logs':
+                    loadTradeLogs();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+            }
+        }
+        
+        async function loadSignalsData() {
+            try {
+                const response = await fetch('/api/signal-explorer');
+                const data = await response.json();
+                const signalsList = document.getElementById('signals-list');
+                
+                signalsList.innerHTML = data.signals.map(signal => `
+                    <div class="signal-item glass-effect p-4 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="font-bold">${signal.symbol}</span>
+                                <span class="ml-2 px-2 py-1 rounded text-xs ${signal.action === 'BUY' ? 'bg-green-600' : 'bg-red-600'}">${signal.action}</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold">${signal.confidence}%</div>
+                                <div class="text-xs text-gray-400">${signal.time}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load signals:', error);
+            }
+        }
+        
+        async function loadBacktestData() {
+            try {
+                const response = await fetch('/api/backtest-results');
+                const data = await response.json();
+                // Update backtest metrics with real data
+            } catch (error) {
+                console.error('Failed to load backtest data:', error);
+            }
+        }
+        
+        async function loadPortfolioHistory() {
+            try {
+                const response = await fetch('/api/portfolio-history');
+                const data = await response.json();
+                // Initialize portfolio history chart
+            } catch (error) {
+                console.error('Failed to load portfolio history:', error);
+            }
+        }
+        
+        async function loadTradeLogs() {
+            try {
+                const response = await fetch('/api/trade-logs');
+                const data = await response.json();
+                const tradeLogs = document.getElementById('trade-logs');
+                
+                tradeLogs.innerHTML = data.logs.map(log => `
+                    <div class="glass-effect p-3 rounded-lg">
+                        <div class="flex justify-between">
+                            <span>${log.time} - ${log.action} ${log.symbol}</span>
+                            <span class="${log.pnl > 0 ? 'text-green-400' : 'text-red-400'}">${log.pnl > 0 ? '+' : ''}$${log.pnl}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load trade logs:', error);
+            }
+        }
+        
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                const data = await response.json();
+                const notificationsList = document.getElementById('notifications-list');
+                
+                notificationsList.innerHTML = data.notifications.map(notif => `
+                    <div class="glass-effect p-3 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-${notif.type === 'alert' ? 'exclamation-triangle' : 'info-circle'} mr-3 text-${notif.type === 'alert' ? 'yellow' : 'blue'}-400"></i>
+                            <div>
+                                <div class="font-semibold">${notif.title}</div>
+                                <div class="text-sm text-gray-400">${notif.message}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+            }
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabNavigation();
+            initializePortfolioChart();
+            initializeProfitChart();
+            loadDashboardData();
+            startRealTimeUpdates();
+            addInteractiveElements();
+        });
 
         // Initialize with welcome message
         setTimeout(() => {
