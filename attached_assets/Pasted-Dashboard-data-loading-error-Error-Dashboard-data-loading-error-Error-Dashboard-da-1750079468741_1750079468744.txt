@@ -1,0 +1,133 @@
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+message: "API response not ok"
+stack: "Error: API response not ok↵ at loadDashboardData (https://545ec543-ad57-4314-9b1f-02b48b32aa42-00-2z5q2kkamisou.kirk.replit.dev:8000/:1026:27)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
+
+Dashboard data loading error: 
+Error {}
