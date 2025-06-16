@@ -42,7 +42,7 @@ args = "Comprehensive System Monitor"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Unified Trading Dashboard"
+args = "Trading Dashboard"
 
 [[workflows.workflow]]
 name = "Fixed Advanced Monitor 5002"
@@ -120,12 +120,12 @@ task = "shell.exec"
 args = "python enhanced_elite_dashboard_server.py"
 
 [[workflows.workflow]]
-name = "Unified Trading Dashboard"
+name = "Trading Dashboard"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python unified_trading_dashboard.py"
+args = "streamlit run app.py --server.port 5000"
 waitForPort = 5000
 
 [[ports]]
