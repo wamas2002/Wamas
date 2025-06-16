@@ -5,6 +5,7 @@ Validates all data sources and eliminates any synthetic or fallback values
 
 import ccxt
 import os
+import time
 import sqlite3
 from datetime import datetime
 import json
