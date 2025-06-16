@@ -35,18 +35,24 @@ class CleanEliteDashboard:
     def get_portfolio_data(self):
         """Get authentic portfolio data from OKX"""
         try:
+            if not self.okx_validator or not self.okx_validator.okx_client:
+                return self._get_fallback_portfolio()
+                
             portfolio_data = self.okx_validator.get_portfolio_data()
             
+            if not portfolio_data or 'total_balance' not in portfolio_data:
+                return self._get_fallback_portfolio()
+            
             dashboard_portfolio = {
-                'total_balance': portfolio_data['total_balance'],
-                'available_balance': portfolio_data['available_balance'],
-                'positions': portfolio_data['active_positions'],
-                'unrealized_pnl': portfolio_data['total_unrealized_pnl'],
-                'realized_pnl': portfolio_data.get('realized_pnl', 0.0),
-                'equity': portfolio_data['total_balance'],
-                'margin_ratio': portfolio_data.get('margin_ratio', 0.0),
+                'total_balance': float(portfolio_data.get('total_balance', 0)),
+                'available_balance': float(portfolio_data.get('available_balance', 0)),
+                'positions': int(portfolio_data.get('active_positions', 0)),
+                'unrealized_pnl': float(portfolio_data.get('total_unrealized_pnl', 0)),
+                'realized_pnl': float(portfolio_data.get('realized_pnl', 0.0)),
+                'equity': float(portfolio_data.get('total_balance', 0)),
+                'margin_ratio': float(portfolio_data.get('margin_ratio', 0.0)),
                 'source': 'okx_authenticated',
-                'timestamp': portfolio_data['timestamp']
+                'timestamp': portfolio_data.get('timestamp', datetime.now().isoformat())
             }
             
             self.cache['portfolio'] = dashboard_portfolio
@@ -54,7 +60,21 @@ class CleanEliteDashboard:
             
         except Exception as e:
             print(f"Portfolio data error: {e}")
-            raise Exception("Unable to fetch authentic OKX portfolio data")
+            return self._get_fallback_portfolio()
+    
+    def _get_fallback_portfolio(self):
+        """Return fallback portfolio structure when OKX data unavailable"""
+        return {
+            'total_balance': 0,
+            'available_balance': 0,
+            'positions': 0,
+            'unrealized_pnl': 0,
+            'realized_pnl': 0.0,
+            'equity': 0,
+            'margin_ratio': 0.0,
+            'source': 'connection_error',
+            'timestamp': datetime.now().isoformat()
+        }
 
     def get_trading_signals(self, filters=None):
         """Get trading signals from authentic sources"""
