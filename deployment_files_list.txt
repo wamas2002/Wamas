@@ -1,0 +1,40 @@
+# قائمة الملفات المطلوبة للتشغيل المحلي
+# Required Files for Local Deployment
+
+## الملفات الأساسية للنظام - Core System Files
+elite_dashboard_fixed.py
+live_position_monitor.py
+advanced_signal_executor.py
+advanced_position_manager.py
+intelligent_profit_optimizer.py
+comprehensive_system_monitor.py
+master_portfolio_dashboard.py
+
+## ملفات التحقق والبيانات - Data Validation Files
+okx_data_validator.py
+advanced_portfolio_analytics.py
+
+## ملفات الإعداد والتشغيل - Setup and Launch Files
+setup_local_trading.py
+local_system_launcher.py
+test_okx_connection.py
+
+## ملفات التكوين - Configuration Files
+.env.template
+local_requirements.txt
+
+## الأدلة والوثائق - Guides and Documentation
+LOCAL_DEPLOYMENT_GUIDE_AR.md
+QUICK_START_ARABIC.md
+
+## ملفات HTML للواجهة - Frontend HTML Files
+templates/elite_dashboard_production.html
+
+## ملفات قواعد البيانات (اختيارية) - Database Files (Optional)
+*.db
+
+## سكريبتات التشغيل - Run Scripts
+start_trading.sh (سيتم إنشاؤه تلقائياً)
+
+## إجمالي الملفات المطلوبة: 17 ملف أساسي
+Total Required Files: 17 core files
