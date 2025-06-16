@@ -1005,21 +1005,29 @@
                 const response = await fetch('/api/dashboard-data');
                 if (response.ok) {
                     dashboardData = await response.json();
-                    updateDashboardWithAnimation();
+                    
+                    // Verify data source is authentic OKX
+                    if (dashboardData.source === 'okx_authenticated') {
+                        updateDashboardWithAnimation();
+                        showNotification('OKX data loaded successfully', 'success');
+                        console.log('✅ Authentic OKX data loaded:', dashboardData);
+                    } else {
+                        throw new Error('Data source not authenticated');
+                    }
                 } else {
                     throw new Error('API response not ok');
                 }
             } catch (error) {
                 console.error('Dashboard data loading error:', error);
-                updateDashboardWithFallback();
+                showNotification('Unable to load authentic OKX data', 'error');
             }
         }
 
         function updateDashboardWithAnimation() {
             // Update with authentic OKX data only
             if (dashboardData && dashboardData.portfolio) {
-                animateValue('portfolio-balance', document.getElementById('portfolio-balance').textContent, '$' + (dashboardData.portfolio.usdt_balance || 0).toLocaleString());
-                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
+                animateValue('portfolio-balance', document.getElementById('portfolio-balance').textContent, '$' + (dashboardData.portfolio.total_balance || 0).toLocaleString());
+                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.unrealized_pnl || 0).toFixed(2));
                 
                 // Update confidence from authentic signals
                 if (dashboardData.signals && dashboardData.signals.length > 0) {
