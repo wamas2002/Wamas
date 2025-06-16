@@ -1026,7 +1026,12 @@
                 }
             } catch (error) {
                 console.error('Dashboard data loading error:', error);
-                updateDashboardWithFallback();
+                // Don't show fallback for valid responses with error status
+                if (dashboardData && dashboardData.status === 'error') {
+                    updateDashboardWithAnimation();
+                } else {
+                    updateDashboardWithFallback();
+                }
             }
         }
 
