@@ -29,7 +29,12 @@ class OKXDataValidator:
                 'secret': secret,
                 'password': passphrase,
                 'sandbox': False,
-                'enableRateLimit': True
+                'enableRateLimit': True,
+                'rateLimit': 2000,  # Increased rate limit delay
+                'timeout': 30000,   # Increased timeout
+                'options': {
+                    'defaultType': 'swap'  # For futures trading
+                }
             })
             
             # Test connection
@@ -48,6 +53,9 @@ class OKXDataValidator:
         """Get 100% authentic portfolio data from OKX"""
         if not self.okx_client:
             raise Exception("No OKX connection available")
+        
+        # Add rate limiting delay
+        time.sleep(1)
             
         try:
             # Get real balance
