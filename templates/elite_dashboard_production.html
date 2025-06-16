@@ -1033,13 +1033,23 @@
         function updateDashboardWithAnimation() {
             // Update with authentic OKX data only
             if (dashboardData && dashboardData.portfolio) {
-                animateValue('portfolio-balance', document.getElementById('portfolio-balance').textContent, '$' + (dashboardData.portfolio.usdt_balance || 0).toLocaleString());
-                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
+                const balanceElement = document.getElementById('portfolio-balance');
+                const profitElement = document.getElementById('current-profit');
+                
+                if (balanceElement) {
+                    animateValue('portfolio-balance', balanceElement.textContent, '$' + (dashboardData.portfolio.total_balance || 0).toLocaleString());
+                }
+                if (profitElement) {
+                    animateValue('current-profit', profitElement.textContent, '$' + (dashboardData.portfolio.unrealized_pnl || 0).toFixed(2));
+                }
                 
                 // Update confidence from authentic signals
                 if (dashboardData.signals && dashboardData.signals.length > 0) {
                     const avgConfidence = dashboardData.signals.reduce((acc, s) => acc + s.confidence, 0) / dashboardData.signals.length;
-                    animateValue('confidence-value', document.getElementById('confidence-value').textContent, avgConfidence.toFixed(0) + '%');
+                    const confidenceElement = document.getElementById('confidence-value');
+                    if (confidenceElement) {
+                        animateValue('confidence-value', confidenceElement.textContent, avgConfidence.toFixed(0) + '%');
+                    }
                 }
             }
             
@@ -1069,9 +1079,16 @@
 
         function updateDashboardWithFallback() {
             // Show loading states instead of fallback data
-            document.getElementById('portfolio-balance').textContent = 'No Data';
-            document.getElementById('current-profit').textContent = 'No Data';
-            document.getElementById('btc-price').textContent = 'No Data';
+            const balanceEl = document.getElementById('portfolio-balance');
+            const profitEl = document.getElementById('current-profit');
+            const btcEl = document.getElementById('btc-price');
+            
+            if (balanceEl) balanceEl.textContent = 'Loading...';
+            if (profitEl) profitEl.textContent = 'Loading...';
+            if (btcEl) btcEl.textContent = 'Loading...';
+            
+            // Retry data loading after 5 seconds
+            setTimeout(loadDashboardData, 5000);
         }
 
         function animateValue(elementId, oldValue, newValue) {
