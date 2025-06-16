@@ -419,10 +419,10 @@ if __name__ == '__main__':
     
     logger.info("🚀 Starting Unified Trading Dashboard")
     logger.info("📊 Portfolio monitoring and system control")
-    logger.info("🌐 Access: http://localhost:8080")
+    logger.info("🌐 Access: http://localhost:5000")
     
     # Start background updater
     socketio.start_background_task(background_data_updater)
     
     # Run the application
-    socketio.run(app, host='0.0.0.0', port=8080, debug=False)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)

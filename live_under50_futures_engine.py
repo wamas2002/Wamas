@@ -25,7 +25,7 @@ class LiveUnder50FuturesEngine:
         self.max_leverage = 3  # Conservative leverage for live trading
         self.max_position_size = 0.03  # 3% max position for live trading
         self.price_threshold = 50.0
-        self.min_usdt_balance = 20  # Minimum USDT balance required
+        self.min_usdt_balance = 10  # Minimum USDT balance required
 
         # Active symbols under $50
         self.active_symbols = []

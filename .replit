@@ -126,7 +126,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python unified_trading_dashboard.py"
-waitForPort = 8080
+waitForPort = 5000
 
 [[ports]]
 localPort = 80
