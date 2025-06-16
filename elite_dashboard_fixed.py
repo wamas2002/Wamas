@@ -168,6 +168,10 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'elite_trading_dashboard_secret_2024'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# Add CORS headers
+from flask_cors import CORS
+CORS(app, origins="*")
+
 # Initialize dashboard
 dashboard = CleanEliteDashboard()
 
@@ -180,17 +184,26 @@ def index():
 def api_dashboard_data():
     """Get complete dashboard data - production ready"""
     try:
+        print("📊 Loading dashboard data...")
+        
         # Get portfolio data first
+        print("🔄 Fetching portfolio data...")
         portfolio_data = dashboard.get_portfolio_data()
+        print(f"✅ Portfolio data: {portfolio_data}")
         
         # Get signals data
+        print("🔄 Fetching signals data...")
         signals_data = dashboard.get_trading_signals()[:20]
+        print(f"✅ Signals count: {len(signals_data)}")
         
         # Get performance metrics
+        print("🔄 Fetching performance data...")
         performance_data = dashboard.get_performance_metrics()
+        print(f"✅ Performance data: {performance_data}")
         
         # Compile complete data response
         data = {
+            'source': 'okx_authenticated',
             'portfolio': portfolio_data,
             'signals': signals_data,
             'performance': performance_data,
@@ -199,9 +212,10 @@ def api_dashboard_data():
             'notifications': dashboard.get_notifications(),
             'last_update': datetime.now().isoformat()
         }
+        print(f"✅ Complete data compiled: {list(data.keys())}")
         return jsonify(data)
     except Exception as e:
-        print(f"Dashboard data error: {e}")
+        print(f"❌ Dashboard data error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'OKX data unavailable: {str(e)}'}), 500
