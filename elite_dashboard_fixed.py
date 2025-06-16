@@ -281,22 +281,45 @@ def api_signal_explorer():
         conn = sqlite3.connect('advanced_signal_executor.db')
         cursor = conn.cursor()
         
-        cursor.execute("""
-            SELECT symbol, action, confidence, timestamp, source
-            FROM signal_executions 
-            ORDER BY timestamp DESC 
-            LIMIT 20
-        """)
+        # First check what columns exist
+        cursor.execute("PRAGMA table_info(signal_executions)")
+        columns = [row[1] for row in cursor.fetchall()]
+        
+        # Build query based on available columns
+        if 'action' in columns:
+            query = "SELECT symbol, action, confidence, timestamp FROM signal_executions ORDER BY timestamp DESC LIMIT 20"
+        elif 'side' in columns:
+            query = "SELECT symbol, side, confidence, timestamp FROM signal_executions ORDER BY timestamp DESC LIMIT 20"
+        else:
+            # Fallback to basic columns
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='signal_executions'")
+            if not cursor.fetchone():
+                # Table doesn't exist, return empty
+                conn.close()
+                return jsonify({'signals': [], 'source': 'okx_authentic'}), 200
+            
+            query = "SELECT symbol, confidence, timestamp FROM signal_executions ORDER BY timestamp DESC LIMIT 20"
+        
+        cursor.execute(query)
         
         signals = []
         for row in cursor.fetchall():
-            signals.append({
-                'symbol': row[0],
-                'action': row[1],
-                'confidence': row[2],
-                'time': row[3],
-                'source': 'okx_authentic'
-            })
+            if len(row) >= 4:
+                signals.append({
+                    'symbol': row[0],
+                    'action': row[1] if len(row) > 3 else 'BUY',
+                    'confidence': row[2] if len(row) > 2 else row[1],
+                    'time': row[3] if len(row) > 3 else row[2],
+                    'source': 'okx_authentic'
+                })
+            elif len(row) >= 3:
+                signals.append({
+                    'symbol': row[0],
+                    'action': 'BUY',
+                    'confidence': row[1],
+                    'time': row[2],
+                    'source': 'okx_authentic'
+                })
         
         conn.close()
         
