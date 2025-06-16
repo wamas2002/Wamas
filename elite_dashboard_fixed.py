@@ -35,24 +35,18 @@ class CleanEliteDashboard:
     def get_portfolio_data(self):
         """Get authentic portfolio data from OKX"""
         try:
-            if not self.okx_validator or not self.okx_validator.okx_client:
-                return self._get_fallback_portfolio()
-                
             portfolio_data = self.okx_validator.get_portfolio_data()
             
-            if not portfolio_data or 'total_balance' not in portfolio_data:
-                return self._get_fallback_portfolio()
-            
             dashboard_portfolio = {
-                'total_balance': float(portfolio_data.get('total_balance', 0)),
-                'available_balance': float(portfolio_data.get('available_balance', 0)),
-                'positions': int(portfolio_data.get('active_positions', 0)),
-                'unrealized_pnl': float(portfolio_data.get('total_unrealized_pnl', 0)),
-                'realized_pnl': float(portfolio_data.get('realized_pnl', 0.0)),
-                'equity': float(portfolio_data.get('total_balance', 0)),
-                'margin_ratio': float(portfolio_data.get('margin_ratio', 0.0)),
+                'total_balance': portfolio_data['total_balance'],
+                'available_balance': portfolio_data['available_balance'],
+                'positions': portfolio_data['active_positions'],
+                'unrealized_pnl': portfolio_data['total_unrealized_pnl'],
+                'realized_pnl': portfolio_data.get('realized_pnl', 0.0),
+                'equity': portfolio_data['total_balance'],
+                'margin_ratio': portfolio_data.get('margin_ratio', 0.0),
                 'source': 'okx_authenticated',
-                'timestamp': portfolio_data.get('timestamp', datetime.now().isoformat())
+                'timestamp': portfolio_data['timestamp']
             }
             
             self.cache['portfolio'] = dashboard_portfolio
@@ -60,21 +54,7 @@ class CleanEliteDashboard:
             
         except Exception as e:
             print(f"Portfolio data error: {e}")
-            return self._get_fallback_portfolio()
-    
-    def _get_fallback_portfolio(self):
-        """Return fallback portfolio structure when OKX data unavailable"""
-        return {
-            'total_balance': 0,
-            'available_balance': 0,
-            'positions': 0,
-            'unrealized_pnl': 0,
-            'realized_pnl': 0.0,
-            'equity': 0,
-            'margin_ratio': 0.0,
-            'source': 'connection_error',
-            'timestamp': datetime.now().isoformat()
-        }
+            raise Exception("Unable to fetch authentic OKX portfolio data")
 
     def get_trading_signals(self, filters=None):
         """Get trading signals from authentic sources"""
@@ -196,64 +176,19 @@ def index():
 def api_dashboard_data():
     """Get complete dashboard data - production ready"""
     try:
-        # Get portfolio data with error handling
-        portfolio_data = None
-        try:
-            portfolio_data = dashboard.get_portfolio_data()
-        except Exception as pe:
-            print(f"Portfolio error: {pe}")
-            # Return minimal portfolio structure instead of failing
-            portfolio_data = {
-                'total_balance': 0,
-                'available_balance': 0,
-                'positions': 0,
-                'unrealized_pnl': 0,
-                'source': 'error_state'
-            }
-        
-        # Get signals with error handling
-        signals_data = []
-        try:
-            signals_data = dashboard.get_trading_signals()[:20]
-        except Exception as se:
-            print(f"Signals error: {se}")
-            signals_data = []
-        
-        # Get performance with error handling
-        performance_data = None
-        try:
-            performance_data = dashboard.get_performance_metrics()
-        except Exception as pe:
-            print(f"Performance error: {pe}")
-            performance_data = {
-                'total_trades': 0,
-                'win_rate': 0,
-                'total_pnl': 0,
-                'source': 'error_state'
-            }
-        
         data = {
-            'portfolio': portfolio_data,
-            'signals': signals_data,
-            'performance': performance_data,
+            'portfolio': dashboard.get_portfolio_data(),
+            'signals': dashboard.get_trading_signals()[:20],
+            'performance': dashboard.get_performance_metrics(),
             'engine_status': dashboard.get_engine_status(),
             'confidence_trends': dashboard.get_confidence_trends(),
             'notifications': dashboard.get_notifications(),
-            'last_update': datetime.now().isoformat(),
-            'status': 'success'
+            'last_update': datetime.now().isoformat()
         }
         return jsonify(data)
     except Exception as e:
         print(f"Dashboard data error: {e}")
-        # Return structured error response instead of 500
-        return jsonify({
-            'error': 'Data loading error',
-            'portfolio': {'total_balance': 0, 'unrealized_pnl': 0},
-            'signals': [],
-            'performance': {'total_trades': 0, 'win_rate': 0},
-            'status': 'error',
-            'message': str(e)
-        }), 200
+        return jsonify({'error': 'Unable to fetch authentic trading data'}), 500
 
 @app.route('/api/toggle-engine', methods=['POST'])
 def api_toggle_engine():
@@ -301,45 +236,22 @@ def api_signal_explorer():
         conn = sqlite3.connect('advanced_signal_executor.db')
         cursor = conn.cursor()
         
-        # First check what columns exist
-        cursor.execute("PRAGMA table_info(signal_executions)")
-        columns = [row[1] for row in cursor.fetchall()]
-        
-        # Build query based on available columns
-        if 'action' in columns:
-            query = "SELECT symbol, action, confidence, timestamp FROM signal_executions ORDER BY timestamp DESC LIMIT 20"
-        elif 'side' in columns:
-            query = "SELECT symbol, side, confidence, timestamp FROM signal_executions ORDER BY timestamp DESC LIMIT 20"
-        else:
-            # Fallback to basic columns
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='signal_executions'")
-            if not cursor.fetchone():
-                # Table doesn't exist, return empty
-                conn.close()
-                return jsonify({'signals': [], 'source': 'okx_authentic'}), 200
-            
-            query = "SELECT symbol, confidence, timestamp FROM signal_executions ORDER BY timestamp DESC LIMIT 20"
-        
-        cursor.execute(query)
+        cursor.execute("""
+            SELECT symbol, action, confidence, timestamp, source
+            FROM signal_executions 
+            ORDER BY timestamp DESC 
+            LIMIT 20
+        """)
         
         signals = []
         for row in cursor.fetchall():
-            if len(row) >= 4:
-                signals.append({
-                    'symbol': row[0],
-                    'action': row[1] if len(row) > 3 else 'BUY',
-                    'confidence': row[2] if len(row) > 2 else row[1],
-                    'time': row[3] if len(row) > 3 else row[2],
-                    'source': 'okx_authentic'
-                })
-            elif len(row) >= 3:
-                signals.append({
-                    'symbol': row[0],
-                    'action': 'BUY',
-                    'confidence': row[1],
-                    'time': row[2],
-                    'source': 'okx_authentic'
-                })
+            signals.append({
+                'symbol': row[0],
+                'action': row[1],
+                'confidence': row[2],
+                'time': row[3],
+                'source': 'okx_authentic'
+            })
         
         conn.close()
         

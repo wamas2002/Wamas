@@ -556,21 +556,6 @@
                                 <option>Buy Signals</option>
                                 <option>Sell Signals</option>
                             </select>
-                            <select class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3" id="market-type-filter" onchange="filterSignalsByMarketType()">
-                                <option value="all">All Markets</option>
-                                <option value="spot">Spot Only</option>
-                                <option value="futures">Futures Only</option>
-                            </select>
-                            
-                            <!-- Market Type Filter Badges -->
-                            <div class="pt-3 border-t border-gray-700">
-                                <h4 class="text-sm text-gray-400 mb-2">Quick Filters:</h4>
-                                <div class="flex flex-wrap gap-2">
-                                    <button class="filter-badge px-3 py-1 rounded-full text-xs bg-gray-600 text-white hover:bg-gray-500 transition-colors" data-filter="all" onclick="setMarketFilter('all')">All</button>
-                                    <button class="filter-badge px-3 py-1 rounded-full text-xs bg-green-600 text-white hover:bg-green-500 transition-colors" data-filter="spot" onclick="setMarketFilter('spot')">Spot</button>
-                                    <button class="filter-badge px-3 py-1 rounded-full text-xs bg-blue-600 text-white hover:bg-blue-500 transition-colors" data-filter="futures" onclick="setMarketFilter('futures')">Futures</button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1026,35 +1011,20 @@
                 }
             } catch (error) {
                 console.error('Dashboard data loading error:', error);
-                // Don't show fallback for valid responses with error status
-                if (dashboardData && dashboardData.status === 'error') {
-                    updateDashboardWithAnimation();
-                } else {
-                    updateDashboardWithFallback();
-                }
+                updateDashboardWithFallback();
             }
         }
 
         function updateDashboardWithAnimation() {
             // Update with authentic OKX data only
             if (dashboardData && dashboardData.portfolio) {
-                const balanceElement = document.getElementById('portfolio-balance');
-                const profitElement = document.getElementById('current-profit');
-                
-                if (balanceElement) {
-                    animateValue('portfolio-balance', balanceElement.textContent, '$' + (dashboardData.portfolio.total_balance || 0).toLocaleString());
-                }
-                if (profitElement) {
-                    animateValue('current-profit', profitElement.textContent, '$' + (dashboardData.portfolio.unrealized_pnl || 0).toFixed(2));
-                }
+                animateValue('portfolio-balance', document.getElementById('portfolio-balance').textContent, '$' + (dashboardData.portfolio.usdt_balance || 0).toLocaleString());
+                animateValue('current-profit', document.getElementById('current-profit').textContent, '$' + (dashboardData.portfolio.day_change || 0).toFixed(2));
                 
                 // Update confidence from authentic signals
                 if (dashboardData.signals && dashboardData.signals.length > 0) {
                     const avgConfidence = dashboardData.signals.reduce((acc, s) => acc + s.confidence, 0) / dashboardData.signals.length;
-                    const confidenceElement = document.getElementById('confidence-value');
-                    if (confidenceElement) {
-                        animateValue('confidence-value', confidenceElement.textContent, avgConfidence.toFixed(0) + '%');
-                    }
+                    animateValue('confidence-value', document.getElementById('confidence-value').textContent, avgConfidence.toFixed(0) + '%');
                 }
             }
             
@@ -1084,16 +1054,9 @@
 
         function updateDashboardWithFallback() {
             // Show loading states instead of fallback data
-            const balanceEl = document.getElementById('portfolio-balance');
-            const profitEl = document.getElementById('current-profit');
-            const btcEl = document.getElementById('btc-price');
-            
-            if (balanceEl) balanceEl.textContent = 'Loading...';
-            if (profitEl) profitEl.textContent = 'Loading...';
-            if (btcEl) btcEl.textContent = 'Loading...';
-            
-            // Retry data loading after 5 seconds
-            setTimeout(loadDashboardData, 5000);
+            document.getElementById('portfolio-balance').textContent = 'No Data';
+            document.getElementById('current-profit').textContent = 'No Data';
+            document.getElementById('btc-price').textContent = 'No Data';
         }
 
         function animateValue(elementId, oldValue, newValue) {
@@ -1245,32 +1208,20 @@
                 const signalsList = document.getElementById('signals-list');
                 
                 if (data.signals && data.signals.length > 0) {
-                    signalsList.innerHTML = data.signals.map(signal => {
-                        const marketType = signal.market_type || 'spot';
-                        const marketBadgeColor = marketType === 'futures' ? 'bg-blue-600' : 'bg-green-600';
-                        const actionColor = signal.action === 'BUY' || signal.action === 'LONG' ? 'bg-green-600' : 'bg-red-600';
-                        const leverage = signal.leverage ? `${signal.leverage}x` : '';
-                        
-                        return `
-                        <div class="signal-item glass-effect p-4 rounded-lg mb-3" data-market-type="${marketType}">
+                    signalsList.innerHTML = data.signals.map(signal => `
+                        <div class="signal-item glass-effect p-4 rounded-lg mb-3">
                             <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-2">
+                                <div>
                                     <span class="font-bold text-white">${signal.symbol}</span>
-                                    <span class="px-2 py-1 rounded text-xs ${marketBadgeColor} text-white font-semibold">
-                                        ${marketType.toUpperCase()}
-                                    </span>
-                                    <span class="px-2 py-1 rounded text-xs ${actionColor}">${signal.action}</span>
-                                    ${leverage ? `<span class="px-2 py-1 rounded text-xs bg-purple-600">${leverage}</span>` : ''}
+                                    <span class="ml-2 px-2 py-1 rounded text-xs ${signal.action === 'BUY' ? 'bg-green-600' : 'bg-red-600'}">${signal.action}</span>
                                 </div>
                                 <div class="text-right">
                                     <div class="font-bold text-green-400">${signal.confidence}%</div>
-                                    <div class="text-xs text-gray-400">${signal.time || new Date().toLocaleTimeString()}</div>
-                                    <div class="text-xs text-gray-500">${signal.source_engine || 'AI Engine'}</div>
+                                    <div class="text-xs text-gray-400">${signal.time}</div>
                                 </div>
                             </div>
                         </div>
-                        `;
-                    }).join('');
+                    `).join('');
                 } else {
                     signalsList.innerHTML = `
                         <div class="glass-effect p-6 rounded-lg text-center">
@@ -1532,54 +1483,6 @@
                     </div>
                 `;
             }
-        }
-
-        // Signal Market Type Filtering Functions
-        let currentMarketFilter = 'all';
-        
-        function filterSignalsByMarketType() {
-            const selectElement = document.getElementById('market-type-filter');
-            const filterValue = selectElement.value;
-            setMarketFilter(filterValue);
-        }
-        
-        function setMarketFilter(filterType) {
-            currentMarketFilter = filterType;
-            const signalItems = document.querySelectorAll('.signal-item');
-            const filterBadges = document.querySelectorAll('.filter-badge');
-            
-            // Update active filter badge
-            filterBadges.forEach(badge => {
-                const badgeFilter = badge.getAttribute('data-filter');
-                if (badgeFilter === filterType) {
-                    badge.classList.add('opacity-100');
-                    badge.classList.remove('opacity-60');
-                } else {
-                    badge.classList.add('opacity-60');
-                    badge.classList.remove('opacity-100');
-                }
-            });
-            
-            // Filter signals
-            signalItems.forEach(item => {
-                const marketType = item.getAttribute('data-market-type');
-                if (filterType === 'all' || marketType === filterType) {
-                    item.style.display = 'block';
-                    item.style.animation = 'fadeIn 0.3s ease-in-out';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            
-            // Update dropdown
-            const selectElement = document.getElementById('market-type-filter');
-            if (selectElement) {
-                selectElement.value = filterType;
-            }
-            
-            // Show filter notification
-            const filterText = filterType === 'all' ? 'All Markets' : filterType.charAt(0).toUpperCase() + filterType.slice(1);
-            showNotification(`Filtering by: ${filterText}`, 'info');
         }
 
         // Theme Management Functions

@@ -25,7 +25,7 @@ class LiveUnder50FuturesEngine:
         self.max_leverage = 3  # Conservative leverage for live trading
         self.max_position_size = 0.03  # 3% max position for live trading
         self.price_threshold = 50.0
-        self.min_usdt_balance = 10  # Minimum USDT balance required
+        self.min_usdt_balance = 50  # Minimum USDT balance required
 
         # Active symbols under $50
         self.active_symbols = []
@@ -278,9 +278,6 @@ class LiveUnder50FuturesEngine:
                 'leverage': leverage,
                 'stop_loss': round(stop_loss, 8),
                 'take_profit': round(take_profit, 8),
-                'market_type': 'futures',
-                'trade_direction': signal.lower(),
-                'source_engine': 'live_under50_futures_engine',
                 'rsi': round(rsi, 1),
                 'volatility': round(volatility, 4),
                 'timestamp': datetime.now().isoformat()
@@ -296,7 +293,7 @@ class LiveUnder50FuturesEngine:
             # Get current balance
             balance = self.get_available_balance()
             if balance < self.min_usdt_balance:
-                logger.error(f"Insufficient balance for trade: ${balance:.2f} (minimum: ${self.min_usdt_balance})")
+                logger.error(f"Insufficient balance for trade: ${balance:.2f}")
                 return False
 
             # Account for existing margin usage from active positions
