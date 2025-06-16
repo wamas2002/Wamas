@@ -180,10 +180,20 @@ def index():
 def api_dashboard_data():
     """Get complete dashboard data - production ready"""
     try:
+        # Get portfolio data first
+        portfolio_data = dashboard.get_portfolio_data()
+        
+        # Get signals data
+        signals_data = dashboard.get_trading_signals()[:20]
+        
+        # Get performance metrics
+        performance_data = dashboard.get_performance_metrics()
+        
+        # Compile complete data response
         data = {
-            'portfolio': dashboard.get_portfolio_data(),
-            'signals': dashboard.get_trading_signals()[:20],
-            'performance': dashboard.get_performance_metrics(),
+            'portfolio': portfolio_data,
+            'signals': signals_data,
+            'performance': performance_data,
             'engine_status': dashboard.get_engine_status(),
             'confidence_trends': dashboard.get_confidence_trends(),
             'notifications': dashboard.get_notifications(),
@@ -192,7 +202,9 @@ def api_dashboard_data():
         return jsonify(data)
     except Exception as e:
         print(f"Dashboard data error: {e}")
-        return jsonify({'error': 'Unable to fetch authentic trading data'}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'OKX data unavailable: {str(e)}'}), 500
 
 @app.route('/api/toggle-engine', methods=['POST'])
 def api_toggle_engine():
