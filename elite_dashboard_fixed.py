@@ -213,7 +213,12 @@ def api_dashboard_data():
             'last_update': datetime.now().isoformat()
         }
         print(f"✅ Complete data compiled: {list(data.keys())}")
-        return jsonify(data)
+        response = jsonify(data)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+        response.headers.add('Content-Type', 'application/json')
+        return response
     except Exception as e:
         print(f"❌ Dashboard data error: {e}")
         import traceback
