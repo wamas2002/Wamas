@@ -39,23 +39,24 @@ class CleanEliteDashboard:
             authentic_portfolio = self.okx_validator.get_authentic_portfolio()
             
             dashboard_portfolio = {
-                'total_balance': authentic_portfolio['balance'],
-                'available_balance': authentic_portfolio['balance'] * 0.9,
-                'positions': authentic_portfolio['position_count'],
-                'unrealized_pnl': authentic_portfolio['total_unrealized_pnl'],
+                'total_balance': float(authentic_portfolio['balance']),
+                'available_balance': float(authentic_portfolio['balance']) * 0.95,
+                'positions': int(authentic_portfolio['position_count']),
+                'unrealized_pnl': float(authentic_portfolio['total_unrealized_pnl']),
                 'realized_pnl': 0.0,
-                'equity': authentic_portfolio['balance'],
+                'equity': float(authentic_portfolio['balance']),
                 'margin_ratio': 0.25 if authentic_portfolio['position_count'] > 0 else 0.0,
                 'source': 'okx_authenticated',
                 'timestamp': authentic_portfolio['timestamp']
             }
             
-            self.cache['portfolio'] = dashboard_portfolio
             return dashboard_portfolio
             
         except Exception as e:
             print(f"Portfolio data error: {e}")
-            raise Exception("Unable to fetch authentic OKX portfolio data - no fallback allowed")
+            import traceback
+            traceback.print_exc()
+            raise Exception(f"OKX portfolio data unavailable: {str(e)}")
 
     def get_trading_signals(self, filters=None):
         """Get trading signals from authentic sources"""
